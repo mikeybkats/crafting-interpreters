@@ -45,6 +45,10 @@ impl Scanner {
         &self.tokens
     }
 
+    fn increment_current(&mut self) {
+        self.current += 1;
+    }
+
     fn scan_token(&mut self) {
         let c: char = self.advance();
 
@@ -66,7 +70,7 @@ impl Scanner {
                 } else {
                     TokenType::Bang
                 });
-                self.current += 1;
+                self.increment_current();
             }
 
             '=' => {
@@ -75,7 +79,7 @@ impl Scanner {
                 } else {
                     TokenType::Equal
                 });
-                self.current += 1;
+                self.increment_current();
             }
 
             '<' => {
@@ -84,7 +88,7 @@ impl Scanner {
                 } else {
                     TokenType::Less
                 });
-                self.current += 1;
+                self.increment_current();
             }
 
             '>' => {
@@ -93,7 +97,22 @@ impl Scanner {
                 } else {
                     TokenType::Greater
                 });
-                self.current += 1;
+                self.increment_current();
+            }
+
+            ' ' => (),
+            '\r' => (),
+            '\t' => (),
+            '\n' => self.line += 1,
+
+            '/' => {
+                if self.match_char('/') {
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::Slash)
+                }
             }
 
             _ => {
@@ -115,12 +134,25 @@ impl Scanner {
             .push(Token::new(token_type, lexeme, literal, self.line));
     }
 
-    fn advance(&self) -> char {
-        'a'
+    fn advance(&mut self) -> char {
+        self.current += 1;
+        self.source.chars().nth(self.current).unwrap()
+    }
+
+    fn peek(&self) -> char {
+        if self.is_at_end() {
+            return '\0';
+        }
+
+        self.current_char()
     }
 
     fn is_at_end(&self) -> bool {
         self.current >= self.source_length
+    }
+
+    fn current_char(&self) -> char {
+        self.source.chars().nth(self.current).unwrap()
     }
 
     fn match_char(&self, expected_char: char) -> bool {
@@ -128,7 +160,7 @@ impl Scanner {
             return false;
         }
 
-        if self.source.chars().nth(self.current).unwrap() != expected_char {
+        if self.current_char() != expected_char {
             return false;
         }
 
