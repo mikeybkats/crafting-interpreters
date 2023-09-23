@@ -1,10 +1,13 @@
 use crate::lox::Lox;
 
+mod error;
 mod lox;
 mod scanner;
+mod token;
 
 fn main() {
     println!("Hello, world!");
 
-    Lox::main().unwrap();
+    let mut lox = Lox::new();
+    lox.main().unwrap();
 }
