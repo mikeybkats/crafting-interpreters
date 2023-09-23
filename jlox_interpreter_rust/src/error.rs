@@ -3,21 +3,24 @@ pub struct ErrorReporter {
 }
 
 impl ErrorReporter {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { had_error: false }
     }
 
-    fn error(&mut self, line: usize, message: &str) {
+    pub fn set_error(&mut self, had_error: bool) {
+        self.had_error = had_error;
+    }
+
+    pub fn had_error(&self) -> bool {
+        self.had_error
+    }
+
+    pub fn report_error_message(&mut self, line: usize, message: &str) {
         self.report(line, "", message);
     }
 
-    fn report(&mut self, line: usize, where_: &str, message: &str) {
+    pub fn report(&mut self, line: usize, where_: &str, message: &str) {
         eprintln!("[line {}] Error{}: {}", line, where_, message);
         self.had_error = true;
     }
-}
-
-fn main() {
-    let mut reporter = ErrorReporter::new();
-    reporter.error(1, "An error occurred");
 }

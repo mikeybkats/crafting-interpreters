@@ -1,17 +1,22 @@
 use std::{
+    cell::RefCell,
     env, fs,
     io::{self, BufRead, BufReader, Write},
     process,
+    rc::Rc,
 };
 
-use crate::scanner::Scanner;
+use crate::{error::ErrorReporter, scanner::Scanner};
 
 pub struct Lox {
-    had_error: bool,
+    error_reporter: Rc<RefCell<ErrorReporter>>,
 }
 impl Lox {
     pub fn new() -> Self {
-        Self { had_error: false }
+        Self {
+            // use reference counter to count references for any sub impl that will need to report errors
+            error_reporter: Rc::new(RefCell::new(ErrorReporter::new())),
+        }
     }
 
     pub fn main(&mut self) -> io::Result<()> {
@@ -33,9 +38,9 @@ impl Lox {
         let bytes = fs::read(path)?;
         let content = String::from_utf8_lossy(&bytes).to_string();
 
-        Lox::run(content);
+        self.run(content);
 
-        if self.had_error {
+        if self.error_reporter.borrow_mut().had_error() {
             process::exit(65);
         }
 
@@ -54,28 +59,19 @@ impl Lox {
             if line.is_empty() {
                 break;
             }
-            Self::run(line);
-            self.had_error = false;
+            self.run(line);
+            self.error_reporter.borrow_mut().set_error(false);
         }
 
         Ok(())
     }
 
-    fn run(source: String) {
-        let mut scanner = Scanner::new(source);
+    fn run(&self, source: String) {
+        let mut scanner = Scanner::new(source, Rc::clone(&self.error_reporter));
         let tokens = scanner.scan_tokens();
 
         for token in tokens {
             println!("{:?}", token);
         }
     }
-
-    // fn error(&mut self, line: usize, message: &str) {
-    //     self.report(line, "", message);
-    // }
-
-    // fn report(&mut self, line: usize, where_: &str, message: &str) {
-    //     eprintln!("[line {}] Error{}: {}", line, where_, message);
-    //     self.had_error = true;
-    // }
 }
