@@ -19,22 +19,7 @@ impl Lox {
         }
     }
 
-    pub fn main(&mut self) -> io::Result<()> {
-        let args: Vec<String> = env::args().collect();
-
-        if args.len() > 2 {
-            println!("Ussage: rlox [script[");
-            process::exit(64);
-        } else if args.len() == 2 {
-            self.run_file(&args[1])?;
-        } else {
-            self.run_prompt()?;
-        }
-
-        Ok(())
-    }
-
-    fn run_file(&mut self, path: &str) -> io::Result<()> {
+    pub fn run_file(&mut self, path: &str) -> io::Result<()> {
         let bytes = fs::read(path)?;
         let content = String::from_utf8_lossy(&bytes).to_string();
 
@@ -47,20 +32,34 @@ impl Lox {
         Ok(())
     }
 
-    fn run_prompt(&mut self) -> io::Result<()> {
+    pub fn run_prompt(&mut self) -> io::Result<()> {
         let input = io::stdin();
-        let reader = BufReader::new(input);
+        // let reader = BufReader::new(input);
+        let mut reader = input.lock();
 
-        for line_result in reader.lines() {
+        println!("Welcome to Lox");
+        println!("--------------");
+
+        // for line_result in reader.lines() {
+        loop {
             print!("> ");
-            io::stdout().flush()?;
-            let line = line_result?;
 
-            if line.is_empty() {
-                break;
+            io::stdout().flush().unwrap();
+
+            let mut line = String::new();
+            match reader.read_line(&mut line) {
+                Ok(bytes_read) if bytes_read > 0 => {
+                    self.run(line);
+                }
+                Ok(_) => break, // EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
+                Err(error) => {
+                    self.error_reporter.borrow_mut().set_error(false);
+                    self.error_reporter
+                        .borrow_mut()
+                        .report_error_message(0, &error.to_string());
+                    break;
+                }
             }
-            self.run(line);
-            self.error_reporter.borrow_mut().set_error(false);
         }
 
         Ok(())
