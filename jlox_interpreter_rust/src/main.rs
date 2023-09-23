@@ -18,7 +18,12 @@ fn main() {
     } else if args.len() == 2 {
         lox.run_file(&args[1]).unwrap();
     } else {
-        lox.run_prompt().unwrap();
+        let prompt = lox.run_prompt();
+
+        match prompt {
+            Ok(_value) => (),
+            Err(_e) => (),
+        }
     }
 
     // Ok(())

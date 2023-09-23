@@ -50,75 +50,84 @@ impl Scanner {
     }
 
     fn scan_token(&mut self) {
-        let c: char = self.advance();
+        let c: Option<char> = self.advance();
+
+        println!("character: {}", c.unwrap());
 
         match c {
-            '(' => self.add_token(TokenType::LeftParen),
-            ')' => self.add_token(TokenType::RightParen),
-            '{' => self.add_token(TokenType::LeftBrace),
-            '}' => self.add_token(TokenType::RightBrace),
-            ',' => self.add_token(TokenType::Comma),
-            '.' => self.add_token(TokenType::Dot),
-            '-' => self.add_token(TokenType::Minus),
-            '+' => self.add_token(TokenType::Plus),
-            ';' => self.add_token(TokenType::Semicolon),
-            '*' => self.add_token(TokenType::Star),
+            Some(c) => match c {
+                '(' => self.add_token(TokenType::LeftParen),
+                ')' => self.add_token(TokenType::RightParen),
+                '{' => self.add_token(TokenType::LeftBrace),
+                '}' => self.add_token(TokenType::RightBrace),
+                ',' => self.add_token(TokenType::Comma),
+                '.' => self.add_token(TokenType::Dot),
+                '-' => self.add_token(TokenType::Minus),
+                '+' => self.add_token(TokenType::Plus),
+                ';' => self.add_token(TokenType::Semicolon),
+                '*' => self.add_token(TokenType::Star),
 
-            '!' => {
-                self.add_token(if self.match_char('=') {
-                    TokenType::BangEqual
-                } else {
-                    TokenType::Bang
-                });
-                self.increment_current();
-            }
-
-            '=' => {
-                self.add_token(if self.match_char('=') {
-                    TokenType::EqualEqual
-                } else {
-                    TokenType::Equal
-                });
-                self.increment_current();
-            }
-
-            '<' => {
-                self.add_token(if self.match_char('=') {
-                    TokenType::LessEqual
-                } else {
-                    TokenType::Less
-                });
-                self.increment_current();
-            }
-
-            '>' => {
-                self.add_token(if self.match_char('=') {
-                    TokenType::GreaterEqual
-                } else {
-                    TokenType::Greater
-                });
-                self.increment_current();
-            }
-
-            ' ' => (),
-            '\r' => (),
-            '\t' => (),
-            '\n' => self.line += 1,
-
-            '/' => {
-                if self.match_char('/') {
-                    while self.peek() != '\n' && !self.is_at_end() {
-                        self.advance();
-                    }
-                } else {
-                    self.add_token(TokenType::Slash)
+                '!' => {
+                    self.add_token(if self.match_char('=') {
+                        TokenType::BangEqual
+                    } else {
+                        TokenType::Bang
+                    });
+                    self.increment_current();
                 }
-            }
 
-            _ => {
+                '=' => {
+                    self.add_token(if self.match_char('=') {
+                        TokenType::EqualEqual
+                    } else {
+                        TokenType::Equal
+                    });
+                    self.increment_current();
+                }
+
+                '<' => {
+                    self.add_token(if self.match_char('=') {
+                        TokenType::LessEqual
+                    } else {
+                        TokenType::Less
+                    });
+                    self.increment_current();
+                }
+
+                '>' => {
+                    self.add_token(if self.match_char('=') {
+                        TokenType::GreaterEqual
+                    } else {
+                        TokenType::Greater
+                    });
+                    self.increment_current();
+                }
+
+                ' ' => (),
+                '\r' => (),
+                '\t' => (),
+                '\n' => self.line += 1,
+
+                '/' => {
+                    if self.match_char('/') {
+                        while self.peek() != '\n' && !self.is_at_end() {
+                            self.advance();
+                        }
+                    } else {
+                        self.add_token(TokenType::Slash)
+                    }
+                }
+
+                _ => {
+                    self.error_reporter
+                        .borrow_mut()
+                        .report_error_message(self.line, "Unexpected Character");
+                }
+            },
+            None => {
                 self.error_reporter
                     .borrow_mut()
-                    .report_error_message(self.line, "Unexpected Character");
+                    .report_error_message(self.line, "No Character");
             }
         }
     }
@@ -134,9 +143,17 @@ impl Scanner {
             .push(Token::new(token_type, lexeme, literal, self.line));
     }
 
-    fn advance(&mut self) -> char {
+    fn advance(&mut self) -> Option<char> {
         self.current += 1;
-        self.source.chars().nth(self.current).unwrap()
+
+        let character = self.source.chars().nth(self.current);
+
+        println!("SOURCE CHAR: {}", character.unwrap());
+
+        match character {
+            Some(character) => Some(character),
+            _ => None,
+        }
     }
 
     fn peek(&self) -> char {

@@ -34,13 +34,11 @@ impl Lox {
 
     pub fn run_prompt(&mut self) -> io::Result<()> {
         let input = io::stdin();
-        // let reader = BufReader::new(input);
         let mut reader = input.lock();
 
         println!("Welcome to Lox");
         println!("--------------");
 
-        // for line_result in reader.lines() {
         loop {
             print!("> ");
 
@@ -49,6 +47,7 @@ impl Lox {
             let mut line = String::new();
             match reader.read_line(&mut line) {
                 Ok(bytes_read) if bytes_read > 0 => {
+                    println!("SOURCE: {}", line);
                     self.run(line);
                 }
                 Ok(_) => break, // EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
