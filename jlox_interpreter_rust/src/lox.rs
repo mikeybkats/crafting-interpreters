@@ -47,7 +47,6 @@ impl Lox {
             let mut line = String::new();
             match reader.read_line(&mut line) {
                 Ok(bytes_read) if bytes_read > 0 => {
-                    println!("SOURCE: {}", line);
                     self.run(line);
                 }
                 Ok(_) => break, // EOF (Ctrl+D on Unix, Ctrl+Z on Windows)

@@ -1,8 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, str::Chars};
 
 use crate::{
     error::ErrorReporter,
-    token::{Token, TokenType},
+    token::{self, Token, TokenType},
 };
 
 pub struct Scanner {
@@ -52,8 +52,6 @@ impl Scanner {
     fn scan_token(&mut self) {
         let c: Option<char> = self.advance();
 
-        println!("character: {}", c.unwrap());
-
         match c {
             Some(c) => match c {
                 '(' => self.add_token(TokenType::LeftParen),
@@ -68,39 +66,39 @@ impl Scanner {
                 '*' => self.add_token(TokenType::Star),
 
                 '!' => {
-                    self.add_token(if self.match_char('=') {
-                        TokenType::BangEqual
-                    } else {
-                        TokenType::Bang
-                    });
-                    self.increment_current();
+                    let mut token_type = TokenType::Bang;
+                    if self.match_char('=') {
+                        self.increment_current();
+                        token_type = TokenType::BangEqual;
+                    }
+                    self.add_token(token_type);
                 }
 
                 '=' => {
-                    self.add_token(if self.match_char('=') {
-                        TokenType::EqualEqual
-                    } else {
-                        TokenType::Equal
-                    });
-                    self.increment_current();
+                    let mut token_type = TokenType::Equal;
+                    if self.match_char('=') {
+                        self.increment_current();
+                        token_type = TokenType::EqualEqual
+                    }
+                    self.add_token(token_type);
                 }
 
                 '<' => {
-                    self.add_token(if self.match_char('=') {
-                        TokenType::LessEqual
-                    } else {
-                        TokenType::Less
-                    });
-                    self.increment_current();
+                    let mut token_type = TokenType::Less;
+                    if self.match_char('=') {
+                        self.increment_current();
+                        token_type = TokenType::LessEqual
+                    }
+                    self.add_token(token_type);
                 }
 
                 '>' => {
-                    self.add_token(if self.match_char('=') {
-                        TokenType::GreaterEqual
-                    } else {
-                        TokenType::Greater
-                    });
-                    self.increment_current();
+                    let mut token_type = TokenType::Greater;
+                    if self.match_char('=') {
+                        self.increment_current();
+                        token_type = TokenType::GreaterEqual
+                    }
+                    self.add_token(token_type);
                 }
 
                 ' ' => (),
@@ -125,9 +123,11 @@ impl Scanner {
                 }
             },
             None => {
-                self.error_reporter
-                    .borrow_mut()
-                    .report_error_message(self.line, "No Character");
+                // self.error_reporter
+                //     .borrow_mut()
+                //     .report_error_message(self.line, "No Character");
+                // println!("End of input");
+                // Do nothing
             }
         }
     }
@@ -144,13 +144,11 @@ impl Scanner {
     }
 
     fn advance(&mut self) -> Option<char> {
+        let c = self.source.chars().nth(self.current);
+
         self.current += 1;
 
-        let character = self.source.chars().nth(self.current);
-
-        println!("SOURCE CHAR: {}", character.unwrap());
-
-        match character {
+        match c {
             Some(character) => Some(character),
             _ => None,
         }
