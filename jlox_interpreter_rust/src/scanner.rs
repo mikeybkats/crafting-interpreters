@@ -1,8 +1,8 @@
-use std::{cell::RefCell, rc::Rc, str::Chars};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     error::ErrorReporter,
-    token::{self, Token, TokenType},
+    token::{Token, TokenType},
 };
 
 pub struct Scanner {
@@ -116,6 +116,8 @@ impl Scanner {
                     }
                 }
 
+                '"' => self.string(),
+
                 _ => {
                     self.error_reporter
                         .borrow_mut()
@@ -133,10 +135,10 @@ impl Scanner {
     }
 
     fn add_token(&mut self, token_type: TokenType) {
-        self.add_token_by_type(token_type, None)
+        self.add_token_with_value(token_type, None)
     }
 
-    fn add_token_by_type(&mut self, token_type: TokenType, literal: Option<String>) {
+    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<String>) {
         let lexeme = self.source[self.start..self.current].to_string();
 
         self.tokens
@@ -180,5 +182,31 @@ impl Scanner {
         }
 
         true
+    }
+
+    fn string(&mut self) {
+        // while the next character is not a double quote and it's not EOF
+        while self.peek() != '"' && !self.is_at_end() {
+            // if there is a new line tally line index
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            // go to next char
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            self.error_reporter
+                .borrow_mut()
+                .report_error_message(self.line, "Unterminated string.");
+            return;
+        }
+
+        // Get the The closing " quotation mark
+        self.advance();
+
+        // Trim the surrounding quotes.
+        let value = &self.source[self.start + 1..self.current - 1];
+        self.add_token_with_value(TokenType::String, Some(value.to_string()));
     }
 }
