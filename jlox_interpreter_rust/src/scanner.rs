@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     error::ErrorReporter,
-    token::{Token, TokenType},
+    token::{StringOrNumber, Token, TokenType},
 };
 
 pub struct Scanner {
@@ -119,9 +119,13 @@ impl Scanner {
                 '"' => self.string(),
 
                 _ => {
-                    self.error_reporter
-                        .borrow_mut()
-                        .report_error_message(self.line, "Unexpected Character");
+                    if c.is_numeric() {
+                        self.number()
+                    } else {
+                        self.error_reporter
+                            .borrow_mut()
+                            .report_error_message(self.line, "Unexpected Character");
+                    }
                 }
             },
             None => {
@@ -138,7 +142,7 @@ impl Scanner {
         self.add_token_with_value(token_type, None)
     }
 
-    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<String>) {
+    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<StringOrNumber>) {
         let lexeme = self.source[self.start..self.current].to_string();
 
         self.tokens
@@ -162,6 +166,14 @@ impl Scanner {
         }
 
         self.current_char()
+    }
+
+    fn peek_next(&self) -> Option<char> {
+        if self.current + 1 >= self.source_length {
+            return Some('\0');
+        }
+
+        self.source.chars().nth(self.current + 1)
     }
 
     fn is_at_end(&self) -> bool {
@@ -207,6 +219,26 @@ impl Scanner {
 
         // Trim the surrounding quotes.
         let value = &self.source[self.start + 1..self.current - 1];
-        self.add_token_with_value(TokenType::String, Some(value.to_string()));
+        self.add_token_with_value(
+            TokenType::String,
+            Some(StringOrNumber::Str(value.to_string())),
+        );
+    }
+
+    fn number(&mut self) {
+        while self.peek().is_numeric() {
+            self.advance();
+        }
+
+        let next_is_numeric = self
+            .peek_next()
+            .map_or(false, |character| character.is_numeric());
+
+        if self.peek() == '.' && next_is_numeric {
+            self.advance();
+        }
+
+        let number: f64 = self.source[self.start..self.current].parse().unwrap();
+        self.add_token_with_value(TokenType::Number, Some(StringOrNumber::Num(number)))
     }
 }
