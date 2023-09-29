@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     error::ErrorReporter,
@@ -13,10 +13,29 @@ pub struct Scanner {
     current: usize,
     line: usize,
     error_reporter: Rc<RefCell<ErrorReporter>>,
+    keywords: HashMap<String, TokenType>,
 }
 impl Scanner {
     pub fn new(source: String, error_reporter: Rc<RefCell<ErrorReporter>>) -> Self {
         let source_length = source.chars().count().clone();
+        let mut keywords = HashMap::new();
+
+        keywords.insert("and".to_string(), TokenType::And);
+        keywords.insert("class".to_string(), TokenType::Class);
+        keywords.insert("else".to_string(), TokenType::Else);
+        keywords.insert("false".to_string(), TokenType::False);
+        keywords.insert("for".to_string(), TokenType::For);
+        keywords.insert("fun".to_string(), TokenType::Fun);
+        keywords.insert("if".to_string(), TokenType::If);
+        keywords.insert("nil".to_string(), TokenType::Nil);
+        keywords.insert("or".to_string(), TokenType::Or);
+        keywords.insert("print".to_string(), TokenType::Print);
+        keywords.insert("return".to_string(), TokenType::Return);
+        keywords.insert("super".to_string(), TokenType::Super);
+        keywords.insert("this".to_string(), TokenType::This);
+        keywords.insert("true".to_string(), TokenType::True);
+        keywords.insert("var".to_string(), TokenType::Var);
+        keywords.insert("while".to_string(), TokenType::While);
 
         Self {
             source,
@@ -26,11 +45,13 @@ impl Scanner {
             current: 0,
             line: 1,
             error_reporter,
+            keywords,
         }
     }
 
     pub fn scan_tokens(&mut self) -> &Vec<Token> {
         while !self.is_at_end() {
+            // beginning of next lexeme
             self.start = self.current;
             self.scan_token();
         }
@@ -121,6 +142,8 @@ impl Scanner {
                 _ => {
                     if c.is_numeric() {
                         self.number()
+                    } else if self.is_alphabetic_or_under(c) {
+                        self.identifier()
                     } else {
                         self.error_reporter
                             .borrow_mut()
@@ -147,6 +170,27 @@ impl Scanner {
 
         self.tokens
             .push(Token::new(token_type, lexeme, literal, self.line));
+    }
+
+    fn identifier(&mut self) {
+        let next_char = self.peek();
+        while self.is_alphanumeric_or_under(next_char) {
+            self.advance();
+        }
+
+        let text = &self.source[self.start..self.current];
+        match self.keywords.get(text) {
+            Some(token_type) => self.add_token(*token_type),
+            None => self.add_token(TokenType::Identifier),
+        }
+    }
+
+    fn is_alphabetic_or_under(&self, c: char) -> bool {
+        c.is_alphabetic() || c == '_'
+    }
+
+    fn is_alphanumeric_or_under(&self, c: char) -> bool {
+        self.is_alphabetic_or_under(c) || c.is_numeric()
     }
 
     fn advance(&mut self) -> Option<char> {
