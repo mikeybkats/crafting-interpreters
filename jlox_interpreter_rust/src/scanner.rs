@@ -173,12 +173,12 @@ impl Scanner {
     }
 
     fn identifier(&mut self) {
-        let next_char = self.peek();
-        while self.is_alphanumeric_or_under(next_char) {
+        while self.is_alphanumeric_or_under(self.peek()) {
             self.advance();
         }
 
         let text = &self.source[self.start..self.current];
+
         match self.keywords.get(text) {
             Some(token_type) => self.add_token(*token_type),
             None => self.add_token(TokenType::Identifier),
