@@ -5,3 +5,7 @@ version = 3
 [[package]]
 name = "jlox_interpreter_rust"
 version = "0.1.0"
+
+[[package]]
+name = "tools"
+version = "0.1.0"

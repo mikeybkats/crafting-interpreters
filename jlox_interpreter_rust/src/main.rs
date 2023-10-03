@@ -3,6 +3,7 @@ use std::{env, process};
 use crate::lox::Lox;
 
 mod error;
+mod expr;
 mod lox;
 mod scanner;
 mod token;
