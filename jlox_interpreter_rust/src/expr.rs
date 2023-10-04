@@ -40,9 +40,9 @@ pub trait ExprVisitor<R> {
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> R;
 }
 
-struct AstPrinter;
+pub struct AstPrinter;
 impl AstPrinter {
-    fn print(expr: Expr) -> String {
+    pub fn print(expr: Expr) -> String {
         return expr.accept(&Self);
     }
 
