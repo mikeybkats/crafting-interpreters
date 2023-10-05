@@ -1,5 +1,6 @@
 use crate::token::{StringOrNumber, Token};
 
+#[derive(Debug)]
 pub enum Expr {
     Binary {
         left: Box<Expr>,
@@ -64,6 +65,7 @@ impl ExprVisitor<String> for AstPrinter {
         match value {
             Some(value) => match value {
                 StringOrNumber::Str(string) => string.clone(),
+                StringOrNumber::Num(number) => number.to_string(),
                 _ => String::from("nil"),
             },
             _ => String::from("nil"),
@@ -73,33 +75,3 @@ impl ExprVisitor<String> for AstPrinter {
         self.parenthisize(operator.lexeme.clone(), vec![right])
     }
 }
-
-// example usage
-// struct MyVisitor;
-// impl ExprVisitor<()> for MyVisitor {
-//     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) {
-//         println!("lol wat, this is so awesome!");
-//     }
-//     fn visit_grouping_expr(&self, expression: &Expr) -> () {}
-//     fn visit_literal_expr(&self, value: &Option<StringOrNumber>) -> () {}
-//     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> () {}
-// }
-
-// fn my_visitor_usage() {
-//     let expr = Expr::Binary {
-//         left: Box::new(Expr::Literal {
-//             value: Some(StringOrNumber::Num(1.0)),
-//         }),
-//         operator: Token::new(
-//             crate::token::TokenType::And,
-//             "some string".to_string(),
-//             Some(StringOrNumber::Str("()".to_string())),
-//             0,
-//         ),
-//         right: Box::new(Expr::Literal {
-//             value: Some(StringOrNumber::Num(9.0)),
-//         }),
-//     };
-//     let mut my_visitor = MyVisitor;
-//     expr.accept(&mut my_visitor);
-// }

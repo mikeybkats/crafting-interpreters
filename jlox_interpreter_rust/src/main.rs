@@ -20,8 +20,10 @@ fn main() {
             }),
         }),
         operator: Token::new(TokenType::Star, "*".to_string(), None, 1),
-        right: Box::new(Expr::Literal {
-            value: Some(StringOrNumber::Num(45.67)),
+        right: Box::new(Expr::Grouping {
+            expression: Box::new(Expr::Literal {
+                value: Some(StringOrNumber::Num(45.67)),
+            }),
         }),
     };
 
