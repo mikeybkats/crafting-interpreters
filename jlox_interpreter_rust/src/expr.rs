@@ -11,7 +11,7 @@ pub enum Expr {
         expression: Box<Expr>,
     },
     Literal {
-        value: Option<StringOrNumber>,
+        value: StringOrNumber,
     },
     Unary {
         operator: Token,
@@ -37,30 +37,8 @@ impl Expr {
 pub trait ExprVisitor<R> {
     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_grouping_expr(&self, expression: &Expr) -> R;
-    fn visit_literal_expr(&self, value: &Option<StringOrNumber>) -> R;
+    fn visit_literal_expr(&self, value: &StringOrNumber) -> R;
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> R;
-}
-
-impl ExprVisitor<String> for AstPrinter {
-    fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> String {
-        self.parenthisize(operator.lexeme.clone(), vec![left, right])
-    }
-    fn visit_grouping_expr(&self, expression: &Expr) -> String {
-        self.parenthisize("group".to_string(), vec![expression])
-    }
-    fn visit_literal_expr(&self, value: &Option<StringOrNumber>) -> String {
-        match value {
-            Some(value) => match value {
-                StringOrNumber::Str(string) => string.clone(),
-                StringOrNumber::Num(number) => number.to_string(),
-                _ => String::from("nil"),
-            },
-            _ => String::from("nil"),
-        }
-    }
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> String {
-        self.parenthisize(operator.lexeme.clone(), vec![right])
-    }
 }
 
 pub struct AstPrinter;
@@ -76,9 +54,29 @@ impl AstPrinter {
     }
 }
 
+impl ExprVisitor<String> for AstPrinter {
+    fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> String {
+        self.parenthisize(operator.lexeme.clone(), vec![left, right])
+    }
+    fn visit_grouping_expr(&self, expression: &Expr) -> String {
+        self.parenthisize("group".to_string(), vec![expression])
+    }
+    fn visit_literal_expr(&self, value: &StringOrNumber) -> String {
+        match value {
+            StringOrNumber::Str(string) => string.clone(),
+            StringOrNumber::Num(number) => number.to_string(),
+            _ => String::from("nil"),
+        }
+    }
+    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> String {
+        self.parenthisize(operator.lexeme.clone(), vec![right])
+    }
+}
+
 // (* (- 123) (group 45.67))
 // -123 group 45.67 *
 
+#[derive(Debug)]
 pub struct RPNPrinter;
 impl RPNPrinter {
     pub fn print(expr: Expr) -> String {
@@ -99,13 +97,10 @@ impl ExprVisitor<String> for RPNPrinter {
     fn visit_grouping_expr(&self, expression: &Expr) -> String {
         self.reverse_notation("group".to_string(), vec![expression])
     }
-    fn visit_literal_expr(&self, value: &Option<StringOrNumber>) -> String {
+    fn visit_literal_expr(&self, value: &StringOrNumber) -> String {
         match value {
-            Some(value) => match value {
-                StringOrNumber::Str(string) => string.clone(),
-                StringOrNumber::Num(number) => number.to_string(),
-                _ => String::from("nil"),
-            },
+            StringOrNumber::Str(string) => string.clone(),
+            StringOrNumber::Num(number) => number.to_string(),
             _ => String::from("nil"),
         }
     }

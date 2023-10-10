@@ -54,14 +54,8 @@ pub enum TokenType {
 pub enum StringOrNumber {
     Str(String),
     Num(f64),
+    None,
 }
-
-// Another way to do this:
-// enum Literal {
-//     Str(String),
-//     Num(i32),
-//     None,
-// }
 
 #[derive(Debug)]
 pub struct Token {

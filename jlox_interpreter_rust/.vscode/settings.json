@@ -3,5 +3,7 @@
     "./Cargo.toml",
     "./Cargo.toml",
     "./tools/Cargo.toml"
-  ]
+  ],
+  "spellright.language": ["en"],
+  "spellright.documentTypes": ["latex", "plaintext"]
 }

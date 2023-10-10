@@ -76,3 +76,42 @@ The data structure of the grammar will form a tree.
 a _parse tree_ includes all grammar productions as nodes.
 
 _abstract syntax tree_ only include the grammar nodes that are needed
+
+## translation of visitor pattern to Rust:
+
+```Rust
+enum Expr {
+    // contains all expression types
+}
+
+impl Expr {
+    // accept takes an expression visitor as the argument. this visitor will contain the side effects and behaviors intented to run when matching against the given expression
+    pub fn accept<R>(&self, visitor: ExprVisitor<R>) -> R {
+        match self {
+            // matched expression calls the visitor function when accept is called
+            Expr::ExprName { keys } => visitor.visit_expr_name(keys)
+            // list other expressions to match for
+        }
+    }
+}
+
+pub trait ExprVisitor<R> {
+    fn visit_expr_name(&self, expr_keys) -> R;
+    // list other visitors
+}
+
+struct SomeStruct;
+impl SomeStruct {
+    fn accept_caller(expr: Expr){
+        return expr.accept(&Self);
+    }
+
+    // define behaviors and effects
+}
+
+impl ExprVisitor<SomeType> for SomeStruct {
+    fn visit_expr_name(&self){
+        // call behaviors and effects
+    }
+}
+```
