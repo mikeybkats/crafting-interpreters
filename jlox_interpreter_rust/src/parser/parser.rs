@@ -12,6 +12,10 @@ impl Parser {
         Self { current: 0, tokens }
     }
 
+    /// # equality
+    ///
+    /// the equality function returns the binary expression to make comparisons between a left and right expression
+    ///
     fn equality(&self) -> Expr {
         let mut expr: Expr = self.comparison();
 
@@ -77,8 +81,59 @@ impl Parser {
     }
 
     fn comparison(&self) -> Expr {
-        let expr = self.term();
+        let mut expr = self.term();
+
+        while self.match_symbol(vec![
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::Less,
+            TokenType::LessEqual,
+        ]) {
+            let operator: Token;
+            match self.previous() {
+                Some(token) => operator = *token,
+                None => {
+                    // Token not found, throw an error
+                }
+            }
+
+            let right = self.term();
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            }
+        }
+
+        expr
     }
 
-    fn term(&self) -> Expr {}
+    /// # term
+    ///
+    /// the term function defines a term from a left and right expression
+    ///
+    fn term(&self) -> Expr {
+        let mut expr = self.factor();
+
+        while self.match_symbol(vec![TokenType::Minus, TokenType::Plus]) {
+            let operator: Token;
+            match self.previous() {
+                Some(token) => operator = *token,
+                None => {
+                    // Token not found, throw an error
+                }
+            }
+
+            let right = self.term();
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            }
+        }
+
+        expr
+    }
+
+    fn factor(&self) -> Expr {}
 }
