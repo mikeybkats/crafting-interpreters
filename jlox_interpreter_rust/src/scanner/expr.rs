@@ -1,4 +1,4 @@
-use crate::token::{StringOrNumber, Token};
+use crate::scanner::token::{StringOrNumber, Token};
 
 #[derive(Debug)]
 pub enum Expr {

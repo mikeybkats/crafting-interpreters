@@ -1,15 +1,13 @@
 use std::{env, process};
 
-use expr::{AstPrinter, Expr, RPNPrinter};
-use token::{StringOrNumber, Token, TokenType};
+use scanner::expr::{AstPrinter, Expr, RPNPrinter};
+use scanner::token::{StringOrNumber, Token, TokenType};
 
 use crate::lox::Lox;
 
-mod error;
-mod expr;
 mod lox;
+mod parser;
 mod scanner;
-mod token;
 
 fn main() {
     test_expr();

@@ -6,7 +6,7 @@ use std::{
     rc::Rc,
 };
 
-use crate::{error::ErrorReporter, scanner::Scanner};
+use crate::{scanner::error::ErrorReporter, scanner::scanner::Scanner};
 
 pub struct Lox {
     error_reporter: Rc<RefCell<ErrorReporter>>,
