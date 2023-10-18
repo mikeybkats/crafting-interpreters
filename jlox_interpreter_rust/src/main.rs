@@ -1,7 +1,7 @@
 use std::{env, process};
 
 use scanner::expr::{AstPrinter, Expr, RPNPrinter};
-use scanner::token::{StringOrNumber, Token, TokenType};
+use scanner::token::{Literal, Token, TokenType};
 
 use crate::lox::Lox;
 
@@ -38,7 +38,7 @@ fn test_expr() {
 
     let expr = Expr::Binary {
         left: Box::new(left),
-        operator: Token::new(TokenType::Star, "*".to_string(), None, 1),
+        operator: Token::new(TokenType::Star, "*".to_string(), Literal::None, 1),
         right: Box::new(right),
     };
 
@@ -49,7 +49,7 @@ fn test_expr() {
 
     let expr = Expr::Binary {
         left: Box::new(left),
-        operator: Token::new(TokenType::Star, "*".to_string(), None, 1),
+        operator: Token::new(TokenType::Star, "*".to_string(), Literal::None, 1),
         right: Box::new(right),
     };
 
@@ -61,26 +61,26 @@ fn test_expr() {
 
 fn setup_bin_expr2() -> (Expr, Expr) {
     let literal_exp = Box::new(Expr::Literal {
-        value: StringOrNumber::Num(1.0),
+        value: Literal::Num(1.0),
     });
     let literal_exp2 = Box::new(Expr::Literal {
-        value: StringOrNumber::Num(2.0),
+        value: Literal::Num(2.0),
     });
     let binary_exp = Expr::Binary {
         left: literal_exp,
-        operator: Token::new(TokenType::Plus, "+".to_string(), None, 1),
+        operator: Token::new(TokenType::Plus, "+".to_string(), Literal::None, 1),
         right: literal_exp2,
     };
 
     let literal_exp3 = Box::new(Expr::Literal {
-        value: StringOrNumber::Num(4.0),
+        value: Literal::Num(4.0),
     });
     let literal_exp4 = Box::new(Expr::Literal {
-        value: StringOrNumber::Num(3.0),
+        value: Literal::Num(3.0),
     });
     let binary_exp2 = Expr::Binary {
         left: literal_exp3,
-        operator: Token::new(TokenType::Minus, "-".to_string(), None, 1),
+        operator: Token::new(TokenType::Minus, "-".to_string(), Literal::None, 1),
         right: literal_exp4,
     };
 
@@ -88,9 +88,9 @@ fn setup_bin_expr2() -> (Expr, Expr) {
 }
 
 fn setup_bin_expr() -> (Expr, Expr) {
-    let unary_operator = Token::new(TokenType::Minus, "-".to_string(), None, 1);
+    let unary_operator = Token::new(TokenType::Minus, "-".to_string(), Literal::None, 1);
     let unary_right = Box::new(Expr::Literal {
-        value: StringOrNumber::Num(123.0),
+        value: Literal::Num(123.0),
     });
     let unary_expr = Expr::Unary {
         operator: unary_operator,
@@ -99,7 +99,7 @@ fn setup_bin_expr() -> (Expr, Expr) {
 
     let grouping_expr = Expr::Grouping {
         expression: Box::new(Expr::Literal {
-            value: StringOrNumber::Num(45.67),
+            value: Literal::Num(45.67),
         }),
     };
 

@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 // use super to access a sibling sub module
 use super::error::ErrorReporter;
-use super::token::{StringOrNumber, Token, TokenType};
+use super::token::{Literal, Token, TokenType};
 
 pub struct Scanner {
     source: String,
@@ -58,7 +58,7 @@ impl Scanner {
         self.tokens.push(Token::new(
             TokenType::Eof,
             String::from(""),
-            None,
+            Literal::None,
             self.line,
         ));
 
@@ -164,11 +164,11 @@ impl Scanner {
         self.add_token_with_value(token_type, None)
     }
 
-    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<StringOrNumber>) {
+    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let lexeme = self.source[self.start..self.current].to_string();
 
         self.tokens
-            .push(Token::new(token_type, lexeme, literal, self.line));
+            .push(Token::new(token_type, lexeme, Literal::None, self.line));
     }
 
     fn identifier(&mut self) {
@@ -262,10 +262,7 @@ impl Scanner {
 
         // Trim the surrounding quotes.
         let value = &self.source[self.start + 1..self.current - 1];
-        self.add_token_with_value(
-            TokenType::String,
-            Some(StringOrNumber::Str(value.to_string())),
-        );
+        self.add_token_with_value(TokenType::String, Some(Literal::Str(value.to_string())));
     }
 
     fn number(&mut self) {
@@ -282,6 +279,6 @@ impl Scanner {
         }
 
         let number: f64 = self.source[self.start..self.current].parse().unwrap();
-        self.add_token_with_value(TokenType::Number, Some(StringOrNumber::Num(number)))
+        self.add_token_with_value(TokenType::Number, Some(Literal::Num(number)))
     }
 }

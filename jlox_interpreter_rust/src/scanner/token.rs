@@ -50,34 +50,31 @@ pub enum TokenType {
     Eof,
 }
 
-#[derive(Debug)]
-pub enum StringOrNumber {
+#[derive(Debug, Clone)]
+pub enum Literal {
     Str(String),
     Num(f64),
+    Bool(bool),
+    Nil,
     None,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Option<StringOrNumber>,
+    pub literal: Literal,
     pub line: usize,
 }
 
 impl Token {
-    pub fn new(
-        token_type: TokenType,
-        lexeme: String,
-        literal: Option<StringOrNumber>,
-        line: usize,
-    ) -> Self {
+    pub fn new(token_type: TokenType, lexeme: String, literal: Literal, line: usize) -> Self {
         // Using a literal enum with a processed literal would allow a simpler object, but
         // what is done when there is a none value?
         // process ahead of time or before use?
         // let literal = match literal {
-        //     Some(StringOrNumber::Str(s)) => Literal::Str(s),
-        //     Some(StringOrNumber::Num(n)) => Literal::Num(n),
+        //     Some(Literal::Str(s)) => Literal::Str(s),
+        //     Some(Literal::Num(n)) => Literal::Num(n),
         //     None => Literal::None,
         // };
 
@@ -90,11 +87,6 @@ impl Token {
     }
 
     fn to_string(&self) -> String {
-        format!(
-            "{:?} {} {:?}",
-            self.token_type,
-            self.lexeme,
-            self.literal.as_ref().unwrap()
-        )
+        format!("{:?} {} {:?}", self.token_type, self.lexeme, self.literal)
     }
 }
