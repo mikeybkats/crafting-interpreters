@@ -1,17 +1,40 @@
-use crate::scanner::{
-    expr::Expr,
-    token::{self, Literal, Token, TokenType},
+use crate::{
+    lox::Lox,
+    scanner::{
+        expr::Expr,
+        token::{self, Literal, Token, TokenType},
+    },
 };
 
 use super::parse_error::ParseError;
 
-pub struct Parser {
+pub struct Parser<'a> {
     current: usize,
-    tokens: Vec<Token>,
+    tokens: &'a Vec<Token>,
+    lox: Box<&'a Lox>,
 }
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
-        Self { current: 0, tokens }
+// TODO: many of these methods probably need to be returning results instead of straight expressions
+impl<'a> Parser<'a> {
+    pub fn new(tokens: &'a Vec<Token>, lox: &'a Lox) -> Self {
+        Self {
+            current: 0,
+            tokens,
+            lox: Box::new(lox),
+        }
+    }
+
+    /// # parse
+    ///
+    ///
+    // Expr parse() {
+    // try {
+    //     return expression();
+    //   } catch (ParseError error) {
+    //     return null;
+    //   }
+    // }
+    pub fn parse(&mut self) -> Expr {
+        return self.expression();
     }
 
     fn expression(&mut self) -> Expr {
@@ -227,7 +250,7 @@ impl Parser {
             }
         }
 
-        self.primary()
+        self.primary().unwrap()
     }
 
     /// # Primary
@@ -238,23 +261,23 @@ impl Parser {
     ///
     /// primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
     ///
-    fn primary(&mut self) -> Expr {
+    fn primary(&mut self) -> Result<Expr, ParseError> {
         if self.match_symbol(vec![TokenType::False]) {
-            return Expr::Literal {
+            return Ok(Expr::Literal {
                 value: token::Literal::Bool(false),
-            };
+            });
         }
 
         if self.match_symbol(vec![TokenType::True]) {
-            return Expr::Literal {
+            return Ok(Expr::Literal {
                 value: token::Literal::Bool(true),
-            };
+            });
         }
 
         if self.match_symbol(vec![TokenType::Nil]) {
-            return Expr::Literal {
+            return Ok(Expr::Literal {
                 value: token::Literal::Nil,
-            };
+            });
         }
 
         if self.match_symbol(vec![TokenType::Number, TokenType::String]) {
@@ -267,62 +290,88 @@ impl Parser {
                 None => prev_literal = Literal::None,
             }
 
-            return Expr::Literal {
+            return Ok(Expr::Literal {
                 value: prev_literal,
-            };
+            });
         }
 
         if self.match_symbol(vec![TokenType::LeftParen]) {
             let expr = self.expression();
 
-            self.consume(
+            match self.consume(
                 TokenType::RightParen,
                 String::from("Expect ')' after expression."),
-            );
-
-            return Expr::Grouping {
-                expression: Box::new(expr),
+            ) {
+                Ok(_token) => {
+                    // do nothing
+                }
+                Err(_err) => {
+                    // throw error
+                }
             };
+
+            return Ok(Expr::Grouping {
+                expression: Box::new(expr),
+            });
         }
 
-        // TODO: Rewrite to throw an error here. This will require rewriting much of the application. Errors should bubble up to the top of the application
-        Expr::Grouping {
-            expression: Box::new(Expr::Literal {
-                value: Literal::None,
-            }),
-        }
+        Err(self.error(self.peek().unwrap(), "Expect expression.".to_string()))
     }
 
-    // private Token consume(TokenType type, String message) {
-    //     if (check(type)) return advance();
-
-    //     throw error(peek(), message);
-    //   }
     /// # consume
     ///
     /// checks to see if the next token is of the expected type. If so, it consumes the token. Else, it returns a parse error.
+    ///
     fn consume(&mut self, token_type: TokenType, message: String) -> Result<&Token, ParseError> {
         if self.check(&token_type) {
             match self.advance() {
                 Some(token) => return Ok(token),
-                None => return Err(ParseError::new()),
+                None => return Err(ParseError::new(&"Token not found".to_string())),
             }
         }
 
         match self.peek() {
             Some(token) => Err(self.error(token, message)),
-            None => Err(ParseError::new()),
+            None => Err(ParseError::new(&"Token not found".to_string())),
         }
     }
 
-    // private ParseError error(Token token, String message) {
-    //     Lox.error(token, message);
-    //     return new ParseError();
-    //   }
     /// # error
     ///
     /// creates a new parse error
+    ///
     fn error(&self, token: &Token, message: String) -> ParseError {
-        ParseError::new()
+        self.lox.as_ref().error(token, &message);
+        ParseError::new(&message)
+    }
+
+    /// # synchronize
+    ///
+    /// Catches exceptions at statement boundaries, and brings the parser to the correct state. This prevents unwanted error messages from polluting the user's dev experience.
+    ///
+    fn _synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().unwrap().token_type == TokenType::Semicolon {
+                return;
+            }
+
+            match self.peek().unwrap().token_type {
+                TokenType::Class => {}
+                TokenType::Fun => {}
+                TokenType::Var => {}
+                TokenType::For => {}
+                TokenType::If => {}
+                TokenType::While => {}
+                TokenType::Print => {}
+                TokenType::Return => (),
+                _ => {
+                    self.advance();
+                }
+            }
+        }
+
+        self.advance();
     }
 }

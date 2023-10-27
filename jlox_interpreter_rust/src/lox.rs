@@ -6,7 +6,17 @@ use std::{
     rc::Rc,
 };
 
-use crate::{scanner::error::ErrorReporter, scanner::scanner::Scanner};
+use crate::{
+    parser::parser::Parser,
+    scanner::{
+        error::ErrorReporter,
+        expr::{self, AstPrinter},
+    },
+    scanner::{
+        scanner::Scanner,
+        token::{Token, TokenType},
+    },
+};
 
 pub struct Lox {
     error_reporter: Rc<RefCell<ErrorReporter>>,
@@ -16,6 +26,20 @@ impl Lox {
         Self {
             // use reference counter to count references for any sub impl that will need to report errors
             error_reporter: Rc::new(RefCell::new(ErrorReporter::new())),
+        }
+    }
+
+    pub fn error(&self, token: &Token, message: &String) {
+        if token.token_type == TokenType::Eof {
+            self.error_reporter
+                .borrow_mut()
+                .report(token.line, " at end", message)
+        } else {
+            self.error_reporter.borrow_mut().report(
+                token.line,
+                format!(" at '{}'", token.lexeme).as_str(),
+                message,
+            )
         }
     }
 
@@ -67,8 +91,13 @@ impl Lox {
         let mut scanner = Scanner::new(source, Rc::clone(&self.error_reporter));
         let tokens = scanner.scan_tokens();
 
-        for token in tokens {
-            println!("{:?}", token);
-        }
+        let mut parser = Parser::new(tokens, self);
+        let expression = parser.parse();
+
+        AstPrinter::print(expression);
+
+        // for token in tokens {
+        //     println!("{:?}", token);
+        // }
     }
 }
