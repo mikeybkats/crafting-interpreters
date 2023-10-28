@@ -10,6 +10,10 @@ impl ParseError {
             message: message.clone(),
         }
     }
+
+    pub fn get_message(&self) -> &String {
+        &self.message
+    }
 }
 
 impl fmt::Display for ParseError {

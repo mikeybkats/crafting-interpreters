@@ -25,19 +25,12 @@ impl<'a> Parser<'a> {
 
     /// # parse
     ///
-    ///
-    // Expr parse() {
-    // try {
-    //     return expression();
-    //   } catch (ParseError error) {
-    //     return null;
-    //   }
-    // }
-    pub fn parse(&mut self) -> Expr {
+    /// The main function of the Parser implementation. This starts the process of parsing an expression.
+    pub fn parse(&mut self) -> Result<Expr, ParseError> {
         return self.expression();
     }
 
-    fn expression(&mut self) -> Expr {
+    fn expression(&mut self) -> Result<Expr, ParseError> {
         self.equality()
     }
 
@@ -45,18 +38,13 @@ impl<'a> Parser<'a> {
     ///
     /// the equality function returns the binary expression to make comparisons between a left and right expression
     ///
-    fn equality(&mut self) -> Expr {
-        let mut expr: Expr = self.comparison();
+    fn equality(&mut self) -> Result<Expr, ParseError> {
+        let mut expr: Expr = self.comparison()?;
 
         while self.match_symbol(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
-            let operator: Token;
-            match self.previous() {
-                Some(token_operator) => operator = token_operator.clone(),
-                None => {
-                    operator = Token::new(TokenType::Eof, "".to_string(), token::Literal::None, 1)
-                }
-            }
-            let right: Expr = self.comparison();
+            let operator: Token = self.get_operator()?.clone();
+
+            let right: Expr = self.comparison()?;
 
             expr = Expr::Binary {
                 left: Box::new(expr),
@@ -65,7 +53,7 @@ impl<'a> Parser<'a> {
             };
         }
 
-        expr
+        Ok(expr)
     }
 
     fn match_symbol(&mut self, tokens: Vec<TokenType>) -> bool {
@@ -113,14 +101,22 @@ impl<'a> Parser<'a> {
 
     /// # peek
     ///
-    /// returns the next token as an Option<&Token>
+    /// returns the next token.
     ///
     fn peek(&self) -> Option<&Token> {
         self.tokens.get(self.current)
     }
 
+    /// # previous
+    ///
+    /// returns the previous token.
     fn previous(&self) -> Option<&Token> {
         self.tokens.get(self.current - 1)
+    }
+
+    fn get_operator(&self) -> Result<&Token, ParseError> {
+        self.previous()
+            .ok_or_else(|| ParseError::new(&String::from("Expected Operator")))
     }
 
     /// # comparison
@@ -131,8 +127,8 @@ impl<'a> Parser<'a> {
     ///
     /// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     ///
-    fn comparison(&mut self) -> Expr {
-        let mut expr = self.term();
+    fn comparison(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.term()?;
 
         while self.match_symbol(vec![
             TokenType::Greater,
@@ -140,24 +136,18 @@ impl<'a> Parser<'a> {
             TokenType::Less,
             TokenType::LessEqual,
         ]) {
-            let operator: Token;
-            match self.previous() {
-                Some(token) => {
-                    operator = token.clone();
-                    let right = self.term();
-                    expr = Expr::Binary {
-                        left: Box::new(expr),
-                        operator,
-                        right: Box::new(right),
-                    }
-                }
-                None => {
-                    // Token not found, throw an error
-                }
-            }
+            let operator: Token = self.get_operator()?.clone();
+
+            let right = self.term()?;
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
 
-        expr
+        Ok(expr)
     }
 
     /// # term
@@ -168,28 +158,21 @@ impl<'a> Parser<'a> {
     ///
     /// term           → factor ( ( "-" | "+" ) factor )* ;
     ///
-    fn term(&mut self) -> Expr {
-        let mut expr = self.factor();
+    fn term(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.factor()?;
 
         while self.match_symbol(vec![TokenType::Minus, TokenType::Plus]) {
-            let operator: Token;
-            match self.previous() {
-                Some(token) => {
-                    operator = token.clone();
-                    let right = self.term();
-                    expr = Expr::Binary {
-                        left: Box::new(expr),
-                        operator,
-                        right: Box::new(right),
-                    }
-                }
-                None => {
-                    // Token not found, throw an error
-                }
+            let operator: Token = self.get_operator()?.clone();
+
+            let right = self.term()?;
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
             }
         }
 
-        expr
+        Ok(expr)
     }
 
     /// # factor
@@ -200,27 +183,20 @@ impl<'a> Parser<'a> {
     ///
     /// factor         → unary ( ( "/" | "*" ) unary )* ;
     ///
-    fn factor(&mut self) -> Expr {
-        let mut expr = self.unary();
+    fn factor(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.unary()?;
 
         while self.match_symbol(vec![TokenType::Slash, TokenType::Star]) {
-            match self.previous() {
-                Some(token) => {
-                    let operator = token.clone();
-                    let right = self.term();
-                    expr = Expr::Binary {
-                        left: Box::new(expr),
-                        operator,
-                        right: Box::new(right),
-                    }
-                }
-                None => {
-                    // Token not found, throw an error
-                }
-            }
+            let operator = self.get_operator()?.clone();
+            let right = self.term()?;
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
 
-        expr
+        Ok(expr)
     }
 
     /// # unary
@@ -231,26 +207,19 @@ impl<'a> Parser<'a> {
     ///
     /// unary          → ( "!" | "-" ) unary | primary ;
     ///
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, ParseError> {
         if self.match_symbol(vec![TokenType::Bang, TokenType::Minus]) {
-            match self.previous() {
-                Some(token) => {
-                    let operator = token.clone();
+            let operator = self.get_operator()?.clone();
 
-                    let right = self.unary();
+            let right = self.unary()?;
 
-                    return Expr::Unary {
-                        operator,
-                        right: Box::new(right),
-                    };
-                }
-                None => {
-                    // token not found, throw error
-                }
-            }
+            return Ok(Expr::Unary {
+                operator,
+                right: Box::new(right),
+            });
         }
 
-        self.primary().unwrap()
+        self.primary()
     }
 
     /// # Primary
@@ -296,7 +265,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.match_symbol(vec![TokenType::LeftParen]) {
-            let expr = self.expression();
+            let expr = self.expression()?;
 
             match self.consume(
                 TokenType::RightParen,
@@ -315,7 +284,7 @@ impl<'a> Parser<'a> {
             });
         }
 
-        Err(self.error(self.peek().unwrap(), "Expect expression.".to_string()))
+        Err(self.error(self.peek().unwrap(), "Expected expression.".to_string()))
     }
 
     /// # consume

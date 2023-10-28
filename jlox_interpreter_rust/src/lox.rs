@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    parser::parser::Parser,
+    parser::{parse_error::ParseError, parser::Parser},
     scanner::{
         error::ErrorReporter,
         expr::{self, AstPrinter},
@@ -71,9 +71,15 @@ impl Lox {
             let mut line = String::new();
             match reader.read_line(&mut line) {
                 Ok(bytes_read) if bytes_read > 0 => {
-                    self.run(line);
+                    self.run(line).unwrap_or_else(|error| {
+                        io::Error::new(io::ErrorKind::Other, error);
+
+                        // self.error_reporter.borrow_mut().set_error(had_error: false);
+                        // self.error_reporter.borrow_mut().report_error_message(line, message)
+
+                        String::from("")
+                    });
                 }
-                Ok(_) => break, // EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
                 Err(error) => {
                     self.error_reporter.borrow_mut().set_error(false);
                     self.error_reporter
@@ -81,20 +87,21 @@ impl Lox {
                         .report_error_message(0, &error.to_string());
                     break;
                 }
+                Ok(_) => break, // EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
             }
         }
 
         Ok(())
     }
 
-    fn run(&self, source: String) {
+    fn run(&self, source: String) -> Result<String, ParseError> {
         let mut scanner = Scanner::new(source, Rc::clone(&self.error_reporter));
         let tokens = scanner.scan_tokens();
 
         let mut parser = Parser::new(tokens, self);
-        let expression = parser.parse();
+        let expression = parser.parse()?;
 
-        AstPrinter::print(expression);
+        Ok(AstPrinter::print(expression))
 
         // for token in tokens {
         //     println!("{:?}", token);
