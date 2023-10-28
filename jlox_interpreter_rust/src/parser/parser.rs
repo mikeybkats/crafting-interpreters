@@ -110,6 +110,7 @@ impl<'a> Parser<'a> {
     /// # previous
     ///
     /// returns the previous token.
+    ///
     fn previous(&self) -> Option<&Token> {
         self.tokens.get(self.current - 1)
     }
@@ -284,6 +285,8 @@ impl<'a> Parser<'a> {
             });
         }
 
+        // TODO: It looks like there are conflicting ways of reporting errors. This does not make sense to me.
+        // Err(ParseError::new(&String::from("Expected expression")))
         Err(self.error(self.peek().unwrap(), "Expected expression.".to_string()))
     }
 

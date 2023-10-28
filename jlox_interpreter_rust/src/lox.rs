@@ -71,14 +71,17 @@ impl Lox {
             let mut line = String::new();
             match reader.read_line(&mut line) {
                 Ok(bytes_read) if bytes_read > 0 => {
-                    self.run(line).unwrap_or_else(|error| {
+                    let result = self.run(line).map_err(|error| {
+                        // TODO: It looks like there are conflicting ways of reporting errors. This does not make sense to me.
                         io::Error::new(io::ErrorKind::Other, error);
-
-                        // self.error_reporter.borrow_mut().set_error(had_error: false);
-                        // self.error_reporter.borrow_mut().report_error_message(line, message)
-
-                        String::from("")
+                        // self.error(token, message)
                     });
+
+                    match result {
+                        Ok(_) => {}
+                        Err(_e) => { // print error}
+                        }
+                    }
                 }
                 Err(error) => {
                     self.error_reporter.borrow_mut().set_error(false);
