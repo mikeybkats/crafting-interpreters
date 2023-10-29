@@ -268,17 +268,10 @@ impl<'a> Parser<'a> {
         if self.match_symbol(vec![TokenType::LeftParen]) {
             let expr = self.expression()?;
 
-            match self.consume(
+            self.consume(
                 TokenType::RightParen,
                 String::from("Expect ')' after expression."),
-            ) {
-                Ok(_token) => {
-                    // do nothing
-                }
-                Err(_err) => {
-                    // throw error
-                }
-            };
+            )?;
 
             return Ok(Expr::Grouping {
                 expression: Box::new(expr),
@@ -286,7 +279,10 @@ impl<'a> Parser<'a> {
         }
 
         // TODO: It looks like there are conflicting ways of reporting errors. This does not make sense to me.
-        // Err(ParseError::new(&String::from("Expected expression")))
+        // Err(ParseError::new(
+        //     self.peek().unwrap(),
+        //     &String::from("Expected expression"),
+        // ))
         Err(self.error(self.peek().unwrap(), "Expected expression.".to_string()))
     }
 
@@ -311,6 +307,8 @@ impl<'a> Parser<'a> {
     /// # error
     ///
     /// creates a new parse error
+    ///
+    /// The error() method returns the error instead of throwing it because we want to let the calling method inside the parser decide whether to unwind or not.
     ///
     fn error(&self, token: &Token, message: String) -> ParseError {
         self.lox.as_ref().error(token, &message);
