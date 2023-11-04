@@ -8,10 +8,7 @@ use std::{
 
 use crate::{
     parser::{parse_error::ParseError, parser::Parser},
-    scanner::{
-        error::ErrorReporter,
-        expr::{self, AstPrinter},
-    },
+    scanner::{error::ErrorReporter, expr::AstPrinter},
     scanner::{
         scanner::Scanner,
         token::{Token, TokenType},
@@ -47,7 +44,7 @@ impl Lox {
         let bytes = fs::read(path)?;
         let content = String::from_utf8_lossy(&bytes).to_string();
 
-        self.run(content);
+        let _value_of_run = self.run(content);
 
         if self.error_reporter.borrow_mut().had_error() {
             process::exit(65);

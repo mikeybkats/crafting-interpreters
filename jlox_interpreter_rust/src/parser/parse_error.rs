@@ -15,8 +15,7 @@ impl ParseError {
         }
     }
 
-    pub fn get_error(&self) -> &String {
-        // (&self.token, &self.message)
+    pub fn _get_error(&self) -> &String {
         &self.message
     }
 }

@@ -164,7 +164,7 @@ impl Scanner {
         self.add_token_with_value(token_type, None)
     }
 
-    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<Literal>) {
+    fn add_token_with_value(&mut self, token_type: TokenType, _literal: Option<Literal>) {
         let lexeme = self.source[self.start..self.current].to_string();
 
         self.tokens

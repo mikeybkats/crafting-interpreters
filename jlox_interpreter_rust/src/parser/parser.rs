@@ -13,7 +13,7 @@ pub struct Parser<'a> {
     tokens: &'a Vec<Token>,
     lox: Box<&'a Lox>,
 }
-// TODO: many of these methods probably need to be returning results instead of straight expressions
+
 impl<'a> Parser<'a> {
     pub fn new(tokens: &'a Vec<Token>, lox: &'a Lox) -> Self {
         Self {
@@ -26,10 +26,15 @@ impl<'a> Parser<'a> {
     /// # parse
     ///
     /// The main function of the Parser implementation. This starts the process of parsing an expression.
+    ///
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
         return self.expression();
     }
 
+    /// # expression
+    ///
+    /// Compiles the expression.
+    ///
     fn expression(&mut self) -> Result<Expr, ParseError> {
         self.equality()
     }
@@ -41,7 +46,7 @@ impl<'a> Parser<'a> {
     fn equality(&mut self) -> Result<Expr, ParseError> {
         let mut expr: Expr = self.comparison()?;
 
-        while self.match_symbol(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
+        while self.match_symbol(&[TokenType::BangEqual, TokenType::EqualEqual]) {
             let operator: Token = self.get_operator()?.clone();
 
             let right: Expr = self.comparison()?;
@@ -56,7 +61,11 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn match_symbol(&mut self, tokens: Vec<TokenType>) -> bool {
+    /// # match_symbol
+    ///
+    /// Loops through a given vector of tokens, advances the cursor and returns true if any of the tokens in the vector match the next token.
+    ///
+    fn match_symbol(&mut self, tokens: &[TokenType]) -> bool {
         for token_type in tokens.iter() {
             if self.check(token_type) {
                 self.advance();
@@ -68,7 +77,7 @@ impl<'a> Parser<'a> {
 
     /// # check
     ///
-    /// returns true if the token is of the given type
+    /// Returns true if the next token is of the given type. Returns false if the parser has reached the end of the file.
     ///
     fn check(&self, token_type: &TokenType) -> bool {
         if self.is_at_end() {
@@ -80,9 +89,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// advance
+    /// # advance
     ///
-    /// advances the cursor (consuming the current token), and returns the current Token as an Option<&Token>
+    /// Advances the cursor (consuming the current token), and returns the current Token as an Option<&Token>
     ///
     fn advance(&mut self) -> Option<&Token> {
         if !self.is_at_end() {
@@ -131,7 +140,7 @@ impl<'a> Parser<'a> {
     fn comparison(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.term()?;
 
-        while self.match_symbol(vec![
+        while self.match_symbol(&[
             TokenType::Greater,
             TokenType::GreaterEqual,
             TokenType::Less,
@@ -162,7 +171,7 @@ impl<'a> Parser<'a> {
     fn term(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.factor()?;
 
-        while self.match_symbol(vec![TokenType::Minus, TokenType::Plus]) {
+        while self.match_symbol(&[TokenType::Minus, TokenType::Plus]) {
             let operator: Token = self.get_operator()?.clone();
 
             let right = self.term()?;
@@ -187,7 +196,7 @@ impl<'a> Parser<'a> {
     fn factor(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.unary()?;
 
-        while self.match_symbol(vec![TokenType::Slash, TokenType::Star]) {
+        while self.match_symbol(&[TokenType::Slash, TokenType::Star]) {
             let operator = self.get_operator()?.clone();
             let right = self.term()?;
             expr = Expr::Binary {
@@ -209,7 +218,7 @@ impl<'a> Parser<'a> {
     /// unary          → ( "!" | "-" ) unary | primary ;
     ///
     fn unary(&mut self) -> Result<Expr, ParseError> {
-        if self.match_symbol(vec![TokenType::Bang, TokenType::Minus]) {
+        if self.match_symbol(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.get_operator()?.clone();
 
             let right = self.unary()?;
@@ -232,25 +241,25 @@ impl<'a> Parser<'a> {
     /// primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
     ///
     fn primary(&mut self) -> Result<Expr, ParseError> {
-        if self.match_symbol(vec![TokenType::False]) {
+        if self.match_symbol(&[TokenType::False]) {
             return Ok(Expr::Literal {
                 value: token::Literal::Bool(false),
             });
         }
 
-        if self.match_symbol(vec![TokenType::True]) {
+        if self.match_symbol(&[TokenType::True]) {
             return Ok(Expr::Literal {
                 value: token::Literal::Bool(true),
             });
         }
 
-        if self.match_symbol(vec![TokenType::Nil]) {
+        if self.match_symbol(&[TokenType::Nil]) {
             return Ok(Expr::Literal {
                 value: token::Literal::Nil,
             });
         }
 
-        if self.match_symbol(vec![TokenType::Number, TokenType::String]) {
+        if self.match_symbol(&[TokenType::Number, TokenType::String]) {
             let prev_literal;
 
             match self.previous() {
@@ -265,7 +274,7 @@ impl<'a> Parser<'a> {
             });
         }
 
-        if self.match_symbol(vec![TokenType::LeftParen]) {
+        if self.match_symbol(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
 
             self.consume(
@@ -278,11 +287,6 @@ impl<'a> Parser<'a> {
             });
         }
 
-        // TODO: It looks like there are conflicting ways of reporting errors. This does not make sense to me.
-        // Err(ParseError::new(
-        //     self.peek().unwrap(),
-        //     &String::from("Expected expression"),
-        // ))
         Err(self.error(self.peek().unwrap(), "Expected expression.".to_string()))
     }
 
@@ -291,16 +295,14 @@ impl<'a> Parser<'a> {
     /// checks to see if the next token is of the expected type. If so, it consumes the token. Else, it returns a parse error.
     ///
     fn consume(&mut self, token_type: TokenType, message: String) -> Result<&Token, ParseError> {
-        if self.check(&token_type) {
-            match self.advance() {
-                Some(token) => return Ok(token),
-                None => return Err(ParseError::new(&"Token not found".to_string())),
+        match self.check(&token_type) {
+            true => {
+                return Ok(self.advance().unwrap());
             }
-        }
-
-        match self.peek() {
-            Some(token) => Err(self.error(token, message)),
-            None => Err(ParseError::new(&"Token not found".to_string())),
+            false => match self.peek() {
+                Some(token) => Err(self.error(token, message)),
+                None => return Err(ParseError::new(&"Token not found".to_string())),
+            },
         }
     }
 
