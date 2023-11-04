@@ -56,6 +56,7 @@ impl AstPrinter {
 
 impl ExprVisitor<String> for AstPrinter {
     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> String {
+        println!("{:?} {:?}", left, right);
         self.parenthisize(operator.lexeme.clone(), vec![left, right])
     }
     fn visit_grouping_expr(&self, expression: &Expr) -> String {

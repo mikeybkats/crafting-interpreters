@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    parser::{parse_error::ParseError, parser::Parser},
+    parser::parser::Parser,
     scanner::{error::ErrorReporter, expr::AstPrinter},
     scanner::{
         scanner::Scanner,
@@ -68,17 +68,7 @@ impl Lox {
             let mut line = String::new();
             match reader.read_line(&mut line) {
                 Ok(bytes_read) if bytes_read > 0 => {
-                    let result = self.run(line).map_err(|_error| {
-                        // TODO: It looks like there are conflicting ways of reporting errors. This does not make sense to me.
-                        // io::Error::new(io::ErrorKind::Other, error);
-                        // self.error(, error.get_error())
-                    });
-
-                    match result {
-                        Ok(_) => {}
-                        Err(_e) => { // print error}
-                        }
-                    }
+                    self.run(line);
                 }
                 Err(error) => {
                     self.error_reporter.borrow_mut().set_error(false);
@@ -94,14 +84,22 @@ impl Lox {
         Ok(())
     }
 
-    fn run(&self, source: String) -> Result<String, ParseError> {
+    fn run(&self, source: String) {
         let mut scanner = Scanner::new(source, Rc::clone(&self.error_reporter));
         let tokens = scanner.scan_tokens();
 
         let mut parser = Parser::new(tokens, self);
-        let expression = parser.parse()?;
 
-        Ok(AstPrinter::print(expression))
+        let expressions = parser.parse();
+
+        match expressions {
+            Ok(exprs) => {
+                for expression in exprs {
+                    println!("{}", AstPrinter::print(expression));
+                }
+            }
+            Err(_e) => (),
+        }
 
         // for token in tokens {
         //     println!("{:?}", token);

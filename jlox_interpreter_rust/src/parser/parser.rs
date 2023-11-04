@@ -27,8 +27,34 @@ impl<'a> Parser<'a> {
     ///
     /// The main function of the Parser implementation. This starts the process of parsing an expression.
     ///
-    pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        return self.expression();
+    pub fn parse(&mut self) -> Result<Vec<Expr>, ParseError> {
+        return self.expressions();
+    }
+
+    /// # expressions
+    ///
+    /// Compiles list of expressions
+    ///
+    /// expressions --> expression (, expressions)*;
+    ///
+    fn expressions(&mut self) -> Result<Vec<Expr>, ParseError> {
+        let mut expressions = Vec::new();
+
+        if let Ok(mut expression) = self.equality() {
+            loop {
+                expressions.push(expression);
+
+                if !self.match_symbol(&[TokenType::Comma]) {
+                    break;
+                }
+                match self.equality() {
+                    Ok(new_expression) => expression = new_expression,
+                    Err(e) => return Err(e),
+                }
+            }
+        }
+
+        Ok(expressions)
     }
 
     /// # expression
@@ -80,12 +106,9 @@ impl<'a> Parser<'a> {
     /// Returns true if the next token is of the given type. Returns false if the parser has reached the end of the file.
     ///
     fn check(&self, token_type: &TokenType) -> bool {
-        if self.is_at_end() {
-            return false;
-        }
         match self.peek() {
-            Some(token) => token.token_type == *token_type,
-            None => false,
+            Some(token) if !self.is_at_end() => token.token_type == *token_type,
+            _ => false,
         }
     }
 
@@ -245,25 +268,20 @@ impl<'a> Parser<'a> {
             return Ok(Expr::Literal {
                 value: token::Literal::Bool(false),
             });
-        }
-
-        if self.match_symbol(&[TokenType::True]) {
+        } else if self.match_symbol(&[TokenType::True]) {
             return Ok(Expr::Literal {
                 value: token::Literal::Bool(true),
             });
-        }
-
-        if self.match_symbol(&[TokenType::Nil]) {
+        } else if self.match_symbol(&[TokenType::Nil]) {
             return Ok(Expr::Literal {
                 value: token::Literal::Nil,
             });
-        }
-
-        if self.match_symbol(&[TokenType::Number, TokenType::String]) {
+        } else if self.match_symbol(&[TokenType::Number, TokenType::String]) {
             let prev_literal;
 
             match self.previous() {
                 Some(token) => {
+                    println!("token val: {:?}", token);
                     prev_literal = token.literal.clone();
                 }
                 None => prev_literal = Literal::None,
@@ -272,9 +290,7 @@ impl<'a> Parser<'a> {
             return Ok(Expr::Literal {
                 value: prev_literal,
             });
-        }
-
-        if self.match_symbol(&[TokenType::LeftParen]) {
+        } else if self.match_symbol(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
 
             self.consume(
@@ -285,9 +301,9 @@ impl<'a> Parser<'a> {
             return Ok(Expr::Grouping {
                 expression: Box::new(expr),
             });
+        } else {
+            Err(self.error(self.peek().unwrap(), "Expected expression.".to_string()))
         }
-
-        Err(self.error(self.peek().unwrap(), "Expected expression.".to_string()))
     }
 
     /// # consume
