@@ -281,7 +281,6 @@ impl<'a> Parser<'a> {
 
             match self.previous() {
                 Some(token) => {
-                    println!("token val: {:?}", token);
                     prev_literal = token.literal.clone();
                 }
                 None => prev_literal = Literal::None,
