@@ -95,7 +95,7 @@ impl Lox {
         match expressions {
             Ok(exprs) => {
                 for expression in exprs {
-                    println!("{}", AstPrinter::print(expression));
+                    println!("Expression as AST: {}", AstPrinter::print(expression));
                 }
             }
             Err(_e) => (),
