@@ -2,7 +2,7 @@ use crate::{
     lox::Lox,
     scanner::{
         expr::Expr,
-        token::{self, Literal, Token, TokenType},
+        token::{self, Token, TokenType},
     },
 };
 
@@ -266,15 +266,15 @@ impl<'a> Parser<'a> {
     fn primary(&mut self) -> Result<Expr, ParseError> {
         if self.match_symbol(&[TokenType::False]) {
             return Ok(Expr::Literal {
-                value: token::Literal::Bool(false),
+                value: Some(token::Literal::Bool(false)),
             });
         } else if self.match_symbol(&[TokenType::True]) {
             return Ok(Expr::Literal {
-                value: token::Literal::Bool(true),
+                value: Some(token::Literal::Bool(true)),
             });
         } else if self.match_symbol(&[TokenType::Nil]) {
             return Ok(Expr::Literal {
-                value: token::Literal::Nil,
+                value: Some(token::Literal::Nil),
             });
         } else if self.match_symbol(&[TokenType::Number, TokenType::String]) {
             let prev_literal;
@@ -283,7 +283,7 @@ impl<'a> Parser<'a> {
                 Some(token) => {
                     prev_literal = token.literal.clone();
                 }
-                None => prev_literal = Literal::None,
+                None => prev_literal = None,
             }
 
             return Ok(Expr::Literal {

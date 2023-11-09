@@ -58,7 +58,7 @@ impl Scanner {
         self.tokens.push(Token::new(
             TokenType::Eof,
             String::from(""),
-            Literal::None,
+            None,
             self.line,
         ));
 
@@ -161,10 +161,10 @@ impl Scanner {
     }
 
     fn add_token(&mut self, token_type: TokenType) {
-        self.add_token_with_value(token_type, Literal::None)
+        self.add_token_with_value(token_type, None)
     }
 
-    fn add_token_with_value(&mut self, token_type: TokenType, literal: Literal) {
+    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let lexeme = self.source[self.start..self.current].to_string();
 
         self.tokens
@@ -262,7 +262,7 @@ impl Scanner {
 
         // Trim the surrounding quotes.
         let value = &self.source[self.start + 1..self.current - 1];
-        self.add_token_with_value(TokenType::String, Literal::Str(value.to_string()));
+        self.add_token_with_value(TokenType::String, Some(Literal::Str(value.to_string())));
     }
 
     fn number(&mut self) {
@@ -279,6 +279,6 @@ impl Scanner {
         }
 
         let number: f64 = self.source[self.start..self.current].parse().unwrap();
-        self.add_token_with_value(TokenType::Number, Literal::Num(number))
+        self.add_token_with_value(TokenType::Number, Some(Literal::Num(number)))
     }
 }

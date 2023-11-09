@@ -11,7 +11,7 @@ pub enum Expr {
         expression: Box<Expr>,
     },
     Literal {
-        value: Literal,
+        value: Option<Literal>,
     },
     Unary {
         operator: Token,
@@ -37,7 +37,7 @@ impl Expr {
 pub trait ExprVisitor<R> {
     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_grouping_expr(&self, expression: &Expr) -> R;
-    fn visit_literal_expr(&self, value: &Literal) -> R;
+    fn visit_literal_expr(&self, value: &Option<Literal>) -> R;
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> R;
 }
 
@@ -67,10 +67,10 @@ impl ExprVisitor<String> for AstPrinter {
     fn visit_grouping_expr(&self, expression: &Expr) -> String {
         self.parenthisize("group".to_string(), vec![expression])
     }
-    fn visit_literal_expr(&self, value: &Literal) -> String {
+    fn visit_literal_expr(&self, value: &Option<Literal>) -> String {
         match value {
-            Literal::Str(string) => string.clone(),
-            Literal::Num(number) => number.to_string(),
+            Some(Literal::Str(string)) => string.clone(),
+            Some(Literal::Num(number)) => number.to_string(),
             _ => String::from("nil"),
         }
     }
@@ -103,10 +103,10 @@ impl ExprVisitor<String> for RPNPrinter {
     fn visit_grouping_expr(&self, expression: &Expr) -> String {
         self.reverse_notation("group".to_string(), vec![expression])
     }
-    fn visit_literal_expr(&self, value: &Literal) -> String {
+    fn visit_literal_expr(&self, value: &Option<Literal>) -> String {
         match value {
-            Literal::Str(string) => string.clone(),
-            Literal::Num(number) => number.to_string(),
+            Some(Literal::Str(string)) => string.clone(),
+            Some(Literal::Num(number)) => number.to_string(),
             _ => String::from("nil"),
         }
     }

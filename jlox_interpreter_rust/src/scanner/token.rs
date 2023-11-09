@@ -56,19 +56,23 @@ pub enum Literal {
     Num(f64),
     Bool(bool),
     Nil,
-    None,
 }
 
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Literal,
+    pub literal: Option<Literal>,
     pub line: usize,
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, literal: Literal, line: usize) -> Self {
+    pub fn new(
+        token_type: TokenType,
+        lexeme: String,
+        literal: Option<Literal>,
+        line: usize,
+    ) -> Self {
         // Using a literal enum with a processed literal would allow a simpler object, but
         // what is done when there is a none value?
         // process ahead of time or before use?
