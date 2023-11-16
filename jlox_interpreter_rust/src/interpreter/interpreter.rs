@@ -13,38 +13,34 @@ use crate::scanner::{
 
 pub struct Interpreter;
 impl Interpreter {
-    fn evaluate(&self, expression: &Expr) -> Option<Literal> {
+    fn evaluate(&self, expression: &Expr) -> Literal {
         expression.accept(&Self)
     }
 }
 
-impl ExprVisitor<Option<Literal>> for Interpreter {
-    fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> Option<Literal> {
-        None
+impl ExprVisitor<Literal> for Interpreter {
+    fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> Literal {
+        Literal::Nil
     }
 
-    fn visit_grouping_expr(&self, expression: &Expr) -> Option<Literal> {
+    fn visit_grouping_expr(&self, expression: &Expr) -> Literal {
         self.evaluate(expression)
     }
 
-    fn visit_literal_expr(&self, value: &Option<Literal>) -> Option<Literal> {
+    fn visit_literal_expr(&self, value: &Option<Literal>) -> Literal {
         match value {
-            Some(value) => Some(value.clone()),
-            _ => None,
+            Some(value) => value.clone(),
+            _ => Literal::Nil,
         }
     }
 
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Option<Literal> {
-        match self.evaluate(right) {
-            Some(literal) => match operator.token_type {
-                TokenType::Minus => match literal {
-                    Literal::Num(num) => Some(Literal::Num(-num)),
-                    _ => None, // Handle non-numeric cases or invalid unary minus operation
-                },
-                TokenType::Bang => Some(Literal::Bool(!literal.is_truthy())),
-                _ => None, // Handle other operator cases or invalid operators
-            },
-            None => None, // Handle the case where right.evaluate() returns None
+    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Literal {
+        let right_literal = self.evaluate(right);
+
+        match (operator.token_type, right_literal.clone()) {
+            (TokenType::Minus, Literal::Num(num)) => Literal::Num(-num),
+            (TokenType::Bang, _) => Literal::Bool(!right_literal.is_truthy()),
+            _ => Literal::Nil,
         }
     }
 }
