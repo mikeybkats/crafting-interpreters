@@ -58,6 +58,18 @@ pub enum Literal {
     Nil,
 }
 
+impl Literal {
+    /// # is_truthy
+    /// returns whether the literal value is true or false in lox
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Literal::Bool(b) => *b,
+            Literal::Nil => false,
+            _ => true, // All other values (Str, Num) are truthy
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,

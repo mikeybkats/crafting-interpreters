@@ -26,21 +26,25 @@ impl ExprVisitor<Option<Literal>> for Interpreter {
     fn visit_grouping_expr(&self, expression: &Expr) -> Option<Literal> {
         self.evaluate(expression)
     }
+
     fn visit_literal_expr(&self, value: &Option<Literal>) -> Option<Literal> {
         match value {
             Some(value) => Some(value.clone()),
             _ => None,
         }
     }
+
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Option<Literal> {
-        if let Some(Literal::Num(num)) = self.evaluate(right) {
-            if operator.token_type == TokenType::Minus {
-                return Some(Literal::Num(-num));
-            } else {
-                return None;
-            }
-        } else {
-            None
+        match self.evaluate(right) {
+            Some(literal) => match operator.token_type {
+                TokenType::Minus => match literal {
+                    Literal::Num(num) => Some(Literal::Num(-num)),
+                    _ => None, // Handle non-numeric cases or invalid unary minus operation
+                },
+                TokenType::Bang => Some(Literal::Bool(!literal.is_truthy())),
+                _ => None, // Handle other operator cases or invalid operators
+            },
+            None => None, // Handle the case where right.evaluate() returns None
         }
     }
 }
