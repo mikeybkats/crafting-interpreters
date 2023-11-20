@@ -16,11 +16,60 @@ impl Interpreter {
     fn evaluate(&self, expression: &Expr) -> Literal {
         expression.accept(&Self)
     }
+
+    fn is_equal(&self, a: &Literal, b: &Literal) -> bool {
+        match (a, b) {
+            (Literal::Num(a), Literal::Num(b)) => a == b,
+            (Literal::Str(a), Literal::Str(b)) => a == b,
+            (Literal::Bool(a), Literal::Bool(b)) => a == b,
+            _ => false,
+        }
+    }
 }
 
 impl ExprVisitor<Literal> for Interpreter {
     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> Literal {
-        Literal::Nil
+        let left = self.evaluate(left);
+        let right = self.evaluate(right);
+
+        match (operator.token_type, left, right) {
+            (TokenType::BangEqual, left_num, right_num) => {
+                Literal::Bool(!self.is_equal(&left_num, &right_num))
+            }
+            (TokenType::EqualEqual, left_num, right_num) => {
+                Literal::Bool(self.is_equal(&left_num, &right_num))
+            }
+
+            (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Bool(left_num > right_num)
+            }
+            (TokenType::GreaterEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Bool(left_num >= right_num)
+            }
+            (TokenType::Less, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Bool(left_num < right_num)
+            }
+            (TokenType::LessEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Bool(left_num <= right_num)
+            }
+
+            (TokenType::Minus, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Num(left_num - right_num)
+            }
+            (TokenType::Plus, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Num(left_num + right_num)
+            }
+            (TokenType::Plus, Literal::Str(left_str), Literal::Str(right_str)) => {
+                Literal::Str(format!("{}{}", left_str, right_str))
+            }
+            (TokenType::Slash, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Num(left_num / right_num)
+            }
+            (TokenType::Star, Literal::Num(left_num), Literal::Num(right_num)) => {
+                Literal::Num(left_num * right_num)
+            }
+            _ => Literal::Nil,
+        }
     }
 
     fn visit_grouping_expr(&self, expression: &Expr) -> Literal {

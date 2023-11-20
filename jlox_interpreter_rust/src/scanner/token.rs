@@ -68,6 +68,18 @@ impl Literal {
             _ => true, // All other values (Str, Num) are truthy
         }
     }
+
+    /// # instance_of
+    /// returns true if the type being checked  matches the type of self
+    pub fn instance_of(&self, type_check: &Literal) -> bool {
+        match (self, type_check) {
+            (Literal::Str(_), Literal::Str(_)) => true,
+            (Literal::Num(_), Literal::Num(_)) => true,
+            (Literal::Bool(_), Literal::Bool(_)) => true,
+            (Literal::Nil, Literal::Nil) => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
