@@ -3,15 +3,12 @@ use std::fmt;
 #[derive(Debug)]
 pub struct ParseError {
     message: String,
-    // token: Token,
 }
 
 impl ParseError {
     pub fn new(message: &String) -> Self {
-        // println!("parse error: {}", message);
         Self {
             message: message.clone(),
-            // token: token.clone(),
         }
     }
 

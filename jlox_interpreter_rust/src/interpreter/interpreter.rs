@@ -3,13 +3,7 @@ use crate::scanner::{
     token::{Literal, Token, TokenType},
 };
 
-///
-/// # LoxObject
-/// "The leaves of an expression tree—the atomic bits of syntax that all other expressions are composed of—are literals. Literals are almost values already, but the distinction is important. A literal is a bit of syntax that produces a value. A literal always appears somewhere in the user’s source code. Lots of values are produced by computation and don’t exist anywhere in the code itself. Those aren’t literals. A literal comes from the parser’s domain. Values are an interpreter concept, part of the runtime’s world." [CraftingInterpreters](https://craftinginterpreters.com/evaluating-expressions.html)
-// #[derive(Debug, Clone)]
-// pub struct LoxObject {
-//     value: Literal,
-// }
+use super::runtime_error::RuntimeError;
 
 pub struct Interpreter;
 impl Interpreter {
@@ -25,50 +19,73 @@ impl Interpreter {
             _ => false,
         }
     }
+
+    fn check_number_operand(
+        &self,
+        token_type: TokenType,
+        operand: Literal,
+    ) -> Result<Literal, RuntimeError> {
+        match operand {
+            Literal::Num(_) => Ok(operand),
+            _ => {
+                return Err(RuntimeError::new(
+                    "Operand must be a number.".to_string(),
+                    operand,
+                ))
+            }
+        }
+    }
 }
 
-impl ExprVisitor<Literal> for Interpreter {
-    fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> Literal {
+impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
+    fn visit_binary_expr(
+        &self,
+        left: &Expr,
+        operator: &Token,
+        right: &Expr,
+    ) -> Result<Literal, RuntimeError> {
         let left = self.evaluate(left);
         let right = self.evaluate(right);
 
         match (operator.token_type, left, right) {
-            (TokenType::BangEqual, left_num, right_num) => {
-                Literal::Bool(!self.is_equal(&left_num, &right_num))
-            }
-            (TokenType::EqualEqual, left_num, right_num) => {
-                Literal::Bool(self.is_equal(&left_num, &right_num))
-            }
+            // (TokenType::BangEqual, left_num, right_num) => {
+            //     Literal::Bool(!self.is_equal(&left_num, &right_num))
+            // }
+            // (TokenType::EqualEqual, left_num, right_num) => {
+            //     Literal::Bool(self.is_equal(&left_num, &right_num))
+            // }
 
-            (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Bool(left_num > right_num)
-            }
-            (TokenType::GreaterEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Bool(left_num >= right_num)
-            }
-            (TokenType::Less, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Bool(left_num < right_num)
-            }
-            (TokenType::LessEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Bool(left_num <= right_num)
-            }
-
+            // (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
+            //     Literal::Bool(left_num > right_num)
+            // }
+            // (TokenType::GreaterEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
+            //     Literal::Bool(left_num >= right_num)
+            // }
+            // (TokenType::Less, Literal::Num(left_num), Literal::Num(right_num)) => {
+            //     Literal::Bool(left_num < right_num)
+            // }
+            // (TokenType::LessEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
+            //     Literal::Bool(left_num <= right_num)
+            // }
             (TokenType::Minus, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Num(left_num - right_num)
+                match self.check_number_operand(TokenType::Minus, right) {
+                    Ok(result) => Ok(Literal::Num(left_num - right_num)),
+                    Err(e) => Err(e),
+                }
             }
-            (TokenType::Plus, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Num(left_num + right_num)
-            }
-            (TokenType::Plus, Literal::Str(left_str), Literal::Str(right_str)) => {
-                Literal::Str(format!("{}{}", left_str, right_str))
-            }
-            (TokenType::Slash, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Num(left_num / right_num)
-            }
-            (TokenType::Star, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Literal::Num(left_num * right_num)
-            }
-            _ => Literal::Nil,
+            // (TokenType::Plus, Literal::Num(left_num), Literal::Num(right_num)) => {
+            //     Literal::Num(left_num + right_num)
+            // }
+            // (TokenType::Plus, Literal::Str(left_str), Literal::Str(right_str)) => {
+            //     Literal::Str(format!("{}{}", left_str, right_str))
+            // }
+            // (TokenType::Slash, Literal::Num(left_num), Literal::Num(right_num)) => {
+            //     Literal::Num(left_num / right_num)
+            // }
+            // (TokenType::Star, Literal::Num(left_num), Literal::Num(right_num)) => {
+            //     Literal::Num(left_num * right_num)
+            // }
+            _ => Ok(Literal::Nil),
         }
     }
 
