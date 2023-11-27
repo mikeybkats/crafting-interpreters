@@ -7,6 +7,16 @@ use super::runtime_error::RuntimeError;
 
 pub struct Interpreter;
 impl Interpreter {
+    fn interpret(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+        match self.evaluate(expression) {
+            Ok(value) => {
+                println!("{:?}", value);
+                Ok(value)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match expression.accept(&Self) {
             Ok(result) => Ok(result),
