@@ -1,24 +1,24 @@
-use crate::scanner::token::Literal;
+use crate::scanner::token::TokenType;
 use std::fmt;
 
 #[derive(Debug)]
 pub struct RuntimeError {
     message: String,
-    literal: Literal,
+    token_type: TokenType,
 }
 
 impl RuntimeError {
-    pub fn new(message: String, literal: Literal) -> Self {
+    pub fn new(message: String, token_type: TokenType) -> Self {
         Self {
             message,
-            literal: literal.clone(),
+            token_type,
         }
     }
 }
 
 impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {:?}", self.message, self.literal)
+        write!(f, "{} {:?}", self.message, self.token_type)
     }
 }
 
