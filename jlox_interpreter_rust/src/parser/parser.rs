@@ -1,9 +1,6 @@
-use crate::{
-    lox::Lox,
-    scanner::{
-        expr::Expr,
-        token::{self, Token, TokenType},
-    },
+use crate::scanner::{
+    expr::Expr,
+    token::{self, Token, TokenType},
 };
 
 use super::parse_error::ParseError;
@@ -11,15 +8,17 @@ use super::parse_error::ParseError;
 pub struct Parser<'a> {
     current: usize,
     tokens: &'a Vec<Token>,
-    lox: Box<&'a Lox>,
+    // lox: Box<&'a Lox>,
+    empty_token: Token,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a Vec<Token>, lox: &'a Lox) -> Self {
+    pub fn new(tokens: &'a Vec<Token>) -> Self {
         Self {
             current: 0,
             tokens,
-            lox: Box::new(lox),
+            // lox: Box::new(lox),
+            empty_token: Token::new(TokenType::Nil, "".to_string(), Some(token::Literal::Nil), 0),
         }
     }
 
@@ -149,7 +148,7 @@ impl<'a> Parser<'a> {
 
     fn get_operator(&self) -> Result<&Token, ParseError> {
         self.previous()
-            .ok_or_else(|| ParseError::new(&String::from("Expected Operator")))
+            .ok_or_else(|| ParseError::new(&String::from("Expected Operator"), &self.empty_token))
     }
 
     /// # comparison
@@ -301,7 +300,10 @@ impl<'a> Parser<'a> {
                 expression: Box::new(expr),
             });
         } else {
-            Err(self.error(self.peek().unwrap(), "Expected expression.".to_string()))
+            Err(ParseError::new(
+                &"Expected expression.".to_string(),
+                self.peek().unwrap(),
+            ))
         }
     }
 
@@ -315,8 +317,13 @@ impl<'a> Parser<'a> {
                 return Ok(self.advance().unwrap());
             }
             false => match self.peek() {
-                Some(token) => Err(self.error(token, message)),
-                None => return Err(ParseError::new(&"Token not found".to_string())),
+                Some(token) => Err(ParseError::new(&message, token)),
+                None => {
+                    return Err(ParseError::new(
+                        &"Token not found".to_string(),
+                        &self.empty_token,
+                    ))
+                }
             },
         }
     }
@@ -327,10 +334,11 @@ impl<'a> Parser<'a> {
     ///
     /// The error() method returns the error instead of throwing it because we want to let the calling method inside the parser decide whether to unwind or not.
     ///
-    fn error(&self, token: &Token, message: String) -> ParseError {
-        self.lox.as_ref().error(token, &message);
-        ParseError::new(&message)
-    }
+    // fn error(&self, token: &Token, message: String) -> ParseError {
+    //     ParseError::new(&message, token)
+    //     // self.lox.as_ref().error(LoxError::ParseError(error));
+    //     // error
+    // }
 
     /// # synchronize
     ///

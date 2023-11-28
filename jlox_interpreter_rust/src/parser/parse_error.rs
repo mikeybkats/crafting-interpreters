@@ -1,14 +1,18 @@
 use std::fmt;
 
+use crate::scanner::token::Token;
+
 #[derive(Debug)]
 pub struct ParseError {
     message: String,
+    token: Token,
 }
 
 impl ParseError {
-    pub fn new(message: &String) -> Self {
+    pub fn new(message: &String, token: &Token) -> Self {
         Self {
             message: message.clone(),
+            token: token.clone(),
         }
     }
 
@@ -19,7 +23,7 @@ impl ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
+        write!(f, "{} {:?}", self.message, self.token)
     }
 }
 

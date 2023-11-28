@@ -7,7 +7,7 @@ use super::runtime_error::RuntimeError;
 
 pub struct Interpreter;
 impl Interpreter {
-    fn interpret(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    pub fn interpret(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match self.evaluate(expression) {
             Ok(value) => {
                 println!("{:?}", value);

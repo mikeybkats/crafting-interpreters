@@ -7,13 +7,16 @@ use std::{
 };
 
 use crate::{
-    parser::parser::Parser,
+    interpreter::{interpreter::Interpreter, runtime_error::RuntimeError},
+    parser::{parse_error::ParseError, parser::Parser},
+    scanner::scanner::Scanner,
     scanner::{error::ErrorReporter, expr::AstPrinter},
-    scanner::{
-        scanner::Scanner,
-        token::{Token, TokenType},
-    },
 };
+
+pub enum LoxError {
+    RuntimeError(RuntimeError),
+    ParseError(ParseError),
+}
 
 pub struct Lox {
     error_reporter: Rc<RefCell<ErrorReporter>>,
@@ -26,19 +29,26 @@ impl Lox {
         }
     }
 
-    pub fn error(&self, token: &Token, message: &String) {
-        if token.token_type == TokenType::Eof {
-            self.error_reporter
-                .borrow_mut()
-                .report(token.line, " at end", message)
-        } else {
-            self.error_reporter.borrow_mut().report(
-                token.line,
-                format!(" at '{}'", token.lexeme).as_str(),
-                message,
-            )
+    pub fn error(&self, error: LoxError) {
+        match error {
+            LoxError::RuntimeError(error) => (),
+            LoxError::ParseError(error) => (),
         }
     }
+
+    // pub fn error(&self, token: &Token, message: &String) {
+    //     if token.token_type == TokenType::Eof {
+    //         self.error_reporter
+    //             .borrow_mut()
+    //             .report(token.line, " at end", message)
+    //     } else {
+    //         self.error_reporter.borrow_mut().report(
+    //             token.line,
+    //             format!(" at '{}'", token.lexeme).as_str(),
+    //             message,
+    //         )
+    //     }
+    // }
 
     pub fn run_file(&mut self, path: &str) -> io::Result<()> {
         let bytes = fs::read(path)?;
@@ -95,6 +105,7 @@ impl Lox {
         match expressions {
             Ok(exprs) => {
                 for expression in exprs {
+                    let result = Interpreter.interpret(&expression);
                     println!("Expression as AST: {}", AstPrinter::print(expression));
                 }
             }
