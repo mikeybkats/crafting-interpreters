@@ -9,10 +9,7 @@ pub struct Interpreter;
 impl Interpreter {
     pub fn interpret(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match self.evaluate(expression) {
-            Ok(value) => {
-                println!("{:?}", value);
-                Ok(value)
-            }
+            Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
@@ -35,7 +32,7 @@ impl Interpreter {
 
     fn check_number_operand(
         &self,
-        token_type: TokenType,
+        token: &Token,
         operand: Literal,
     ) -> Result<Literal, RuntimeError> {
         match operand {
@@ -43,7 +40,7 @@ impl Interpreter {
             _ => {
                 return Err(RuntimeError::new(
                     "Operand must be a number.".to_string(),
-                    token_type,
+                    token,
                 ))
             }
         }
@@ -51,7 +48,7 @@ impl Interpreter {
 
     fn check_number_operands(
         &self,
-        token_type: TokenType,
+        token: &Token,
         left: Literal,
         right: Literal,
     ) -> Result<bool, RuntimeError> {
@@ -60,7 +57,7 @@ impl Interpreter {
             _ => {
                 return Err(RuntimeError::new(
                     "Operands must be numbers.".to_string(),
-                    token_type,
+                    token,
                 ))
             }
         }
@@ -82,14 +79,14 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 Ok(Literal::Bool(!self.is_equal(&left_num, &right_num)))
             }
             (TokenType::EqualEqual, left_num, right_num) => {
-                match self.check_number_operands(TokenType::EqualEqual, left, right) {
+                match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Bool(self.is_equal(&left_num, &right_num))),
                     Err(e) => Err(e),
                 }
             }
 
             (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
-                match self.check_number_operands(TokenType::Greater, left, right) {
+                match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Bool(left_num > right_num)),
                     Err(e) => Err(e),
                 }
@@ -98,19 +95,19 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 Ok(Literal::Bool(left_num >= right_num))
             }
             (TokenType::Less, Literal::Num(left_num), Literal::Num(right_num)) => {
-                match self.check_number_operands(TokenType::Less, left, right) {
+                match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Bool(left_num < right_num)),
                     Err(e) => Err(e),
                 }
             }
             (TokenType::LessEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
-                match self.check_number_operands(TokenType::LessEqual, left, right) {
+                match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Bool(left_num <= right_num)),
                     Err(e) => Err(e),
                 }
             }
             (TokenType::Minus, Literal::Num(left_num), Literal::Num(right_num)) => {
-                match self.check_number_operands(TokenType::Minus, left, right) {
+                match self.check_number_operands(operator, left, right) {
                     Ok(_result) => Ok(Literal::Num(left_num - right_num)),
                     Err(e) => Err(e),
                 }
@@ -122,13 +119,13 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 Ok(Literal::Str(format!("{}{}", left_str, right_str)))
             }
             (TokenType::Slash, Literal::Num(left_num), Literal::Num(right_num)) => {
-                match self.check_number_operands(TokenType::Slash, left, right) {
+                match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Num(left_num / right_num)),
                     Err(e) => Err(e),
                 }
             }
             (TokenType::Star, Literal::Num(left_num), Literal::Num(right_num)) => {
-                match self.check_number_operands(TokenType::Star, left, right) {
+                match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Num(left_num * right_num)),
                     Err(e) => Err(e),
                 }
@@ -142,24 +139,27 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     }
 
     fn visit_literal_expr(&self, value: &Option<Literal>) -> Result<Literal, RuntimeError> {
+        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
+
         match value {
             Some(value) => Ok(value.clone()),
-            _ => Err(RuntimeError::new("No value".to_string(), TokenType::Nil)),
+            _ => Err(RuntimeError::new("No value".to_string(), &empty_token)),
         }
     }
 
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Result<Literal, RuntimeError> {
         let right_literal = self.evaluate(right)?;
+        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
 
         match (operator.token_type, right_literal.clone()) {
             (TokenType::Minus, Literal::Num(num)) => {
-                match self.check_number_operand(TokenType::Minus, right_literal) {
+                match self.check_number_operand(operator, right_literal) {
                     Ok(_result) => Ok(Literal::Num(-num)),
                     Err(e) => Err(e),
                 }
             }
             (TokenType::Bang, _) => Ok(Literal::Bool(!right_literal.is_truthy())),
-            _ => Err(RuntimeError::new("No value".to_string(), TokenType::Nil)),
+            _ => Err(RuntimeError::new("No value".to_string(), &empty_token)),
         }
     }
 }

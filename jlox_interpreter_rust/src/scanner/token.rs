@@ -80,6 +80,15 @@ impl Literal {
             _ => false,
         }
     }
+
+    pub fn print(&self) {
+        match self {
+            Literal::Str(string) => println!("{string}"),
+            Literal::Bool(boolean) => println!("{boolean}"),
+            Literal::Num(number) => println!("{number}"),
+            Literal::Nil => println!(""),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -1,24 +1,28 @@
-use crate::scanner::token::TokenType;
+use crate::scanner::token::Token;
 use std::fmt;
 
 #[derive(Debug)]
 pub struct RuntimeError {
     message: String,
-    token_type: TokenType,
+    token: Token,
 }
 
 impl RuntimeError {
-    pub fn new(message: String, token_type: TokenType) -> Self {
+    pub fn new(message: String, token: &Token) -> Self {
         Self {
             message,
-            token_type,
+            token: token.clone(),
         }
+    }
+
+    pub fn get_error(&self) -> (&str, &Token) {
+        (self.message.as_str(), &self.token)
     }
 }
 
 impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {:?}", self.message, self.token_type)
+        write!(f, "{} {:?}", self.message, self.token.token_type)
     }
 }
 

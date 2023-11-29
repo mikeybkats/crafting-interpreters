@@ -9,8 +9,8 @@ use std::{
 use crate::{
     interpreter::{interpreter::Interpreter, runtime_error::RuntimeError},
     parser::{parse_error::ParseError, parser::Parser},
+    scanner::error::ErrorReporter,
     scanner::scanner::Scanner,
-    scanner::{error::ErrorReporter, expr::AstPrinter},
 };
 
 pub enum LoxError {
@@ -31,24 +31,14 @@ impl Lox {
 
     pub fn error(&self, error: LoxError) {
         match error {
-            LoxError::RuntimeError(error) => (),
-            LoxError::ParseError(error) => (),
+            LoxError::RuntimeError(error) => {
+                self.error_reporter.borrow_mut().report_runtime_error(error)
+            }
+            LoxError::ParseError(error) => {
+                self.error_reporter.borrow_mut().report_parse_error(error)
+            }
         }
     }
-
-    // pub fn error(&self, token: &Token, message: &String) {
-    //     if token.token_type == TokenType::Eof {
-    //         self.error_reporter
-    //             .borrow_mut()
-    //             .report(token.line, " at end", message)
-    //     } else {
-    //         self.error_reporter.borrow_mut().report(
-    //             token.line,
-    //             format!(" at '{}'", token.lexeme).as_str(),
-    //             message,
-    //         )
-    //     }
-    // }
 
     pub fn run_file(&mut self, path: &str) -> io::Result<()> {
         let bytes = fs::read(path)?;
@@ -98,7 +88,7 @@ impl Lox {
         let mut scanner = Scanner::new(source, Rc::clone(&self.error_reporter));
         let tokens = scanner.scan_tokens();
 
-        let mut parser = Parser::new(tokens, self);
+        let mut parser = Parser::new(tokens);
 
         let expressions = parser.parse();
 
@@ -106,14 +96,14 @@ impl Lox {
             Ok(exprs) => {
                 for expression in exprs {
                     let result = Interpreter.interpret(&expression);
-                    println!("Expression as AST: {}", AstPrinter::print(expression));
+                    match result {
+                        Ok(expr) => expr.print(),
+                        Err(error) => self.error(LoxError::RuntimeError(error)),
+                    }
+                    // println!("Expression as AST: {}", AstPrinter::print(expression));
                 }
             }
-            Err(_e) => (),
+            Err(error) => self.error(LoxError::ParseError(error)),
         }
-
-        // for token in tokens {
-        //     println!("{:?}", token);
-        // }
     }
 }
