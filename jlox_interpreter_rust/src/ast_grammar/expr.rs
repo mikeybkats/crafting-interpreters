@@ -56,12 +56,6 @@ impl AstPrinter {
 
 impl ExprVisitor<String> for AstPrinter {
     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> String {
-        // println!(
-        //     "Binary expression left: {:?}\nBinary expression right: {:?}\nOperator: {}",
-        //     left,
-        //     right,
-        //     operator.lexeme.as_str()
-        // );
         self.parenthisize(operator.lexeme.clone(), vec![left, right])
     }
     fn visit_grouping_expr(&self, expression: &Expr) -> String {
@@ -78,9 +72,6 @@ impl ExprVisitor<String> for AstPrinter {
         self.parenthisize(operator.lexeme.clone(), vec![right])
     }
 }
-
-// (* (- 123) (group 45.67))
-// -123 group 45.67 *
 
 #[derive(Debug)]
 pub struct RPNPrinter;

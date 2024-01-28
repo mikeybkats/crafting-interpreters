@@ -1,7 +1,6 @@
-use crate::scanner::{
-    expr::Expr,
-    token::{self, Token, TokenType},
-};
+use crate::scanner::token::{self, Token, TokenType};
+
+use crate::ast_grammar::expr::Expr;
 
 use super::parse_error::ParseError;
 

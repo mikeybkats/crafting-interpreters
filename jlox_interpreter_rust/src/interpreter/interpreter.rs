@@ -1,7 +1,6 @@
-use crate::scanner::{
-    expr::{Expr, ExprVisitor},
-    token::{Literal, Token, TokenType},
-};
+use crate::scanner::token::{Literal, Token, TokenType};
+
+use crate::ast_grammar::expr::{Expr, ExprVisitor};
 
 use super::runtime_error::RuntimeError;
 
@@ -75,6 +74,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         let right = self.evaluate(right)?;
 
         match (operator.token_type, left.clone(), right.clone()) {
+            // Handle equals
             (TokenType::BangEqual, left_num, right_num) => {
                 Ok(Literal::Bool(!self.is_equal(&left_num, &right_num)))
             }
@@ -85,15 +85,24 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 }
             }
 
+            // Handle greater than
             (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => Ok(Literal::Bool(left_num > right_num)),
-                    Err(e) => Err(e),
+                    Ok(_) => {
+                        println!("all good here");
+                        Ok(Literal::Bool(left_num > right_num))
+                    }
+                    Err(e) => {
+                        println!("an error has occued");
+                        Err(e)
+                    }
                 }
             }
             (TokenType::GreaterEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
                 Ok(Literal::Bool(left_num >= right_num))
             }
+
+            // Handle less than
             (TokenType::Less, Literal::Num(left_num), Literal::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Bool(left_num < right_num)),
@@ -106,31 +115,57 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                     Err(e) => Err(e),
                 }
             }
+
+            // Handle subtraction
             (TokenType::Minus, Literal::Num(left_num), Literal::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
                     Ok(_result) => Ok(Literal::Num(left_num - right_num)),
                     Err(e) => Err(e),
                 }
             }
+
+            // Handle addition
             (TokenType::Plus, Literal::Num(left_num), Literal::Num(right_num)) => {
                 Ok(Literal::Num(left_num + right_num))
             }
             (TokenType::Plus, Literal::Str(left_str), Literal::Str(right_str)) => {
                 Ok(Literal::Str(format!("{}{}", left_str, right_str)))
             }
+
+            // Handle addition of string and number concatenation
+            (TokenType::Plus, Literal::Num(left_num), Literal::Str(right_str)) => {
+                Ok(Literal::Str(format!("{}{}", left_num, right_str)))
+            }
+            (TokenType::Plus, Literal::Str(left_str), Literal::Num(right_num)) => {
+                Ok(Literal::Str(format!("{}{}", left_str, right_num)))
+            }
+
+            // Handle division
             (TokenType::Slash, Literal::Num(left_num), Literal::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Num(left_num / right_num)),
                     Err(e) => Err(e),
                 }
             }
+
+            // Handle multiplication
             (TokenType::Star, Literal::Num(left_num), Literal::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Num(left_num * right_num)),
                     Err(e) => Err(e),
                 }
             }
-            _ => Ok(Literal::Nil),
+
+            // Handle errors
+            _ => Err(RuntimeError::new(
+                format!(
+                    "Expression: '{} {} {}' does not evaluate.",
+                    left.format(),
+                    operator.lexeme,
+                    right.format(),
+                ),
+                operator,
+            )),
         }
     }
 
