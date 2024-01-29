@@ -1,3 +1,4 @@
+use crate::ast_grammar::stmt::Stmt;
 use crate::scanner::token::{self, Token, TokenType};
 
 use crate::ast_grammar::expr::Expr;
@@ -25,8 +26,20 @@ impl<'a> Parser<'a> {
     ///
     /// The main function of the Parser implementation. This starts the process of parsing an expression.
     ///
-    pub fn parse(&mut self) -> Result<Vec<Expr>, ParseError> {
-        return self.expressions();
+    // pub fn parse(&mut self) -> Result<Vec<Expr>, ParseError> {
+    //     return self.expressions();
+    // }
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, ParseError> {
+        let mut statements = Vec::new();
+
+        while !self.is_at_end() {
+            match self.statement() {
+                Ok(stmt) => statements.push(stmt),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(statements)
     }
 
     /// # expressions
@@ -61,6 +74,40 @@ impl<'a> Parser<'a> {
     ///
     fn expression(&mut self) -> Result<Expr, ParseError> {
         self.equality()
+    }
+
+    /// # statement
+    /// "A program is a list of statements, and we parse one of those statements using this method"
+    fn statement(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_symbol(&[TokenType::Print]) {
+            return self.print_statement();
+        }
+
+        self.expression_statement()
+    }
+
+    /// # print_statement
+    /// parse a print statement
+    fn print_statement(&mut self) -> Result<Stmt, ParseError> {
+        let value = self.expression()?;
+
+        self.consume(TokenType::Semicolon, "Expect ';' after value.");
+
+        Ok(Stmt::Print {
+            expression: Box::new(value),
+        })
+    }
+
+    /// # expression_statement
+    /// parse an expression
+    fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
+        let value = self.expression()?;
+
+        self.consume(TokenType::Semicolon, "Expect ';' after expression.");
+
+        Ok(Stmt::Expression {
+            expression: Box::new(value),
+        })
     }
 
     /// # equality
@@ -290,10 +337,7 @@ impl<'a> Parser<'a> {
         } else if self.match_symbol(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
 
-            self.consume(
-                TokenType::RightParen,
-                String::from("Expect ')' after expression."),
-            )?;
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
 
             return Ok(Expr::Grouping {
                 expression: Box::new(expr),
@@ -310,13 +354,13 @@ impl<'a> Parser<'a> {
     ///
     /// checks to see if the next token is of the expected type. If so, it consumes the token. Else, it returns a parse error.
     ///
-    fn consume(&mut self, token_type: TokenType, message: String) -> Result<&Token, ParseError> {
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<&Token, ParseError> {
         match self.check(&token_type) {
             true => {
                 return Ok(self.advance().unwrap());
             }
             false => match self.peek() {
-                Some(token) => Err(ParseError::new(&message, token)),
+                Some(token) => Err(ParseError::new(message, token)),
                 None => {
                     return Err(ParseError::new(
                         &"Token not found".to_string(),

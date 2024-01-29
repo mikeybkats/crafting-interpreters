@@ -1,6 +1,9 @@
 use crate::scanner::token::{Literal, Token};
 
 #[derive(Debug, Clone)]
+/// # Expression
+/// Enumerates the different types of expressions.
+/// Expressions are the first syntax tree nodes we see, introduced in “Representing Code”. The main Expr class defines the visitor interface used to dispatch against the specific expression types, and contains the other expression subclasses as nested classes.
 pub enum Expr {
     Binary {
         left: Box<Expr>,
