@@ -90,18 +90,16 @@ impl Lox {
 
         let mut parser = Parser::new(tokens);
 
-        let expressions = parser.parse();
+        let statements = parser.parse();
 
-        match expressions {
-            Ok(exprs) => {
-                for expression in exprs {
-                    let result = Interpreter.interpret(&expression);
-                    match result {
-                        Ok(expr) => expr.print(),
-                        Err(error) => self.error(LoxError::RuntimeError(error)),
-                    }
-                    // println!("Expression as AST: {}", AstPrinter::print(expression));
+        match statements {
+            Ok(stmts) => {
+                let result = Interpreter.interpret(stmts);
+                match result {
+                    Ok(expr) => expr.print(),
+                    Err(error) => self.error(LoxError::RuntimeError(error)),
                 }
+                // println!("Expression as AST: {}", AstPrinter::print(expression));
             }
             Err(error) => self.error(LoxError::ParseError(error)),
         }

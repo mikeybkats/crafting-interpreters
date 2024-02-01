@@ -1,3 +1,4 @@
+use crate::ast_grammar::stmt::Stmt;
 use crate::scanner::token::{Literal, Token, TokenType};
 
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
@@ -6,14 +7,25 @@ use super::runtime_error::RuntimeError;
 
 pub struct Interpreter;
 impl Interpreter {
-    pub fn interpret(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
-        match self.evaluate(expression) {
+    pub fn interpret(&self, statements: Vec<Stmt>) -> Result<Literal, RuntimeError> {
+        for statement in statements {
+            match self.execute(&statement) {
+                Ok(value) => return Ok(value),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(Literal::Nil)
+    }
+
+    pub fn execute(&self, statement: &Stmt) -> Result<Literal, RuntimeError> {
+        match statement.accept(&Self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
 
-    fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    pub fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match expression.accept(&Self) {
             Ok(result) => Ok(result),
             Err(e) => Err(e),
@@ -88,10 +100,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
             // Handle greater than
             (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => {
-                        println!("all good here");
-                        Ok(Literal::Bool(left_num > right_num))
-                    }
+                    Ok(_) => Ok(Literal::Bool(left_num > right_num)),
                     Err(e) => {
                         println!("an error has occued");
                         Err(e)

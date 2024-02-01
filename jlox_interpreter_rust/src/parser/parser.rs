@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
     ///
     /// expressions --> expression (, expressions)*;
     ///
-    fn expressions(&mut self) -> Result<Vec<Expr>, ParseError> {
+    fn _expressions(&mut self) -> Result<Vec<Expr>, ParseError> {
         let mut expressions = Vec::new();
 
         if let Ok(mut expression) = self.equality() {
@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
     fn print_statement(&mut self) -> Result<Stmt, ParseError> {
         let value = self.expression()?;
 
-        self.consume(TokenType::Semicolon, "Expect ';' after value.");
+        self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
 
         Ok(Stmt::Print {
             expression: Box::new(value),
@@ -103,7 +103,7 @@ impl<'a> Parser<'a> {
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
         let value = self.expression()?;
 
-        self.consume(TokenType::Semicolon, "Expect ';' after expression.");
+        self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
 
         Ok(Stmt::Expression {
             expression: Box::new(value),
