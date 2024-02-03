@@ -1,4 +1,4 @@
-use crate::ast_grammar::stmt::Stmt;
+use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::scanner::token::{Literal, Token, TokenType};
 
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
@@ -205,5 +205,17 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
             (TokenType::Bang, _) => Ok(Literal::Bool(!right_literal.is_truthy())),
             _ => Err(RuntimeError::new("No value".to_string(), &empty_token)),
         }
+    }
+}
+
+impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
+    fn visit_expression_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+        self.evaluate(statement)
+    }
+
+    fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+        let value = self.evaluate(statement)?;
+        println!("{}", value.format());
+        Ok(Literal::Nil)
     }
 }

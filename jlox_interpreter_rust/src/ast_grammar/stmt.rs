@@ -1,8 +1,3 @@
-use crate::{
-    interpreter::{interpreter::Interpreter, runtime_error::RuntimeError},
-    scanner::token::Literal,
-};
-
 use super::expr::Expr;
 
 #[derive(Debug, Clone)]
@@ -25,16 +20,4 @@ impl Stmt {
 pub trait StmtVisitor<R> {
     fn visit_expression_stmt(&self, expression: &Expr) -> R;
     fn visit_print_stmt(&self, expression: &Expr) -> R;
-}
-
-impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
-    fn visit_expression_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
-        self.evaluate(statement)
-    }
-
-    fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
-        let value = self.evaluate(statement)?;
-        println!("{}", value.format());
-        Ok(Literal::Nil)
-    }
 }
