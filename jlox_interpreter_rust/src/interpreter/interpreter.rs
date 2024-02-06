@@ -102,7 +102,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 match self.check_number_operands(operator, left, right) {
                     Ok(_) => Ok(Literal::Bool(left_num > right_num)),
                     Err(e) => {
-                        println!("an error has occued");
+                        // TODO: handle error
                         Err(e)
                     }
                 }

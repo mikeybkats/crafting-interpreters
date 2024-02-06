@@ -34,7 +34,7 @@ impl<'a> Parser<'a> {
 
         while !self.is_at_end() {
             match self.statement() {
-                Ok(_stmt) => statements.push(self.declaration()?),
+                Ok(stmt) => statements.push(stmt),
                 Err(e) => return Err(e),
             }
         }
@@ -117,7 +117,7 @@ impl<'a> Parser<'a> {
         let name;
         // consume once and advance the cursor
         // hate this syntax
-        match self.consume(TokenType::Identifier, "Expect variable name.") {
+        match self.consume(TokenType::Identifier, "Expected variable name.") {
             Ok(token) => name = token.clone(),
             Err(e) => return Err(e),
         }
@@ -407,12 +407,19 @@ impl<'a> Parser<'a> {
                 return Ok(self.advance().unwrap());
             }
             false => match self.peek() {
-                Some(token) => Err(ParseError::new(message, token)),
+                Some(next_token) => {
+                    // println!(
+                    //     "sending parse error {:?} : {:?}",
+                    //     next_token,
+                    //     self.previous()
+                    // );
+                    Err(ParseError::new(message, self.previous().unwrap()))
+                }
                 None => {
                     return Err(ParseError::new(
                         &"Token not found".to_string(),
                         &self.empty_token,
-                    ))
+                    ));
                 }
             },
         }

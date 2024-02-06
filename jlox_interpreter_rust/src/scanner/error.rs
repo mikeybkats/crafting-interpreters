@@ -43,7 +43,8 @@ impl ErrorReporter {
         eprintln!(
             "[line {}] Error at: {:?} - {}",
             token.line,
-            token.literal.as_ref(),
+            token.lexeme,
+            // token.token_type,
             message
         );
         self.had_error = true;
