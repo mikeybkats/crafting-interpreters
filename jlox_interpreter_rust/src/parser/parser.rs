@@ -1,3 +1,4 @@
+use crate::ast_grammar::stmt::Stmt;
 use crate::scanner::token::{self, Token, TokenType};
 
 use crate::ast_grammar::expr::Expr;
@@ -25,8 +26,20 @@ impl<'a> Parser<'a> {
     ///
     /// The main function of the Parser implementation. This starts the process of parsing an expression.
     ///
-    pub fn parse(&mut self) -> Result<Vec<Expr>, ParseError> {
-        return self.expressions();
+    // pub fn parse(&mut self) -> Result<Vec<Expr>, ParseError> {
+    //     return self.expressions();
+    // }
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, ParseError> {
+        let mut statements = Vec::new();
+
+        while !self.is_at_end() {
+            match self.statement() {
+                Ok(stmt) => statements.push(stmt),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(statements)
     }
 
     /// # expressions
@@ -35,7 +48,7 @@ impl<'a> Parser<'a> {
     ///
     /// expressions --> expression (, expressions)*;
     ///
-    fn expressions(&mut self) -> Result<Vec<Expr>, ParseError> {
+    fn _expressions(&mut self) -> Result<Vec<Expr>, ParseError> {
         let mut expressions = Vec::new();
 
         if let Ok(mut expression) = self.equality() {
@@ -61,6 +74,83 @@ impl<'a> Parser<'a> {
     ///
     fn expression(&mut self) -> Result<Expr, ParseError> {
         self.equality()
+    }
+
+    /// # declaration
+    /// Called repeatedly when parsing statments in either block or script mode
+    /// This is the where the application should synchronize when the parser panics.
+    fn declaration(&mut self) -> Result<Stmt, ParseError> {
+        match self.var_declaration() {
+            Ok(stmt) => Ok(stmt),
+            Err(e) => {
+                self.synchronize();
+                Err(e)
+            }
+        }
+    }
+
+    /// # statement
+    /// "A program is a list of statements, and we parse one of those statements using this method"
+    fn statement(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_symbol(&[TokenType::Print]) {
+            return self.print_statement();
+        }
+
+        self.expression_statement()
+    }
+
+    /// # print_statement
+    /// parse a print statement
+    fn print_statement(&mut self) -> Result<Stmt, ParseError> {
+        let value = self.expression()?;
+
+        self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
+
+        Ok(Stmt::Print {
+            expression: Box::new(value),
+        })
+    }
+
+    /// # var_declaration
+    /// parse a variable declaration
+    fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
+        let name;
+        // consume once and advance the cursor
+        // hate this syntax
+        match self.consume(TokenType::Identifier, "Expected variable name.") {
+            Ok(token) => name = token.clone(),
+            Err(e) => return Err(e),
+        }
+
+        let mut initializer: Option<Expr> = None;
+
+        if self.match_symbol(&[TokenType::Equal]) {
+            let expr = self.expression()?;
+            initializer = Some(expr);
+        }
+
+        // consume twice and advance the cursor
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::Var {
+            name: name.clone(),
+            initializer: Box::new(initializer.unwrap()),
+        })
+    }
+
+    /// # expression_statement
+    /// parse an expression
+    fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
+        let value = self.expression()?;
+
+        self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
+
+        Ok(Stmt::Expression {
+            expression: Box::new(value),
+        })
     }
 
     /// # equality
@@ -287,13 +377,14 @@ impl<'a> Parser<'a> {
             return Ok(Expr::Literal {
                 value: prev_literal,
             });
+        } else if self.match_symbol(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable {
+                name: self.previous().unwrap().clone(),
+            });
         } else if self.match_symbol(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
 
-            self.consume(
-                TokenType::RightParen,
-                String::from("Expect ')' after expression."),
-            )?;
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
 
             return Ok(Expr::Grouping {
                 expression: Box::new(expr),
@@ -309,19 +400,19 @@ impl<'a> Parser<'a> {
     /// # consume
     ///
     /// checks to see if the next token is of the expected type. If so, it consumes the token. Else, it returns a parse error.
-    ///
-    fn consume(&mut self, token_type: TokenType, message: String) -> Result<&Token, ParseError> {
+    /// Consume means to take in the next token and advance the cursor. It returns a reference to the token that was consumed so it can be used by the interpreter.
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<&Token, ParseError> {
         match self.check(&token_type) {
             true => {
                 return Ok(self.advance().unwrap());
             }
             false => match self.peek() {
-                Some(token) => Err(ParseError::new(&message, token)),
+                Some(next_token) => Err(self.error(next_token, message)),
                 None => {
                     return Err(ParseError::new(
-                        &"Token not found".to_string(),
+                        &"No token found".to_string(),
                         &self.empty_token,
-                    ))
+                    ));
                 }
             },
         }
@@ -333,17 +424,22 @@ impl<'a> Parser<'a> {
     ///
     /// The error() method returns the error instead of throwing it because we want to let the calling method inside the parser decide whether to unwind or not.
     ///
-    // fn error(&self, token: &Token, message: String) -> ParseError {
-    //     ParseError::new(&message, token)
-    //     // self.lox.as_ref().error(LoxError::ParseError(error));
-    //     // error
-    // }
+    fn error(&self, token: &Token, message: &str) -> ParseError {
+        match token.token_type {
+            TokenType::Eof => {
+                return ParseError::new(&"Unexpected end of file.".to_string(), token);
+            }
+            _ => {
+                return ParseError::new(message, token);
+            }
+        }
+    }
 
     /// # synchronize
     ///
     /// Catches exceptions at statement boundaries, and brings the parser to the correct state. This prevents unwanted error messages from polluting the user's dev experience.
     ///
-    fn _synchronize(&mut self) {
+    fn synchronize(&mut self) {
         self.advance();
 
         while !self.is_at_end() {

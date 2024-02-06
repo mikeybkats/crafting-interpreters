@@ -1,3 +1,4 @@
+use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::scanner::token::{Literal, Token, TokenType};
 
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
@@ -6,16 +7,27 @@ use super::runtime_error::RuntimeError;
 
 pub struct Interpreter;
 impl Interpreter {
-    pub fn interpret(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
-        match self.evaluate(expression) {
+    pub fn interpret(&self, statements: Vec<Stmt>) -> Result<Literal, RuntimeError> {
+        for statement in statements {
+            match self.execute(&statement) {
+                Ok(value) => return Ok(value),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(Literal::Nil)
+    }
+
+    pub fn execute(&self, statement: &Stmt) -> Result<Literal, RuntimeError> {
+        match statement.accept(&Self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
 
-    fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    pub fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match expression.accept(&Self) {
-            Ok(result) => Ok(result),
+            Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
@@ -88,12 +100,9 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
             // Handle greater than
             (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => {
-                        println!("all good here");
-                        Ok(Literal::Bool(left_num > right_num))
-                    }
+                    Ok(_) => Ok(Literal::Bool(left_num > right_num)),
                     Err(e) => {
-                        println!("an error has occued");
+                        // TODO: handle error
                         Err(e)
                     }
                 }
@@ -196,5 +205,30 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
             (TokenType::Bang, _) => Ok(Literal::Bool(!right_literal.is_truthy())),
             _ => Err(RuntimeError::new("No value".to_string(), &empty_token)),
         }
+    }
+
+    fn visit_variable_expr(&self, _name: &Token) -> Result<Literal, RuntimeError> {
+        // TODO: UPDATE THIS
+        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
+        Err(RuntimeError::new("No value".to_string(), &empty_token))
+    }
+}
+
+impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
+    fn visit_expression_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+        self.evaluate(statement)
+    }
+
+    fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+        let value = self.evaluate(statement)?;
+        println!("{}", value.format());
+        Ok(Literal::Nil)
+    }
+
+    fn visit_var_stmt(&self, _name: &Token, _initializer: &Expr) -> Result<Literal, RuntimeError> {
+        // TODO: UPDATE THIS
+        // let value = self.evaluate(initializer)?;
+        // println!("{}: {}", name.lexeme, value.format());
+        Ok(Literal::Nil)
     }
 }

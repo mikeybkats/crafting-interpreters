@@ -150,13 +150,7 @@ impl Scanner {
                     }
                 }
             },
-            None => {
-                // self.error_reporter
-                //     .borrow_mut()
-                //     .report_error_message(self.line, "No Character");
-                // println!("End of input");
-                // Do nothing
-            }
+            None => {}
         }
     }
 
@@ -180,7 +174,10 @@ impl Scanner {
 
         match self.keywords.get(text) {
             Some(token_type) => self.add_token(*token_type),
-            None => self.add_token(TokenType::Identifier),
+            None => self
+                .error_reporter
+                .borrow_mut()
+                .report_error_message(self.line, "Unexpected token"),
         }
     }
 

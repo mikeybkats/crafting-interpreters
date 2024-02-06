@@ -1,6 +1,14 @@
 use crate::scanner::token::{Literal, Token};
 
 #[derive(Debug, Clone)]
+/// # Expression
+/// Enumerates the different types of expressions.
+///
+/// ## Differences between Rust and Java implementations
+/// in the book, the author uses a GenerateAST.java class to generate the AST classes. This is not necessary in Rust. The enum and struct syntax achieves the same result in a more straightforward way.
+///
+/// ## First appears in Representing Code (Chapter 5)
+/// "Expressions are the first syntax tree nodes we see, introduced in the _Representing Code_ chapter. The main Expr class defines the visitor interface used to dispatch against the specific expression types, and contains the other expression subclasses as nested classes."
 pub enum Expr {
     Binary {
         left: Box<Expr>,
@@ -17,6 +25,9 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+    Variable {
+        name: Token,
+    },
 }
 
 impl Expr {
@@ -30,6 +41,7 @@ impl Expr {
             Expr::Grouping { expression } => visitor.visit_grouping_expr(expression),
             Expr::Literal { value } => visitor.visit_literal_expr(value),
             Expr::Unary { operator, right } => visitor.visit_unary_expr(operator, right),
+            Expr::Variable { name } => visitor.visit_variable_expr(name),
         }
     }
 }
@@ -39,69 +51,5 @@ pub trait ExprVisitor<R> {
     fn visit_grouping_expr(&self, expression: &Expr) -> R;
     fn visit_literal_expr(&self, value: &Option<Literal>) -> R;
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> R;
-}
-
-pub struct AstPrinter;
-impl AstPrinter {
-    pub fn print(expr: Expr) -> String {
-        return expr.accept(&Self);
-    }
-
-    fn parenthisize(&self, name: String, exprs: Vec<&Expr>) -> String {
-        let expr_strings: Vec<String> = exprs.iter().map(|&expr| expr.accept(self)).collect();
-
-        format!("({} {})", name, expr_strings.join(" "))
-    }
-}
-
-impl ExprVisitor<String> for AstPrinter {
-    fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> String {
-        self.parenthisize(operator.lexeme.clone(), vec![left, right])
-    }
-    fn visit_grouping_expr(&self, expression: &Expr) -> String {
-        self.parenthisize("group".to_string(), vec![expression])
-    }
-    fn visit_literal_expr(&self, value: &Option<Literal>) -> String {
-        match value {
-            Some(Literal::Str(string)) => string.clone(),
-            Some(Literal::Num(number)) => number.to_string(),
-            _ => String::from("nil"),
-        }
-    }
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> String {
-        self.parenthisize(operator.lexeme.clone(), vec![right])
-    }
-}
-
-#[derive(Debug)]
-pub struct RPNPrinter;
-impl RPNPrinter {
-    pub fn print(expr: Expr) -> String {
-        return expr.accept(&Self);
-    }
-
-    fn reverse_notation(&self, operator: String, exprs: Vec<&Expr>) -> String {
-        let expr_strings: Vec<String> = exprs.iter().map(|&expr| expr.accept(self)).collect();
-
-        format!("{} {}", expr_strings.join(" "), operator)
-    }
-}
-
-impl ExprVisitor<String> for RPNPrinter {
-    fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> String {
-        self.reverse_notation(operator.lexeme.clone(), vec![left, right])
-    }
-    fn visit_grouping_expr(&self, expression: &Expr) -> String {
-        self.reverse_notation("group".to_string(), vec![expression])
-    }
-    fn visit_literal_expr(&self, value: &Option<Literal>) -> String {
-        match value {
-            Some(Literal::Str(string)) => string.clone(),
-            Some(Literal::Num(number)) => number.to_string(),
-            _ => String::from("nil"),
-        }
-    }
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> String {
-        self.reverse_notation(operator.lexeme.clone(), vec![right])
-    }
+    fn visit_variable_expr(&self, name: &Token) -> R;
 }
