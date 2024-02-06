@@ -9,9 +9,9 @@ pub struct ParseError {
 }
 
 impl ParseError {
-    pub fn new(message: &String, token: &Token) -> Self {
+    pub fn new(message: &str, token: &Token) -> Self {
         Self {
-            message: message.clone(),
+            message: String::from(message),
             token: token.clone(),
         }
     }

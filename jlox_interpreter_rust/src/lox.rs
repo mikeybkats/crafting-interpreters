@@ -9,8 +9,8 @@ use std::{
 use crate::{
     interpreter::{interpreter::Interpreter, runtime_error::RuntimeError},
     parser::{parse_error::ParseError, parser::Parser},
-    scanner::error::ErrorReporter,
     scanner::scanner::Scanner,
+    scanner::{error::ErrorReporter, token::Literal},
 };
 
 pub enum LoxError {
@@ -90,17 +90,19 @@ impl Lox {
 
         let mut parser = Parser::new(tokens);
 
-        let expressions = parser.parse();
+        let statements = parser.parse();
 
-        match expressions {
-            Ok(exprs) => {
-                for expression in exprs {
-                    let result = Interpreter.interpret(&expression);
-                    match result {
-                        Ok(expr) => expr.print(),
-                        Err(error) => self.error(LoxError::RuntimeError(error)),
-                    }
-                    // println!("Expression as AST: {}", AstPrinter::print(expression));
+        match statements {
+            Ok(stmts) => {
+                let result = Interpreter.interpret(stmts);
+                match result {
+                    Ok(literal) => match literal {
+                        Literal::Str(s) => println!("{}", s),
+                        Literal::Num(n) => println!("{}", n),
+                        Literal::Bool(b) => println!("{}", b),
+                        Literal::Nil => (),
+                    },
+                    Err(error) => self.error(LoxError::RuntimeError(error)),
                 }
             }
             Err(error) => self.error(LoxError::ParseError(error)),

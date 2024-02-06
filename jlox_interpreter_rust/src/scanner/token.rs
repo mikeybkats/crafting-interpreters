@@ -89,6 +89,15 @@ impl Literal {
             Literal::Nil => println!(""),
         }
     }
+
+    pub fn format(&self) -> String {
+        match self {
+            Literal::Str(string) => format!("{string}"),
+            Literal::Bool(boolean) => format!("{boolean}"),
+            Literal::Num(number) => format!("{number}"),
+            Literal::Nil => String::from("nil"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
