@@ -33,4 +33,8 @@ impl ExprVisitor<String> for AstPrinter {
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> String {
         self.parenthisize(operator.lexeme.clone(), vec![right])
     }
+
+    fn visit_variable_expr(&self, name: &Token) -> String {
+        name.lexeme.clone()
+    }
 }

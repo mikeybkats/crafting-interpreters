@@ -34,7 +34,7 @@ impl<'a> Parser<'a> {
 
         while !self.is_at_end() {
             match self.statement() {
-                Ok(stmt) => statements.push(stmt),
+                Ok(_stmt) => statements.push(self.declaration()?),
                 Err(e) => return Err(e),
             }
         }
@@ -76,6 +76,19 @@ impl<'a> Parser<'a> {
         self.equality()
     }
 
+    /// # declaration
+    /// Called repeatedly when parsing statments in either block or script mode
+    /// This is the where the application should synchronize when the parser panics.
+    fn declaration(&mut self) -> Result<Stmt, ParseError> {
+        match self.var_declaration() {
+            Ok(stmt) => Ok(stmt),
+            Err(e) => {
+                self.synchronize();
+                Err(e)
+            }
+        }
+    }
+
     /// # statement
     /// "A program is a list of statements, and we parse one of those statements using this method"
     fn statement(&mut self) -> Result<Stmt, ParseError> {
@@ -95,6 +108,36 @@ impl<'a> Parser<'a> {
 
         Ok(Stmt::Print {
             expression: Box::new(value),
+        })
+    }
+
+    /// # var_declaration
+    /// parse a variable declaration
+    fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
+        let name;
+        // consume once and advance the cursor
+        // hate this syntax
+        match self.consume(TokenType::Identifier, "Expect variable name.") {
+            Ok(token) => name = token.clone(),
+            Err(e) => return Err(e),
+        }
+
+        let mut initializer: Option<Expr> = None;
+
+        if self.match_symbol(&[TokenType::Equal]) {
+            let expr = self.expression()?;
+            initializer = Some(expr);
+        }
+
+        // consume twice and advance the cursor
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::Var {
+            name: name.clone(),
+            initializer: Box::new(initializer.unwrap()),
         })
     }
 
@@ -334,6 +377,10 @@ impl<'a> Parser<'a> {
             return Ok(Expr::Literal {
                 value: prev_literal,
             });
+        } else if self.match_symbol(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable {
+                name: self.previous().unwrap().clone(),
+            });
         } else if self.match_symbol(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
 
@@ -353,7 +400,7 @@ impl<'a> Parser<'a> {
     /// # consume
     ///
     /// checks to see if the next token is of the expected type. If so, it consumes the token. Else, it returns a parse error.
-    ///
+    /// Consume means to take in the next token and advance the cursor. It returns a reference to the token that was consumed so it can be used by the interpreter.
     fn consume(&mut self, token_type: TokenType, message: &str) -> Result<&Token, ParseError> {
         match self.check(&token_type) {
             true => {
@@ -387,7 +434,7 @@ impl<'a> Parser<'a> {
     ///
     /// Catches exceptions at statement boundaries, and brings the parser to the correct state. This prevents unwanted error messages from polluting the user's dev experience.
     ///
-    fn _synchronize(&mut self) {
+    fn synchronize(&mut self) {
         self.advance();
 
         while !self.is_at_end() {

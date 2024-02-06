@@ -27,7 +27,7 @@ impl Interpreter {
 
     pub fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match expression.accept(&Self) {
-            Ok(result) => Ok(result),
+            Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
@@ -206,6 +206,12 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
             _ => Err(RuntimeError::new("No value".to_string(), &empty_token)),
         }
     }
+
+    fn visit_variable_expr(&self, _name: &Token) -> Result<Literal, RuntimeError> {
+        // TODO: UPDATE THIS
+        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
+        Err(RuntimeError::new("No value".to_string(), &empty_token))
+    }
 }
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
@@ -216,6 +222,13 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(statement)?;
         println!("{}", value.format());
+        Ok(Literal::Nil)
+    }
+
+    fn visit_var_stmt(&self, _name: &Token, _initializer: &Expr) -> Result<Literal, RuntimeError> {
+        // TODO: UPDATE THIS
+        // let value = self.evaluate(initializer)?;
+        // println!("{}: {}", name.lexeme, value.format());
         Ok(Literal::Nil)
     }
 }

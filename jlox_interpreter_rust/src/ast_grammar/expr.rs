@@ -3,7 +3,12 @@ use crate::scanner::token::{Literal, Token};
 #[derive(Debug, Clone)]
 /// # Expression
 /// Enumerates the different types of expressions.
-/// Expressions are the first syntax tree nodes we see, introduced in “Representing Code”. The main Expr class defines the visitor interface used to dispatch against the specific expression types, and contains the other expression subclasses as nested classes.
+///
+/// ## Differences between Rust and Java implementations
+/// in the book, the author uses a GenerateAST.java class to generate the AST classes. This is not necessary in Rust. The enum and struct syntax achieves the same result in a more straightforward way.
+///
+/// ## First appears in Representing Code (Chapter 5)
+/// "Expressions are the first syntax tree nodes we see, introduced in the _Representing Code_ chapter. The main Expr class defines the visitor interface used to dispatch against the specific expression types, and contains the other expression subclasses as nested classes."
 pub enum Expr {
     Binary {
         left: Box<Expr>,
@@ -20,6 +25,9 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+    Variable {
+        name: Token,
+    },
 }
 
 impl Expr {
@@ -33,6 +41,7 @@ impl Expr {
             Expr::Grouping { expression } => visitor.visit_grouping_expr(expression),
             Expr::Literal { value } => visitor.visit_literal_expr(value),
             Expr::Unary { operator, right } => visitor.visit_unary_expr(operator, right),
+            Expr::Variable { name } => visitor.visit_variable_expr(name),
         }
     }
 }
@@ -42,4 +51,5 @@ pub trait ExprVisitor<R> {
     fn visit_grouping_expr(&self, expression: &Expr) -> R;
     fn visit_literal_expr(&self, value: &Option<Literal>) -> R;
     fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> R;
+    fn visit_variable_expr(&self, name: &Token) -> R;
 }
