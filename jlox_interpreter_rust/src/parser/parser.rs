@@ -407,17 +407,10 @@ impl<'a> Parser<'a> {
                 return Ok(self.advance().unwrap());
             }
             false => match self.peek() {
-                Some(next_token) => {
-                    // println!(
-                    //     "sending parse error {:?} : {:?}",
-                    //     next_token,
-                    //     self.previous()
-                    // );
-                    Err(ParseError::new(message, self.previous().unwrap()))
-                }
+                Some(next_token) => Err(self.error(next_token, message)),
                 None => {
                     return Err(ParseError::new(
-                        &"Token not found".to_string(),
+                        &"No token found".to_string(),
                         &self.empty_token,
                     ));
                 }
@@ -431,11 +424,16 @@ impl<'a> Parser<'a> {
     ///
     /// The error() method returns the error instead of throwing it because we want to let the calling method inside the parser decide whether to unwind or not.
     ///
-    // fn error(&self, token: &Token, message: String) -> ParseError {
-    //     ParseError::new(&message, token)
-    //     // self.lox.as_ref().error(LoxError::ParseError(error));
-    //     // error
-    // }
+    fn error(&self, token: &Token, message: &str) -> ParseError {
+        match token.token_type {
+            TokenType::Eof => {
+                return ParseError::new(&"Unexpected end of file.".to_string(), token);
+            }
+            _ => {
+                return ParseError::new(message, self.previous().unwrap());
+            }
+        }
+    }
 
     /// # synchronize
     ///
