@@ -430,7 +430,7 @@ impl<'a> Parser<'a> {
                 return ParseError::new(&"Unexpected end of file.".to_string(), token);
             }
             _ => {
-                return ParseError::new(message, self.previous().unwrap());
+                return ParseError::new(message, token);
             }
         }
     }
