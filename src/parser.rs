@@ -1,9 +1,8 @@
 use crate::ast_grammar::stmt::Stmt;
-use crate::scanner::token::{self, Token, TokenType};
+use crate::ast_grammar::token::{self, Token, TokenType};
+use crate::error::parse_error::ParseError;
 
 use crate::ast_grammar::expr::Expr;
-
-use super::parse_error::ParseError;
 
 pub struct Parser<'a> {
     current: usize,

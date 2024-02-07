@@ -7,10 +7,11 @@ use std::{
 };
 
 use crate::{
-    interpreter::{interpreter::Interpreter, runtime_error::RuntimeError},
-    parser::{parse_error::ParseError, parser::Parser},
-    scanner::scanner::Scanner,
-    scanner::{error::ErrorReporter, token::Literal},
+    ast_grammar::token::Literal,
+    error::{error::ErrorReporter, parse_error::ParseError, runtime_error::RuntimeError},
+    interpreter::Interpreter,
+    parser::Parser,
+    scanner::Scanner,
 };
 
 pub enum LoxError {

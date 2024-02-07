@@ -1,8 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
+use crate::error::error::ErrorReporter;
+
 // use super to access a sibling sub module
-use super::error::ErrorReporter;
-use super::token::{Literal, Token, TokenType};
+use crate::ast_grammar::token::{Literal, Token, TokenType};
 
 pub struct Scanner {
     source: String,

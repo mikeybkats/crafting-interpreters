@@ -1,4 +1,4 @@
-use crate::scanner::token::{Literal, Token};
+use super::token::{Literal, Token};
 
 #[derive(Debug, Clone)]
 /// # Expression

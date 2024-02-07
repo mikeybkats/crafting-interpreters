@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::scanner::token::Token;
+use crate::ast_grammar::token::Token;
 
 #[derive(Debug)]
 pub struct ParseError {

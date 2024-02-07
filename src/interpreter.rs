@@ -1,9 +1,7 @@
-use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
-use crate::scanner::token::{Literal, Token, TokenType};
-
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
-
-use super::runtime_error::RuntimeError;
+use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
+use crate::ast_grammar::token::{Literal, Token, TokenType};
+use crate::error::runtime_error::RuntimeError;
 
 pub struct Interpreter;
 impl Interpreter {
