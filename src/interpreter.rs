@@ -1,10 +1,19 @@
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
+use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
 
-pub struct Interpreter;
+pub struct Interpreter {
+    _environment: Environment,
+}
 impl Interpreter {
+    pub fn new() -> Self {
+        Self {
+            _environment: Environment::new(),
+        }
+    }
+
     pub fn interpret(&self, statements: Vec<Stmt>) -> Result<Literal, RuntimeError> {
         for statement in statements {
             match self.execute(&statement) {
@@ -17,14 +26,14 @@ impl Interpreter {
     }
 
     pub fn execute(&self, statement: &Stmt) -> Result<Literal, RuntimeError> {
-        match statement.accept(&Self) {
+        match statement.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
 
     pub fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
-        match expression.accept(&Self) {
+        match expression.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
         }

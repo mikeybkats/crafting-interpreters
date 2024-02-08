@@ -95,7 +95,8 @@ impl Lox {
 
         match statements {
             Ok(stmts) => {
-                let result = Interpreter.interpret(stmts);
+                let interpreter = Interpreter::new();
+                let result = interpreter.interpret(stmts);
                 match result {
                     Ok(literal) => match literal {
                         Literal::Str(s) => println!("{}", s),
