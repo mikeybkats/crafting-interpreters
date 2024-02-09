@@ -1,7 +1,10 @@
-use crate::scanner::token::Token;
+use crate::ast_grammar::token::Token;
 use std::fmt;
 
 #[derive(Debug)]
+/// # RuntimeError
+///
+/// Runtime errors get reported by the interpreter when it encounters an error during runtime.
 pub struct RuntimeError {
     message: String,
     token: Token,

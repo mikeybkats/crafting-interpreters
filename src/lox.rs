@@ -7,10 +7,11 @@ use std::{
 };
 
 use crate::{
-    interpreter::{interpreter::Interpreter, runtime_error::RuntimeError},
-    parser::{parse_error::ParseError, parser::Parser},
-    scanner::scanner::Scanner,
-    scanner::{error::ErrorReporter, token::Literal},
+    ast_grammar::token::Literal,
+    error::{error::ErrorReporter, parse_error::ParseError, runtime_error::RuntimeError},
+    interpreter::Interpreter,
+    parser::Parser,
+    scanner::Scanner,
 };
 
 pub enum LoxError {
@@ -94,7 +95,8 @@ impl Lox {
 
         match statements {
             Ok(stmts) => {
-                let result = Interpreter.interpret(stmts);
+                let interpreter = Interpreter::new();
+                let result = interpreter.interpret(stmts);
                 match result {
                     Ok(literal) => match literal {
                         Literal::Str(s) => println!("{}", s),

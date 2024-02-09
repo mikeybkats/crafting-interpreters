@@ -1,12 +1,12 @@
 use crate::{
     ast_grammar::expr::{Expr, ExprVisitor},
-    scanner::token::{Literal, Token},
+    ast_grammar::token::{Literal, Token},
 };
 
 #[derive(Debug)]
 pub struct RPNPrinter;
 impl RPNPrinter {
-    pub fn print(expr: Expr) -> String {
+    pub fn _print(expr: Expr) -> String {
         return expr.accept(&Self);
     }
 

@@ -1,12 +1,11 @@
 use std::{env, process};
 
-use ast_grammar::expr::Expr;
-use scanner::token::{Literal, Token, TokenType};
-
-use crate::{ast_printer::ast_printer::AstPrinter, lox::Lox, rpn_printer::rpn_printer::RPNPrinter};
+use crate::lox::Lox;
 
 mod ast_grammar;
 mod ast_printer;
+mod environment;
+mod error;
 mod interpreter;
 mod lox;
 mod parser;

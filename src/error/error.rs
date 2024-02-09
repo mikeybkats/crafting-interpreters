@@ -1,4 +1,5 @@
-use crate::{interpreter::runtime_error::RuntimeError, parser::parse_error::ParseError};
+use super::parse_error::ParseError;
+use super::runtime_error::RuntimeError;
 
 pub struct ErrorReporter {
     had_error: bool,

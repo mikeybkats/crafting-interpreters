@@ -1,14 +1,12 @@
 use crate::ast_grammar::stmt::Stmt;
-use crate::scanner::token::{self, Token, TokenType};
+use crate::ast_grammar::token::{self, Token, TokenType};
+use crate::error::parse_error::ParseError;
 
 use crate::ast_grammar::expr::Expr;
-
-use super::parse_error::ParseError;
 
 pub struct Parser<'a> {
     current: usize,
     tokens: &'a Vec<Token>,
-    // lox: Box<&'a Lox>,
     empty_token: Token,
 }
 
@@ -17,7 +15,6 @@ impl<'a> Parser<'a> {
         Self {
             current: 0,
             tokens,
-            // lox: Box::new(lox),
             empty_token: Token::new(TokenType::Nil, "".to_string(), Some(token::Literal::Nil), 0),
         }
     }
@@ -79,11 +76,11 @@ impl<'a> Parser<'a> {
     /// # declaration
     /// Called repeatedly when parsing statments in either block or script mode
     /// This is the where the application should synchronize when the parser panics.
-    fn declaration(&mut self) -> Result<Stmt, ParseError> {
-        match self.var_declaration() {
+    fn _declaration(&mut self) -> Result<Stmt, ParseError> {
+        match self._var_declaration() {
             Ok(stmt) => Ok(stmt),
             Err(e) => {
-                self.synchronize();
+                self._synchronize();
                 Err(e)
             }
         }
@@ -113,7 +110,7 @@ impl<'a> Parser<'a> {
 
     /// # var_declaration
     /// parse a variable declaration
-    fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
+    fn _var_declaration(&mut self) -> Result<Stmt, ParseError> {
         let name;
         // consume once and advance the cursor
         // hate this syntax
@@ -135,7 +132,7 @@ impl<'a> Parser<'a> {
             "Expect ';' after variable declaration.",
         )?;
 
-        Ok(Stmt::Var {
+        Ok(Stmt::_Var {
             name: name.clone(),
             initializer: Box::new(initializer.unwrap()),
         })
@@ -439,7 +436,7 @@ impl<'a> Parser<'a> {
     ///
     /// Catches exceptions at statement boundaries, and brings the parser to the correct state. This prevents unwanted error messages from polluting the user's dev experience.
     ///
-    fn synchronize(&mut self) {
+    fn _synchronize(&mut self) {
         self.advance();
 
         while !self.is_at_end() {

@@ -1,6 +1,4 @@
-use crate::scanner::token::Token;
-
-use super::expr::Expr;
+use super::{expr::Expr, token::Token};
 
 #[derive(Debug, Clone)]
 /// # Stmt
