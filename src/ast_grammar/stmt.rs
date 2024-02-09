@@ -6,7 +6,7 @@ use super::{expr::Expr, token::Token};
 pub enum Stmt {
     Expression { expression: Box<Expr> },
     Print { expression: Box<Expr> },
-    _Var { name: Token, initializer: Box<Expr> },
+    Var { name: Token, initializer: Box<Expr> },
 }
 
 impl Stmt {
@@ -14,7 +14,7 @@ impl Stmt {
         match self {
             Stmt::Expression { expression } => visitor.visit_expression_stmt(expression),
             Stmt::Print { expression } => visitor.visit_print_stmt(expression),
-            Stmt::_Var { name, initializer } => visitor.visit_var_stmt(name, initializer),
+            Stmt::Var { name, initializer } => visitor.visit_var_stmt(name, initializer),
         }
     }
 }

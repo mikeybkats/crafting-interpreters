@@ -1,15 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{ast_grammar::token::Token, error::runtime_error::RuntimeError};
+use crate::{
+    ast_grammar::token::{Literal, Token},
+    error::runtime_error::RuntimeError,
+};
 
-pub enum EnvValue {
-    _String(String),
-    _Number(f64),
-    _Boolean(bool),
-    _Nil,
-}
 pub struct Environment {
-    pub values: HashMap<String, EnvValue>,
+    pub values: HashMap<String, Literal>,
 }
 
 impl Environment {
@@ -19,9 +16,13 @@ impl Environment {
         }
     }
 
-    pub fn _get_value(&self, token: &Token) -> Result<&EnvValue, RuntimeError> {
+    pub fn define(&mut self, name: String, value: Literal) {
+        self.values.insert(name, value);
+    }
+
+    pub fn get_value(&self, token: &Token) -> Result<Literal, RuntimeError> {
         match self.values.get(&token.lexeme) {
-            Some(value) => return Ok(value),
+            Some(value) => return Ok(value.clone()),
             _ => {
                 return Err(RuntimeError::new(
                     format!("Undefined variable '{}'.", token.lexeme),
@@ -56,10 +57,10 @@ mod tests {
         };
 
         env.values
-            .insert(token_number.lexeme.clone(), EnvValue::_Number(42.0));
+            .insert(token_number.lexeme.clone(), Literal::Number(42.0));
 
         match env._get_value(&token_number) {
-            Ok(EnvValue::_Number(n)) => assert_eq!(*n, 42.0),
+            Ok(Literal::Number(n)) => assert_eq!(*n, 42.0),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -72,11 +73,11 @@ mod tests {
 
         env.values.insert(
             token_string.lexeme.clone(),
-            EnvValue::_String("testString".to_string()),
+            Literal::String("testString".to_string()),
         );
 
         match env._get_value(&token_string) {
-            Ok(EnvValue::_String(s)) => assert_eq!(*s, "testString"),
+            Ok(Literal::String(s)) => assert_eq!(*s, "testString"),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -88,10 +89,10 @@ mod tests {
         };
 
         env.values
-            .insert(token_boolean.lexeme.clone(), EnvValue::_Boolean(false));
+            .insert(token_boolean.lexeme.clone(), Literal::Boolean(false));
 
         match env._get_value(&token_boolean) {
-            Ok(EnvValue::_Boolean(b)) => assert_eq!(*b, false),
+            Ok(Literal::Boolean(b)) => assert_eq!(*b, false),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -102,10 +103,10 @@ mod tests {
             line: 1,
         };
 
-        env.values.insert(token_nil.lexeme.clone(), EnvValue::_Nil);
+        env.values.insert(token_nil.lexeme.clone(), Literal::Nil);
 
         match env._get_value(&token_nil) {
-            Ok(EnvValue::_Nil) => assert!(true),
+            Ok(Literal::Nil) => assert!(true),
             _ => panic!("Value not found or not a number"),
         };
     }
