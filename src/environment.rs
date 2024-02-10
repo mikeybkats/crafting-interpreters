@@ -57,10 +57,10 @@ mod tests {
         };
 
         env.values
-            .insert(token_number.lexeme.clone(), Literal::Number(42.0));
+            .insert(token_number.lexeme.clone(), Literal::Num(42.0));
 
-        match env._get_value(&token_number) {
-            Ok(Literal::Number(n)) => assert_eq!(*n, 42.0),
+        match env.get_value(&token_number) {
+            Ok(Literal::Num(n)) => assert_eq!(n, 42.0),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -73,11 +73,11 @@ mod tests {
 
         env.values.insert(
             token_string.lexeme.clone(),
-            Literal::String("testString".to_string()),
+            Literal::Str("testString".to_string()),
         );
 
-        match env._get_value(&token_string) {
-            Ok(Literal::String(s)) => assert_eq!(*s, "testString"),
+        match env.get_value(&token_string) {
+            Ok(Literal::Str(s)) => assert_eq!(s, "testString"),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -89,10 +89,10 @@ mod tests {
         };
 
         env.values
-            .insert(token_boolean.lexeme.clone(), Literal::Boolean(false));
+            .insert(token_boolean.lexeme.clone(), Literal::Bool(false));
 
-        match env._get_value(&token_boolean) {
-            Ok(Literal::Boolean(b)) => assert_eq!(*b, false),
+        match env.get_value(&token_boolean) {
+            Ok(Literal::Bool(b)) => assert_eq!(b, false),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -105,7 +105,7 @@ mod tests {
 
         env.values.insert(token_nil.lexeme.clone(), Literal::Nil);
 
-        match env._get_value(&token_nil) {
+        match env.get_value(&token_nil) {
             Ok(Literal::Nil) => assert!(true),
             _ => panic!("Value not found or not a number"),
         };

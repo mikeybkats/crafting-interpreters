@@ -91,11 +91,11 @@ impl Lox {
 
         let mut parser = Parser::new(tokens);
 
-        let statements = parser.parse();
+        let mut statements = parser.parse();
 
-        match statements {
+        match &mut statements {
             Ok(stmts) => {
-                let interpreter = Interpreter::new();
+                let mut interpreter = Interpreter::new();
                 let result = interpreter.interpret(stmts);
                 match result {
                     Ok(literal) => match literal {
@@ -107,7 +107,7 @@ impl Lox {
                     Err(error) => self.error(LoxError::RuntimeError(error)),
                 }
             }
-            Err(error) => self.error(LoxError::ParseError(error)),
+            Err(error) => self.error(LoxError::ParseError(error.clone())),
         }
     }
 }

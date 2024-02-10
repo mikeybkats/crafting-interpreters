@@ -10,6 +10,10 @@ use super::token::{Literal, Token};
 /// ## First appears in Representing Code (Chapter 5)
 /// "Expressions are the first syntax tree nodes we see, introduced in the _Representing Code_ chapter. The main Expr class defines the visitor interface used to dispatch against the specific expression types, and contains the other expression subclasses as nested classes."
 pub enum Expr {
+    Assign {
+        name: Token,
+        value: Box<Expr>,
+    },
     Binary {
         left: Box<Expr>,
         operator: Token,
@@ -33,6 +37,7 @@ pub enum Expr {
 impl Expr {
     pub fn accept<R>(&self, visitor: &impl ExprVisitor<R>) -> R {
         match self {
+            Expr::Assign { name, value } => visitor.visit_assign_expr(name, value),
             Expr::Binary {
                 left,
                 operator,
@@ -47,6 +52,7 @@ impl Expr {
 }
 
 pub trait ExprVisitor<R> {
+    fn visit_assign_expr(&self, name: &Token, value: &Expr) -> R;
     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_grouping_expr(&self, expression: &Expr) -> R;
     fn visit_literal_expr(&self, value: &Option<Literal>) -> R;

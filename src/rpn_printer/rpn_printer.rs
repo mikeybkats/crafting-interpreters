@@ -35,8 +35,13 @@ impl ExprVisitor<String> for RPNPrinter {
         self.reverse_notation(operator.lexeme.clone(), vec![right])
     }
 
-    fn visit_variable_expr(&self, name: &Token) -> String {
-        // TODO: UPDATE THIS
-        name.lexeme.clone()
+    fn visit_variable_expr(&self, _name: &Token) -> String {
+        // TODO: Implement this
+        String::new()
+    }
+
+    fn visit_assign_expr(&self, _name: &Token, _value: &Expr) -> String {
+        // TODO: Implement this
+        String::new()
     }
 }

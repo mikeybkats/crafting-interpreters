@@ -1,7 +1,7 @@
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
-use crate::environment::{EnvValue, Environment};
+use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
 
 pub struct Interpreter {
@@ -14,9 +14,9 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&self, statements: Vec<Stmt>) -> Result<Literal, RuntimeError> {
+    pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Literal, RuntimeError> {
         for statement in statements {
-            match self.execute(&statement) {
+            match self.execute(statement) {
                 Ok(value) => return Ok(value),
                 Err(e) => return Err(e),
             }
@@ -25,7 +25,7 @@ impl Interpreter {
         Ok(Literal::Nil)
     }
 
-    pub fn execute(&self, statement: &Stmt) -> Result<Literal, RuntimeError> {
+    pub fn execute(&mut self, statement: &mut Stmt) -> Result<Literal, RuntimeError> {
         match statement.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -148,10 +148,12 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 Ok(Literal::Str(format!("{}{}", left_str, right_str)))
             }
 
-            // Handle addition of string and number concatenation
+            // Handle addition of number and string concatenation
             (TokenType::Plus, Literal::Num(left_num), Literal::Str(right_str)) => {
                 Ok(Literal::Str(format!("{}{}", left_num, right_str)))
             }
+
+            // Handle addition of string and number concatenation
             (TokenType::Plus, Literal::Str(left_str), Literal::Num(right_num)) => {
                 Ok(Literal::Str(format!("{}{}", left_str, right_num)))
             }
@@ -217,6 +219,10 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_variable_expr(&self, name: &Token) -> Result<Literal, RuntimeError> {
         self.environment.get_value(name)
     }
+
+    fn visit_assign_expr(&self, _name: &Token, _value: &Expr) -> Result<Literal, RuntimeError> {
+        Ok(Literal::Nil)
+    }
 }
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
@@ -230,10 +236,15 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
         Ok(Literal::Nil)
     }
 
-    fn visit_var_stmt(&self, name: &Token, initializer: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_var_stmt(
+        &mut self,
+        name: &Token,
+        initializer: &Expr,
+    ) -> Result<Literal, RuntimeError> {
+        println!("visit var statment - name: {:?}", name);
         match self.evaluate(initializer) {
             Ok(value) => {
-                self.environment.define(name.lexeme, value);
+                self.environment.define(name.lexeme.clone(), value.clone());
                 return Ok(value);
             }
             Err(e) => return Err(e),
