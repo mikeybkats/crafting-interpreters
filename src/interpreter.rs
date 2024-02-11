@@ -232,6 +232,7 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
     fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(statement)?;
+        println!("{}", value.format());
         Ok(Literal::Nil)
     }
 

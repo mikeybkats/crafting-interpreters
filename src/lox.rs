@@ -96,15 +96,8 @@ impl Lox {
         let mut statements = parser.parse();
 
         if let Ok(stmts) = &mut statements {
-            let result = self.interpreter.borrow_mut().interpret(stmts);
-            match result {
-                Ok(literal) => match literal {
-                    Literal::Str(s) => println!("{}", s),
-                    Literal::Num(n) => println!("{}", n),
-                    Literal::Bool(b) => println!("{}", b),
-                    Literal::Nil => (),
-                },
-                Err(error) => self.error(LoxError::RuntimeError(error)),
+            if let Err(error) = self.interpreter.borrow_mut().interpret(stmts) {
+                self.error(LoxError::RuntimeError(error));
             }
         } else if let Err(error) = statements {
             self.error(LoxError::ParseError(error));
