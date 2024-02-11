@@ -27,6 +27,7 @@ impl<'a> Parser<'a> {
     //     return self.expressions();
     // }
     pub fn parse(&mut self) -> Result<Vec<Stmt>, ParseError> {
+        // println!("tokens: {:#?}", self.tokens);
         let mut statements = Vec::new();
 
         while !self.is_at_end() {
@@ -122,6 +123,7 @@ impl<'a> Parser<'a> {
         let name;
         // consume once and advance the cursor
         // hate this syntax
+
         match self.consume(TokenType::Identifier, "Expected variable name.") {
             Ok(token) => name = token.clone(),
             Err(e) => return Err(e),

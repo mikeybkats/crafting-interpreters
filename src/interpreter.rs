@@ -216,8 +216,8 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_variable_expr(&self, name: &Token) -> Result<Literal, RuntimeError> {
-        self.environment.get_value(name)
+    fn visit_variable_expr(&self, token: &Token) -> Result<Literal, RuntimeError> {
+        self.environment.get_value(token)
     }
 
     fn visit_assign_expr(&self, _name: &Token, _value: &Expr) -> Result<Literal, RuntimeError> {
@@ -232,7 +232,6 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
     fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(statement)?;
-        println!("{}", value.format());
         Ok(Literal::Nil)
     }
 
@@ -241,10 +240,10 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
         name: &Token,
         initializer: &Expr,
     ) -> Result<Literal, RuntimeError> {
-        println!("visit var statment - name: {:?}", name);
         match self.evaluate(initializer) {
             Ok(value) => {
                 self.environment.define(name.lexeme.clone(), value.clone());
+
                 return Ok(value);
             }
             Err(e) => return Err(e),

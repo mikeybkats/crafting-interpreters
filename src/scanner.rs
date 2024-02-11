@@ -172,13 +172,28 @@ impl Scanner {
         }
 
         let text = &self.source[self.start..self.current];
+        self.add_token(self.get_token_type(text));
+    }
 
-        match self.keywords.get(text) {
-            Some(token_type) => self.add_token(*token_type),
-            None => self
-                .error_reporter
-                .borrow_mut()
-                .report_error_message(self.line, "Unexpected token"),
+    fn get_token_type(&self, token: &str) -> TokenType {
+        match token {
+            "and" => TokenType::And,
+            "class" => TokenType::Class,
+            "else" => TokenType::Else,
+            "false" => TokenType::False,
+            "for" => TokenType::For,
+            "fun" => TokenType::Fun,
+            "if" => TokenType::If,
+            "nil" => TokenType::Nil,
+            "or" => TokenType::Or,
+            "print" => TokenType::Print,
+            "return" => TokenType::Return,
+            "super" => TokenType::Super,
+            "this" => TokenType::This,
+            "true" => TokenType::True,
+            "var" => TokenType::Var,
+            "while" => TokenType::While,
+            _ => TokenType::Identifier,
         }
     }
 
