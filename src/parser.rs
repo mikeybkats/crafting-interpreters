@@ -68,8 +68,8 @@ impl<'a> Parser<'a> {
     /// Compiles the expression.
     ///
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        self.equality()
-        // self.assignment();
+        // self.equality()
+        self.assignment();
     }
 
     /// # declaration
