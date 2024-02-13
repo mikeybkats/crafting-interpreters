@@ -69,7 +69,7 @@ impl<'a> Parser<'a> {
     ///
     fn expression(&mut self) -> Result<Expr, ParseError> {
         // self.equality()
-        self.assignment();
+        self.assignment()
     }
 
     /// # declaration
@@ -158,6 +158,34 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Expression {
             expression: Box::new(value),
         })
+    }
+
+    /// # assignment
+    /// parse an assignment. Will fail if the variable does not exist.
+    fn assignment(&mut self) -> Result<Expr, ParseError> {
+        let expr = self.equality()?;
+
+        if self.match_symbol(&[TokenType::Equal]) {
+            let equals = self.previous().unwrap().clone();
+            let value = self.assignment()?;
+
+            match expr {
+                Expr::Variable { name } => {
+                    return Ok(Expr::Assign {
+                        name,
+                        value: Box::new(value),
+                    });
+                }
+                _ => {
+                    return Err(ParseError::new(
+                        &"Invalid assignment target.".to_string(),
+                        &equals,
+                    ));
+                }
+            }
+        }
+
+        Ok(expr)
     }
 
     /// # equality

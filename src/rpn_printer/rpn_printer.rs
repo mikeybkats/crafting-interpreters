@@ -40,7 +40,7 @@ impl ExprVisitor<String> for RPNPrinter {
         String::new()
     }
 
-    fn visit_assign_expr(&self, _name: &Token, _value: &Expr) -> String {
+    fn visit_assign_expr(&mut self, _name: &Token, _value: &Expr) -> String {
         // TODO: Implement this
         String::new()
     }

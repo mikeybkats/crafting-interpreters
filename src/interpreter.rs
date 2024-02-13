@@ -220,8 +220,10 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         self.environment.get_value(token)
     }
 
-    fn visit_assign_expr(&self, _name: &Token, _value: &Expr) -> Result<Literal, RuntimeError> {
-        Ok(Literal::Nil)
+    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Literal, RuntimeError> {
+        let value = self.evaluate(value)?;
+        self.environment.assign(name, value.clone());
+        Ok(value)
     }
 }
 

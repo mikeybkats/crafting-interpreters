@@ -52,7 +52,7 @@ impl Expr {
 }
 
 pub trait ExprVisitor<R> {
-    fn visit_assign_expr(&self, name: &Token, value: &Expr) -> R;
+    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> R;
     fn visit_binary_expr(&self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_grouping_expr(&self, expression: &Expr) -> R;
     fn visit_literal_expr(&self, value: &Option<Literal>) -> R;

@@ -16,6 +16,20 @@ impl Environment {
         }
     }
 
+    pub fn assign(&mut self, name: &Token, value: Literal) -> Result<Literal, RuntimeError> {
+        println!("Assigning value: {:?}", value);
+        match self.values.get_mut(&name.lexeme) {
+            Some(v) => {
+                *v = value;
+                Ok(v.clone())
+            }
+            _ => Err(RuntimeError::new(
+                format!("Undefined variable '{}'.", name.lexeme),
+                &name,
+            )),
+        }
+    }
+
     pub fn define(&mut self, name: String, value: Literal) {
         self.values.insert(name, value);
     }
