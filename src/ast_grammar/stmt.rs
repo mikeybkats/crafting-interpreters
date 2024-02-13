@@ -20,7 +20,7 @@ impl Stmt {
 }
 
 pub trait StmtVisitor<R> {
-    fn visit_expression_stmt(&self, expression: &Expr) -> R;
-    fn visit_print_stmt(&self, expression: &Expr) -> R;
+    fn visit_expression_stmt(&mut self, expression: &Expr) -> R;
+    fn visit_print_stmt(&mut self, expression: &Expr) -> R;
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> R;
 }

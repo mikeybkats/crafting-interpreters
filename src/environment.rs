@@ -17,7 +17,6 @@ impl Environment {
     }
 
     pub fn assign(&mut self, name: &Token, value: Literal) -> Result<Literal, RuntimeError> {
-        println!("Assigning value: {:?}", value);
         match self.values.get_mut(&name.lexeme) {
             Some(v) => {
                 *v = value;

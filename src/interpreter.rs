@@ -32,7 +32,7 @@ impl Interpreter {
         }
     }
 
-    pub fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    pub fn evaluate(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match expression.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -84,7 +84,7 @@ impl Interpreter {
 
 impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_binary_expr(
-        &self,
+        &mut self,
         left: &Expr,
         operator: &Token,
         right: &Expr,
@@ -187,11 +187,11 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_grouping_expr(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
         self.evaluate(expression)
     }
 
-    fn visit_literal_expr(&self, value: &Option<Literal>) -> Result<Literal, RuntimeError> {
+    fn visit_literal_expr(&mut self, value: &Option<Literal>) -> Result<Literal, RuntimeError> {
         let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
 
         match value {
@@ -200,7 +200,11 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_unary_expr(
+        &mut self,
+        operator: &Token,
+        right: &Expr,
+    ) -> Result<Literal, RuntimeError> {
         let right_literal = self.evaluate(right)?;
         let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
 
@@ -216,23 +220,25 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_variable_expr(&self, token: &Token) -> Result<Literal, RuntimeError> {
+    fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
         self.environment.get_value(token)
     }
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(value)?;
-        self.environment.assign(name, value.clone());
-        Ok(value)
+        match self.environment.assign(name, value.clone()) {
+            Ok(_) => Ok(value),
+            Err(e) => Err(e),
+        }
     }
 }
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
-    fn visit_expression_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
         self.evaluate(statement)
     }
 
-    fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(statement)?;
         println!("{}", value.format());
         Ok(Literal::Nil)
