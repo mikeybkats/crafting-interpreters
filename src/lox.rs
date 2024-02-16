@@ -1,13 +1,14 @@
+use std::io::{BufRead, Read, Write};
 use std::{
     cell::RefCell,
     fs,
-    io::{self, BufRead, Write},
+    io::{self},
     process,
     rc::Rc,
 };
 
 use crate::{
-    ast_grammar::token::Literal,
+    // ast_grammar::token::Literal,
     error::{error::ErrorReporter, parse_error::ParseError, runtime_error::RuntimeError},
     interpreter::Interpreter,
     parser::Parser,
@@ -81,6 +82,31 @@ impl Lox {
                     break;
                 }
                 Ok(_) => break, // EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn run_prompt_multiline(&mut self) -> io::Result<()> {
+        let input = io::stdin();
+        let mut reader = input.lock();
+
+        println!("\n\n---------------------------------------");
+        println!("--- Welcome to Lox (multiline mode) ---");
+        println!("---------------------------------------");
+        println!("Ctrl-D to finish input and run the code \n\n");
+
+        let mut lines = String::new();
+        match reader.read_to_string(&mut lines) {
+            Ok(_) => {
+                self.run(lines);
+            }
+            Err(error) => {
+                self.error_reporter.borrow_mut().set_error(false);
+                self.error_reporter
+                    .borrow_mut()
+                    .report_error_message(0, &error.to_string());
             }
         }
 

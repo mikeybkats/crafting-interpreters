@@ -13,7 +13,7 @@ pub struct Scanner {
     current: usize,
     line: usize,
     error_reporter: Rc<RefCell<ErrorReporter>>,
-    keywords: HashMap<String, TokenType>,
+    // keywords: HashMap<String, TokenType>,
 }
 impl Scanner {
     pub fn new(source: String, error_reporter: Rc<RefCell<ErrorReporter>>) -> Self {
@@ -45,7 +45,7 @@ impl Scanner {
             current: 0,
             line: 1,
             error_reporter,
-            keywords,
+            // keywords,
         }
     }
 

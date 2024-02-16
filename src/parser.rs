@@ -27,7 +27,6 @@ impl<'a> Parser<'a> {
     //     return self.expressions();
     // }
     pub fn parse(&mut self) -> Result<Vec<Stmt>, ParseError> {
-        // println!("tokens: {:#?}", self.tokens);
         let mut statements = Vec::new();
 
         while !self.is_at_end() {
@@ -101,6 +100,9 @@ impl<'a> Parser<'a> {
         if self.match_symbol(&[TokenType::Print]) {
             return self.print_statement();
         }
+        if self.match_symbol(&[TokenType::LeftBrace]) {
+            return self.block();
+        }
 
         self.expression_statement()
     }
@@ -121,8 +123,6 @@ impl<'a> Parser<'a> {
     /// parse a variable declaration
     fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
         let name;
-        // consume once and advance the cursor
-        // hate this syntax
 
         match self.consume(TokenType::Identifier, "Expected variable name.") {
             Ok(token) => name = token.clone(),
@@ -158,6 +158,21 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Expression {
             expression: Box::new(value),
         })
+    }
+
+    fn block(&mut self) -> Result<Stmt, ParseError> {
+        let mut statements = Vec::new();
+
+        while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
+            match self.declaration() {
+                Ok(stmt) => statements.push(stmt),
+                Err(e) => return Err(e),
+            }
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
+
+        Ok(Stmt::Block { statements })
     }
 
     /// # assignment

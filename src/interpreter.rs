@@ -14,15 +14,16 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Literal, RuntimeError> {
+    pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
+        let mut results = Vec::new();
         for statement in statements {
             match self.execute(statement) {
-                Ok(value) => return Ok(value),
+                Ok(value) => results.push(value),
                 Err(e) => return Err(e),
             }
         }
 
-        Ok(Literal::Nil)
+        Ok(results)
     }
 
     pub fn execute(&mut self, statement: &mut Stmt) -> Result<Literal, RuntimeError> {
@@ -30,6 +31,27 @@ impl Interpreter {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
+    }
+
+    pub fn execute_block_stmt(
+        &mut self,
+        statements: &mut Vec<Stmt>,
+        environment: Environment,
+    ) -> Result<Literal, RuntimeError> {
+        let previous = self.environment.clone();
+        self.environment = environment;
+
+        let mut results = Vec::new();
+        for statement in statements {
+            match self.execute(statement) {
+                Ok(value) => results.push(value),
+                Err(e) => return Err(e),
+            }
+        }
+
+        self.environment = previous;
+
+        return Ok(Literal::Nil);
     }
 
     pub fn evaluate(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
@@ -258,4 +280,13 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
             Err(e) => return Err(e),
         }
     }
+
+    fn visit_block_stmt(&mut self, statements: &mut Vec<Stmt>) -> Result<Literal, RuntimeError> {
+        self.execute_block_stmt(
+            statements,
+            Environment::with_enclosing(self.environment.clone()),
+        )
+    }
 }
+
+// impl BlockStmtVisitor<Result<Vec<Literal>, RuntimeError>> for Interpreter {}

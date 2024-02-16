@@ -36,6 +36,7 @@ pub enum Expr {
 
 impl Expr {
     pub fn accept<R>(&self, visitor: &mut impl ExprVisitor<R>) -> R {
+        // println!("Expr::accept: {:#?}", self);
         match self {
             Expr::Assign { name, value } => visitor.visit_assign_expr(name, value),
             Expr::Binary {

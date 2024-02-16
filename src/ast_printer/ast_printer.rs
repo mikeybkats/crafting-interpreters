@@ -38,7 +38,7 @@ impl ExprVisitor<String> for AstPrinter {
         name.lexeme.clone()
     }
 
-    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> String {
+    fn visit_assign_expr(&mut self, _name: &Token, _value: &Expr) -> String {
         // TODO: Implement this
         String::new()
     }

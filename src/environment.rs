@@ -5,13 +5,24 @@ use crate::{
     error::runtime_error::RuntimeError,
 };
 
+#[derive(Debug, Clone)]
 pub struct Environment {
     pub values: HashMap<String, Literal>,
+    pub enclosing: Option<Box<Environment>>,
 }
 
 impl Environment {
     pub fn new() -> Self {
         Self {
+            enclosing: None,
+            values: HashMap::new(),
+        }
+    }
+
+    // Secondary constructor: With an enclosing environment
+    pub fn with_enclosing(enclosing: Environment) -> Self {
+        Environment {
+            enclosing: Some(Box::new(enclosing)),
             values: HashMap::new(),
         }
     }
@@ -22,10 +33,20 @@ impl Environment {
                 *v = value;
                 Ok(v.clone())
             }
-            _ => Err(RuntimeError::new(
-                format!("Undefined variable '{}'.", name.lexeme),
-                &name,
-            )),
+            _ => {
+                if self.enclosing.is_some() {
+                    return self
+                        .enclosing
+                        .as_mut()
+                        .unwrap_or_else(|| panic!("Enclosing environment is None"))
+                        .assign(name, value);
+                } else {
+                    return Err(RuntimeError::new(
+                        format!("Undefined variable '{}'.", name.lexeme),
+                        name,
+                    ));
+                }
+            }
         }
     }
 
@@ -37,10 +58,18 @@ impl Environment {
         match self.values.get(&token.lexeme) {
             Some(value) => return Ok(value.clone()),
             _ => {
-                return Err(RuntimeError::new(
-                    format!("Undefined variable '{}'.", token.lexeme),
-                    token,
-                ))
+                if self.enclosing.is_some() {
+                    return self
+                        .enclosing
+                        .as_ref()
+                        .unwrap_or_else(|| panic!("Enclosing environment is None"))
+                        .get_value(token);
+                } else {
+                    return Err(RuntimeError::new(
+                        format!("Undefined variable '{}'.", token.lexeme),
+                        token,
+                    ));
+                }
             }
         }
     }
