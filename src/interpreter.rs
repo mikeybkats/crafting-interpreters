@@ -1,7 +1,7 @@
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
-use crate::environment::{EnvValue, Environment};
+use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
 
 pub struct Interpreter {
@@ -14,25 +14,53 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&self, statements: Vec<Stmt>) -> Result<Literal, RuntimeError> {
+    pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
+        let mut results = Vec::new();
         for statement in statements {
-            match self.execute(&statement) {
-                Ok(value) => return Ok(value),
+            match self.execute(statement) {
+                Ok(value) => results.push(value),
                 Err(e) => return Err(e),
             }
         }
 
-        Ok(Literal::Nil)
+        Ok(results)
     }
 
-    pub fn execute(&self, statement: &Stmt) -> Result<Literal, RuntimeError> {
+    pub fn execute(&mut self, statement: &mut Stmt) -> Result<Literal, RuntimeError> {
+        // match statement {
+        //     Stmt::Expression { expression } => statement.accept(self),
+        //     Stmt::Print { expression } => statement.accept(self),
+        //     Stmt::Var { name, initializer } => statement.accept(self),
+        //     Stmt::Block { statements } => statement.accept(self),
+        // }
         match statement.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
 
-    pub fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    pub fn execute_block_stmt(
+        &mut self,
+        statements: &mut Vec<Stmt>,
+        environment: Environment,
+    ) -> Result<Literal, RuntimeError> {
+        let previous = self.environment.clone();
+        self.environment = environment;
+
+        let mut results = Vec::new();
+        for statement in statements {
+            match self.execute(statement) {
+                Ok(value) => results.push(value),
+                Err(e) => return Err(e),
+            }
+        }
+
+        self.environment = previous;
+
+        return Ok(Literal::Nil);
+    }
+
+    pub fn evaluate(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
         match expression.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -84,7 +112,7 @@ impl Interpreter {
 
 impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_binary_expr(
-        &self,
+        &mut self,
         left: &Expr,
         operator: &Token,
         right: &Expr,
@@ -148,10 +176,12 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 Ok(Literal::Str(format!("{}{}", left_str, right_str)))
             }
 
-            // Handle addition of string and number concatenation
+            // Handle addition of number and string concatenation
             (TokenType::Plus, Literal::Num(left_num), Literal::Str(right_str)) => {
                 Ok(Literal::Str(format!("{}{}", left_num, right_str)))
             }
+
+            // Handle addition of string and number concatenation
             (TokenType::Plus, Literal::Str(left_str), Literal::Num(right_num)) => {
                 Ok(Literal::Str(format!("{}{}", left_str, right_num)))
             }
@@ -185,11 +215,11 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_grouping_expr(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
         self.evaluate(expression)
     }
 
-    fn visit_literal_expr(&self, value: &Option<Literal>) -> Result<Literal, RuntimeError> {
+    fn visit_literal_expr(&mut self, value: &Option<Literal>) -> Result<Literal, RuntimeError> {
         let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
 
         match value {
@@ -198,7 +228,11 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_unary_expr(
+        &mut self,
+        operator: &Token,
+        right: &Expr,
+    ) -> Result<Literal, RuntimeError> {
         let right_literal = self.evaluate(right)?;
         let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
 
@@ -214,29 +248,70 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_variable_expr(&self, name: &Token) -> Result<Literal, RuntimeError> {
-        self.environment.get_value(name)
+    fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
+        self.environment.get_value(token)
+    }
+
+    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Literal, RuntimeError> {
+        let value = self.evaluate(value)?;
+        match self.environment.assign(name, value.clone()) {
+            Ok(_) => Ok(value),
+            Err(e) => Err(e),
+        }
     }
 }
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
-    fn visit_expression_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
+        let result;
+        match statement {
+            Expr::Assign { name, value } => result = self.visit_assign_expr(name, value),
+            Expr::Binary {
+                left,
+                operator,
+                right,
+            } => result = self.visit_binary_expr(left, operator, right),
+            Expr::Grouping { expression } => result = self.visit_grouping_expr(expression),
+            Expr::Literal { value } => result = self.visit_literal_expr(value),
+            Expr::Unary { operator, right } => result = self.visit_unary_expr(operator, right),
+            Expr::Variable { name } => result = self.visit_variable_expr(name),
+        }
+
+        match result {
+            Ok(value) => {
+                println!("{}", value.format());
+            }
+            _ => (),
+        }
+
         self.evaluate(statement)
     }
 
-    fn visit_print_stmt(&self, statement: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(statement)?;
         println!("{}", value.format());
         Ok(Literal::Nil)
     }
 
-    fn visit_var_stmt(&self, name: &Token, initializer: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_var_stmt(
+        &mut self,
+        name: &Token,
+        initializer: &Expr,
+    ) -> Result<Literal, RuntimeError> {
         match self.evaluate(initializer) {
             Ok(value) => {
-                self.environment.define(name.lexeme, value);
+                self.environment.define(name.lexeme.clone(), value.clone());
+
                 return Ok(value);
             }
             Err(e) => return Err(e),
         }
+    }
+
+    fn visit_block_stmt(&mut self, statements: &mut Vec<Stmt>) -> Result<Literal, RuntimeError> {
+        self.execute_block_stmt(
+            statements,
+            Environment::with_enclosing(self.environment.clone()),
+        )
     }
 }

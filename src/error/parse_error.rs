@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::ast_grammar::token::Token;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParseError {
     message: String,
     token: Token,

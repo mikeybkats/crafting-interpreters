@@ -1,13 +1,14 @@
+use std::io::{BufRead, Read, Write};
 use std::{
     cell::RefCell,
     fs,
-    io::{self, BufRead, Write},
+    io::{self},
     process,
     rc::Rc,
 };
 
 use crate::{
-    ast_grammar::token::Literal,
+    // ast_grammar::token::Literal,
     error::{error::ErrorReporter, parse_error::ParseError, runtime_error::RuntimeError},
     interpreter::Interpreter,
     parser::Parser,
@@ -21,12 +22,14 @@ pub enum LoxError {
 
 pub struct Lox {
     error_reporter: Rc<RefCell<ErrorReporter>>,
+    interpreter: Rc<RefCell<Interpreter>>,
 }
 impl Lox {
     pub fn new() -> Self {
         Self {
             // use reference counter to count references for any sub impl that will need to report errors
             error_reporter: Rc::new(RefCell::new(ErrorReporter::new())),
+            interpreter: Rc::new(RefCell::new(Interpreter::new())),
         }
     }
 
@@ -85,29 +88,45 @@ impl Lox {
         Ok(())
     }
 
+    pub fn run_prompt_multiline(&mut self) -> io::Result<()> {
+        let input = io::stdin();
+        let mut reader = input.lock();
+
+        println!("\n\n---------------------------------------");
+        println!("--- Welcome to Lox (multiline mode) ---");
+        println!("---------------------------------------");
+        println!("Ctrl-D to finish input and run the code \n\n");
+
+        let mut lines = String::new();
+        match reader.read_to_string(&mut lines) {
+            Ok(_) => {
+                self.run(lines);
+            }
+            Err(error) => {
+                self.error_reporter.borrow_mut().set_error(false);
+                self.error_reporter
+                    .borrow_mut()
+                    .report_error_message(0, &error.to_string());
+            }
+        }
+
+        Ok(())
+    }
+
     fn run(&self, source: String) {
         let mut scanner = Scanner::new(source, Rc::clone(&self.error_reporter));
         let tokens = scanner.scan_tokens();
 
         let mut parser = Parser::new(tokens);
 
-        let statements = parser.parse();
+        let mut statements = parser.parse();
 
-        match statements {
-            Ok(stmts) => {
-                let interpreter = Interpreter::new();
-                let result = interpreter.interpret(stmts);
-                match result {
-                    Ok(literal) => match literal {
-                        Literal::Str(s) => println!("{}", s),
-                        Literal::Num(n) => println!("{}", n),
-                        Literal::Bool(b) => println!("{}", b),
-                        Literal::Nil => (),
-                    },
-                    Err(error) => self.error(LoxError::RuntimeError(error)),
-                }
+        if let Ok(stmts) = &mut statements {
+            if let Err(error) = self.interpreter.borrow_mut().interpret(stmts) {
+                self.error(LoxError::RuntimeError(error));
             }
-            Err(error) => self.error(LoxError::ParseError(error)),
+        } else if let Err(error) = statements {
+            self.error(LoxError::ParseError(error));
         }
     }
 }

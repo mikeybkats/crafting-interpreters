@@ -30,10 +30,7 @@ impl<'a> Parser<'a> {
         let mut statements = Vec::new();
 
         while !self.is_at_end() {
-            match self.statement() {
-                Ok(stmt) => statements.push(stmt),
-                Err(e) => return Err(e),
-            }
+            statements.push(self.declaration()?);
         }
 
         Ok(statements)
@@ -70,18 +67,38 @@ impl<'a> Parser<'a> {
     /// Compiles the expression.
     ///
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        self.equality()
+        // self.equality()
+        self.assignment()
     }
 
     /// # declaration
     /// Called repeatedly when parsing statments in either block or script mode
     /// This is the where the application should synchronize when the parser panics.
-    fn _declaration(&mut self) -> Result<Stmt, ParseError> {
-        match self._var_declaration() {
-            Ok(stmt) => Ok(stmt),
-            Err(e) => {
-                self._synchronize();
-                Err(e)
+    fn declaration(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_symbol(&[TokenType::Var]) {
+            match self.var_declaration() {
+                Ok(stmt) => Ok(stmt),
+                Err(e) => {
+                    self.synchronize();
+                    Err(e)
+                }
+            }
+        } else {
+            match self.statement() {
+                Ok(stmt) => {
+                    // match stmt {
+                    //     Stmt::Expression { expression } => {
+                    //         // println!("Expression: {:#?}", expression.clone());
+                    //         Ok(Stmt::Expression { expression })
+                    //     }
+                    //     _ => Ok(stmt),
+                    // }
+                    Ok(stmt)
+                }
+                Err(e) => {
+                    self.synchronize();
+                    Err(e)
+                }
             }
         }
     }
@@ -91,6 +108,9 @@ impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Stmt, ParseError> {
         if self.match_symbol(&[TokenType::Print]) {
             return self.print_statement();
+        }
+        if self.match_symbol(&[TokenType::LeftBrace]) {
+            return self.block();
         }
 
         self.expression_statement()
@@ -110,10 +130,9 @@ impl<'a> Parser<'a> {
 
     /// # var_declaration
     /// parse a variable declaration
-    fn _var_declaration(&mut self) -> Result<Stmt, ParseError> {
+    fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
         let name;
-        // consume once and advance the cursor
-        // hate this syntax
+
         match self.consume(TokenType::Identifier, "Expected variable name.") {
             Ok(token) => name = token.clone(),
             Err(e) => return Err(e),
@@ -132,7 +151,7 @@ impl<'a> Parser<'a> {
             "Expect ';' after variable declaration.",
         )?;
 
-        Ok(Stmt::_Var {
+        Ok(Stmt::Var {
             name: name.clone(),
             initializer: Box::new(initializer.unwrap()),
         })
@@ -148,6 +167,49 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Expression {
             expression: Box::new(value),
         })
+    }
+
+    fn block(&mut self) -> Result<Stmt, ParseError> {
+        let mut statements = Vec::new();
+
+        while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
+            match self.declaration() {
+                Ok(stmt) => statements.push(stmt),
+                Err(e) => return Err(e),
+            }
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
+
+        Ok(Stmt::Block { statements })
+    }
+
+    /// # assignment
+    /// parse an assignment. Will fail if the variable does not exist.
+    fn assignment(&mut self) -> Result<Expr, ParseError> {
+        let expr = self.equality()?;
+
+        if self.match_symbol(&[TokenType::Equal]) {
+            let equals = self.previous().unwrap().clone();
+            let value = self.assignment()?;
+
+            match expr {
+                Expr::Variable { name } => {
+                    return Ok(Expr::Assign {
+                        name,
+                        value: Box::new(value),
+                    });
+                }
+                _ => {
+                    return Err(ParseError::new(
+                        &"Invalid assignment target.".to_string(),
+                        &equals,
+                    ));
+                }
+            }
+        }
+
+        Ok(expr)
     }
 
     /// # equality
@@ -436,7 +498,7 @@ impl<'a> Parser<'a> {
     ///
     /// Catches exceptions at statement boundaries, and brings the parser to the correct state. This prevents unwanted error messages from polluting the user's dev experience.
     ///
-    fn _synchronize(&mut self) {
+    fn synchronize(&mut self) {
         self.advance();
 
         while !self.is_at_end() {

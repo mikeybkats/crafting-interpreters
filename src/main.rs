@@ -1,4 +1,6 @@
-use std::{env, process};
+use std::env;
+
+use getopts::Options;
 
 use crate::lox::Lox;
 
@@ -17,10 +19,26 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    if args.len() > 2 {
-        println!("Usage: rlox [script[");
-        process::exit(64);
+    let mut opts = Options::new();
+    opts.optflag("", "multiline", "enable multiline mode");
+
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(f) => panic!("{}", f.to_string()),
+    };
+
+    if matches.opt_present("multiline") {
+        let prompt = lox.run_prompt_multiline(); // assuming you have a run_prompt_multiline method
+
+        match prompt {
+            Ok(_value) => (),
+            Err(_e) => (),
+        }
     } else if args.len() == 2 {
+        //     println!("Usage: rlox [script[");
+        //     process::exit(64);
+        // } else if args.len() == 2 {
+        println!("Running file: {}", &args[1]);
         lox.run_file(&args[1]).unwrap();
     } else {
         let prompt = lox.run_prompt();
