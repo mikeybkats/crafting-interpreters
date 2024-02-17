@@ -85,7 +85,16 @@ impl<'a> Parser<'a> {
             }
         } else {
             match self.statement() {
-                Ok(stmt) => Ok(stmt),
+                Ok(stmt) => {
+                    // match stmt {
+                    //     Stmt::Expression { expression } => {
+                    //         // println!("Expression: {:#?}", expression.clone());
+                    //         Ok(Stmt::Expression { expression })
+                    //     }
+                    //     _ => Ok(stmt),
+                    // }
+                    Ok(stmt)
+                }
                 Err(e) => {
                     self.synchronize();
                     Err(e)
