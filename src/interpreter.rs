@@ -27,12 +27,6 @@ impl Interpreter {
     }
 
     pub fn execute(&mut self, statement: &mut Stmt) -> Result<Literal, RuntimeError> {
-        // match statement {
-        //     Stmt::Expression { expression } => statement.accept(self),
-        //     Stmt::Print { expression } => statement.accept(self),
-        //     Stmt::Var { name, initializer } => statement.accept(self),
-        //     Stmt::Block { statements } => statement.accept(self),
-        // }
         match statement.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -263,21 +257,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
-        let result;
-        match statement {
-            Expr::Assign { name, value } => result = self.visit_assign_expr(name, value),
-            Expr::Binary {
-                left,
-                operator,
-                right,
-            } => result = self.visit_binary_expr(left, operator, right),
-            Expr::Grouping { expression } => result = self.visit_grouping_expr(expression),
-            Expr::Literal { value } => result = self.visit_literal_expr(value),
-            Expr::Unary { operator, right } => result = self.visit_unary_expr(operator, right),
-            Expr::Variable { name } => result = self.visit_variable_expr(name),
-        }
-
-        match result {
+        match statement.accept(self) {
             Ok(value) => {
                 println!("{}", value.format());
             }
