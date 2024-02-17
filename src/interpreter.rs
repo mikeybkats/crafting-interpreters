@@ -243,7 +243,16 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
-        self.environment.get_value(token)
+        match self.environment.get_value(token) {
+            Ok(value) => match value {
+                Literal::Nil => Err(RuntimeError::new(
+                    format!("Undefined variable '{}'.", token.lexeme),
+                    token,
+                )),
+                _ => Ok(value),
+            },
+            Err(e) => Err(e),
+        }
     }
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Literal, RuntimeError> {

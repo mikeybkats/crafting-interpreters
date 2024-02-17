@@ -34,7 +34,7 @@ impl ErrorReporter {
     //   }
     pub fn report_runtime_error(&mut self, error: RuntimeError) {
         let (message, token) = error.get_error();
-        eprintln!("[line {}]: {}", token.line, message);
+        eprintln!("Runtime Error - [line {}]: {}", token.line, message);
 
         self.had_error = true;
     }
@@ -42,7 +42,7 @@ impl ErrorReporter {
     pub fn report_parse_error(&mut self, error: ParseError) {
         let (message, token) = error.get_error();
         eprintln!(
-            "[line {}] Error at: {:?} - {}",
+            "Parse Error - [line {}] Error at: {:?} - {}",
             token.line,
             token.lexeme,
             // token.token_type,

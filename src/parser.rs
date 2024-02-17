@@ -153,7 +153,9 @@ impl<'a> Parser<'a> {
 
         Ok(Stmt::Var {
             name: name.clone(),
-            initializer: Box::new(initializer.unwrap()),
+            initializer: Box::new(initializer.unwrap_or_else(|| Expr::Literal {
+                value: Some(token::Literal::Nil),
+            })),
         })
     }
 
