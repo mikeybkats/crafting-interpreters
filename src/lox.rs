@@ -45,6 +45,13 @@ impl Lox {
     }
 
     pub fn run_file(&mut self, path: &str) -> io::Result<()> {
+        println!("\n");
+        println!("--------------");
+        println!("Welcome to Lox");
+        println!("--------------");
+        println!("\n");
+        println!("running file {} \n\n", path);
+
         let bytes = fs::read(path)?;
         let content = String::from_utf8_lossy(&bytes).to_string();
 
@@ -61,8 +68,11 @@ impl Lox {
         let input = io::stdin();
         let mut reader = input.lock();
 
+        println!("\n");
+        println!("--------------");
         println!("Welcome to Lox");
         println!("--------------");
+        println!("\n");
 
         loop {
             print!("> ");

@@ -35,7 +35,6 @@ fn main() {
             Err(_e) => (),
         }
     } else if args.len() == 2 {
-        println!("Running file: {}", &args[1]);
         lox.run_file(&args[1]).unwrap();
     } else {
         let prompt = lox.run_prompt();
