@@ -97,6 +97,9 @@ impl<'a> Parser<'a> {
     /// # statement
     /// "A program is a list of statements, and we parse one of those statements using this method"
     fn statement(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_symbol(&[TokenType::If]) {
+            return self.if_statement();
+        }
         if self.match_symbol(&[TokenType::Print]) {
             return self.print_statement();
         }
@@ -105,6 +108,30 @@ impl<'a> Parser<'a> {
         }
 
         self.expression_statement()
+    }
+
+    /// # if_statement
+    ///
+    /// parse an if statement
+    fn if_statement(&mut self) -> Result<Stmt, ParseError> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
+
+        let condition = self.expression()?;
+
+        self.consume(TokenType::RightParen, "Expect ')' after if condition.")?;
+
+        let then_branch = Box::new(self.statement()?);
+        let else_branch = if self.match_symbol(&[TokenType::Else]) {
+            Some(Box::new(self.statement()?))
+        } else {
+            None
+        };
+
+        Ok(Stmt::If {
+            condition: Box::new(condition),
+            then_branch,
+            else_branch,
+        })
     }
 
     /// # print_statement
@@ -180,7 +207,7 @@ impl<'a> Parser<'a> {
     /// # assignment
     /// parse an assignment. Will fail if the variable does not exist.
     fn assignment(&mut self) -> Result<Expr, ParseError> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
 
         if self.match_symbol(&[TokenType::Equal]) {
             let equals = self.previous().unwrap().clone();
@@ -200,6 +227,40 @@ impl<'a> Parser<'a> {
                     ));
                 }
             }
+        }
+
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.and()?;
+
+        while self.match_symbol(&[TokenType::Or]) {
+            let operator = self.previous().unwrap().clone();
+            let right = self.and()?;
+
+            expr = Expr::Logical {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.equality()?;
+
+        while self.match_symbol(&[TokenType::And]) {
+            let operator = self.previous().unwrap().clone();
+            let right = self.equality()?;
+
+            expr = Expr::Logical {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
 
         Ok(expr)

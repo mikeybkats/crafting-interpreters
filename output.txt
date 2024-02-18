@@ -1,80 +1,19 @@
-Running file: test.lox
-Ok(
-    [
-        Var {
-            name: Token {
-                token_type: Identifier,
-                lexeme: "a",
-                literal: None,
-                line: 1,
-            },
-            initializer: Literal {
-                value: Some(
-                    Str(
-                        "global a",
-                    ),
-                ),
-            },
-        },
-        Var {
-            name: Token {
-                token_type: Identifier,
-                lexeme: "b",
-                literal: None,
-                line: 2,
-            },
-            initializer: Literal {
-                value: Some(
-                    Str(
-                        "global b",
-                    ),
-                ),
-            },
-        },
-        Var {
-            name: Token {
-                token_type: Identifier,
-                lexeme: "c",
-                literal: None,
-                line: 3,
-            },
-            initializer: Literal {
-                value: Some(
-                    Str(
-                        "global c",
-                    ),
-                ),
-            },
-        },
-        Print {
-            expression: Variable {
-                name: Token {
-                    token_type: Identifier,
-                    lexeme: "a",
-                    literal: None,
-                    line: 4,
-                },
-            },
-        },
-        Print {
-            expression: Variable {
-                name: Token {
-                    token_type: Identifier,
-                    lexeme: "b",
-                    literal: None,
-                    line: 5,
-                },
-            },
-        },
-        Print {
-            expression: Variable {
-                name: Token {
-                    token_type: Identifier,
-                    lexeme: "c",
-                    literal: None,
-                    line: 6,
-                },
-            },
-        },
-    ],
-)
+
+
+--------------
+Welcome to Lox
+--------------
+
+
+running file test.lox 
+
+
+inner a
+outer b
+global c
+outer a
+outer b
+global c
+global a
+global b
+global c

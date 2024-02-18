@@ -222,6 +222,27 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
+    fn visit_logical_expr(
+        &mut self,
+        left: &Expr,
+        operator: &Token,
+        right: &Expr,
+    ) -> Result<Literal, RuntimeError> {
+        let left = self.evaluate(left)?;
+
+        if operator.token_type == TokenType::Or {
+            if left.is_truthy() {
+                return Ok(left);
+            }
+        } else {
+            if !left.is_truthy() {
+                return Ok(left);
+            }
+        }
+
+        self.evaluate(right)
+    }
+
     fn visit_unary_expr(
         &mut self,
         operator: &Token,
@@ -275,6 +296,25 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
 
         self.evaluate(statement)
+    }
+
+    fn visit_if_stmt(
+        &mut self,
+        condition: &Expr,
+        then_branch: &mut Stmt,
+        else_branch: &mut Option<Box<Stmt>>,
+    ) -> Result<Literal, RuntimeError> {
+        match self.evaluate(condition) {
+            Ok(value) => {
+                if value.is_truthy() {
+                    return self.execute(then_branch);
+                } else if let Some(else_branch) = else_branch {
+                    return self.execute(else_branch);
+                }
+            }
+            Err(e) => return Err(e),
+        }
+        Ok(Literal::Nil)
     }
 
     fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
