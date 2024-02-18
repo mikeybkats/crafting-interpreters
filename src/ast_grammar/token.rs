@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+
+use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
@@ -90,12 +92,23 @@ impl Literal {
         }
     }
 
-    pub fn format(&self) -> String {
+    // pub fn format(&self) -> String {
+    //     match self {
+    //         Literal::Str(string) => format!("{string}"),
+    //         Literal::Bool(boolean) => format!("{boolean}"),
+    //         Literal::Num(number) => format!("{number}"),
+    //         Literal::Nil => String::from("nil"),
+    //     }
+    // }
+}
+
+impl fmt::Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Literal::Str(string) => format!("{string}"),
-            Literal::Bool(boolean) => format!("{boolean}"),
-            Literal::Num(number) => format!("{number}"),
-            Literal::Nil => String::from("nil"),
+            Literal::Str(string) => write!(f, "{}", string),
+            Literal::Bool(boolean) => write!(f, "{}", boolean),
+            Literal::Num(number) => write!(f, "{}", number),
+            Literal::Nil => write!(f, "nil"),
         }
     }
 }

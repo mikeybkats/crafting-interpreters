@@ -89,26 +89,25 @@ impl Lox {
     }
 
     pub fn run_prompt_multiline(&mut self) -> io::Result<()> {
-        let input = io::stdin();
-        let mut reader = input.lock();
-
         println!("\n\n---------------------------------------");
         println!("--- Welcome to Lox (multiline mode) ---");
         println!("---------------------------------------");
         println!("Ctrl-D to finish input and run the code \n\n");
 
         let mut lines = String::new();
-        match reader.read_to_string(&mut lines) {
-            Ok(_) => {
-                self.run(lines);
+        let stdin = io::stdin();
+
+        for line in stdin.lock().lines() {
+            let line = line?;
+            if line.trim() == "RUN" {
+                println!("\n\nRunning code... \n\n");
+                break;
             }
-            Err(error) => {
-                self.error_reporter.borrow_mut().set_error(false);
-                self.error_reporter
-                    .borrow_mut()
-                    .report_error_message(0, &error.to_string());
-            }
+            lines.push_str(&line);
+            lines.push('\n');
         }
+
+        self.run(lines.to_string());
 
         Ok(())
     }

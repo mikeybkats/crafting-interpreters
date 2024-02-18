@@ -85,16 +85,7 @@ impl<'a> Parser<'a> {
             }
         } else {
             match self.statement() {
-                Ok(stmt) => {
-                    // match stmt {
-                    //     Stmt::Expression { expression } => {
-                    //         // println!("Expression: {:#?}", expression.clone());
-                    //         Ok(Stmt::Expression { expression })
-                    //     }
-                    //     _ => Ok(stmt),
-                    // }
-                    Ok(stmt)
-                }
+                Ok(stmt) => Ok(stmt),
                 Err(e) => {
                     self.synchronize();
                     Err(e)
@@ -238,7 +229,7 @@ impl<'a> Parser<'a> {
 
     /// # match_symbol
     ///
-    /// Loops through a given vector of tokens, advances the cursor and returns true if any of the tokens in the vector match the next token.
+    /// Loops through a given vector of tokens, if any of the tokens in the vector match the next token the cursor advances and the method returns true .
     ///
     fn match_symbol(&mut self, tokens: &[TokenType]) -> bool {
         for token_type in tokens.iter() {

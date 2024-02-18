@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
@@ -200,9 +202,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
             _ => Err(RuntimeError::new(
                 format!(
                     "Expression: '{} {} {}' does not evaluate.",
-                    left.format(),
-                    operator.lexeme,
-                    right.format(),
+                    left, operator.lexeme, right,
                 ),
                 operator,
             )),
@@ -267,8 +267,9 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
         match statement.accept(self) {
+            // TODO: fix this. it's appending a D character on numbers
             Ok(value) => {
-                println!("{}", value.format());
+                println!("{}", value);
             }
             _ => (),
         }
@@ -278,7 +279,7 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
     fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(statement)?;
-        println!("{}", value.format());
+        println!("{}", value);
         Ok(Literal::Nil)
     }
 

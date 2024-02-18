@@ -27,11 +27,6 @@ impl ErrorReporter {
         self.had_error = true;
     }
 
-    // static void runtimeError(RuntimeError error) {
-    //     System.err.println(error.getMessage() +
-    //         "\n[line " + error.token.line + "]");
-    //     hadRuntimeError = true;
-    //   }
     pub fn report_runtime_error(&mut self, error: RuntimeError) {
         let (message, token) = error.get_error();
         eprintln!("Runtime Error - [line {}]: {}", token.line, message);
