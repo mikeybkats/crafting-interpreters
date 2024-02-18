@@ -12,4 +12,4 @@ Yet another person learning Rust by way of Robert Nystrom's Crafting Interpreter
 
 `cargo run -- --multiline`
 
-EOF symbol submits the commands. Ctrl-D on mac. Ctrl-Z on windows
+Typing the word `RUN` followed by `Enter` will submit the code.

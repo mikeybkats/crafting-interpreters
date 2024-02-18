@@ -100,6 +100,7 @@ impl Lox {
         for line in stdin.lock().lines() {
             let line = line?;
             if line.trim() == "RUN" {
+                println!("\n\nRunning code... \n\n");
                 break;
             }
             lines.push_str(&line);
