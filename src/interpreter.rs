@@ -1,19 +1,24 @@
-use std::fmt::Display;
-
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
+use crate::lox::PromptMode;
 
 pub struct Interpreter {
     environment: Environment,
+    mode: PromptMode,
 }
 impl Interpreter {
     pub fn new() -> Self {
         Self {
             environment: Environment::new(),
+            mode: PromptMode::Single,
         }
+    }
+
+    pub fn set_mode(&mut self, mode: PromptMode) {
+        self.mode = mode;
     }
 
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
@@ -287,11 +292,12 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
+        // statement.accept(self);
         match statement.accept(self) {
-            // TODO: fix this. it's appending a D character on numbers
-            Ok(value) => {
-                println!("{}", value);
-            }
+            Ok(value) => match self.mode {
+                PromptMode::Single => println!("{}", value),
+                _ => (),
+            },
             _ => (),
         }
 
@@ -314,6 +320,21 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
             }
             Err(e) => return Err(e),
         }
+        Ok(Literal::Nil)
+    }
+
+    fn visit_while_stmt(
+        &mut self,
+        condition: &Expr,
+        body: &mut Stmt,
+    ) -> Result<Literal, RuntimeError> {
+        while self.evaluate(condition)?.is_truthy() {
+            match self.execute(body) {
+                Ok(_) => (),
+                Err(e) => return Err(e),
+            }
+        }
+
         Ok(Literal::Nil)
     }
 

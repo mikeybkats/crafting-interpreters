@@ -10,6 +10,12 @@ pub enum Stmt {
     Expression {
         expression: Box<Expr>,
     },
+    // For {
+    //     initializer: Box<Stmt>,
+    //     condition: Box<Expr>,
+    //     increment: Box<Expr>,
+    //     body: Box<Stmt>,
+    // },
     If {
         condition: Box<Expr>,
         then_branch: Box<Stmt>,
@@ -22,17 +28,25 @@ pub enum Stmt {
         name: Token,
         initializer: Box<Expr>,
     },
+    While {
+        condition: Box<Expr>,
+        body: Box<Stmt>,
+    },
 }
 
 impl Stmt {
     pub fn accept<R>(&mut self, visitor: &mut impl StmtVisitor<R>) -> R {
         match self {
             Stmt::Expression { expression } => visitor.visit_expression_stmt(expression),
+            // Stmt::For { initializer, condition, increment, body } => {
+            //     visitor.visit_for_stmt(initializer, condition, increment, body)
+            // }
             Stmt::If {
                 condition,
                 then_branch,
                 else_branch,
             } => visitor.visit_if_stmt(condition, then_branch, else_branch),
+            Stmt::While { condition, body } => visitor.visit_while_stmt(condition, body),
             Stmt::Print { expression } => visitor.visit_print_stmt(expression),
             Stmt::Var { name, initializer } => visitor.visit_var_stmt(name, initializer),
             Stmt::Block { statements } => visitor.visit_block_stmt(statements),
@@ -42,12 +56,20 @@ impl Stmt {
 
 pub trait StmtVisitor<R> {
     fn visit_expression_stmt(&mut self, expression: &Expr) -> R;
+    // fn visit_for_stmt(
+    //     &mut self,
+    //     initializer: &mut Stmt,
+    //     condition: &Expr,
+    //     increment: &Expr,
+    //     body: &mut Stmt,
+    // ) -> R;
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,
         then_branch: &mut Stmt,
         else_branch: &mut Option<Box<Stmt>>,
     ) -> R;
+    fn visit_while_stmt(&mut self, condition: &Expr, body: &mut Stmt) -> R;
     fn visit_print_stmt(&mut self, expression: &Expr) -> R;
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> R;
     fn visit_block_stmt(&mut self, statements: &mut Vec<Stmt>) -> R;
