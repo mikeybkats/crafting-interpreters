@@ -27,19 +27,30 @@ impl Environment {
         }
     }
 
+    /// # assign
+    ///
+    /// Similar to define, but only used for re-assignment of variables.
     pub fn assign(&mut self, name: &Token, value: Literal) -> Result<Literal, RuntimeError> {
+        // if the values array contains the name, update the value
         match self.values.get_mut(&name.lexeme) {
             Some(v) => {
+                println!("Value exists. Assigning");
                 *v = value;
                 Ok(v.clone())
             }
             _ => {
+                // if the env has an enclosing env, see if the name is there
                 if self.enclosing.is_some() {
-                    return self
-                        .enclosing
-                        .as_mut()
-                        .unwrap_or_else(|| panic!("Enclosing environment is None"))
-                        .assign(name, value);
+                    match self.enclosing.as_mut() {
+                        Some(env) => {
+                            println!("Assigning to enclosing environment");
+                            env.assign(name, value)
+                        }
+                        _ => Err(RuntimeError::new(
+                            format!("Undefined variable '{}'.", name.lexeme),
+                            name,
+                        )),
+                    }
                 } else {
                     return Err(RuntimeError::new(
                         format!("Undefined variable '{}'.", name.lexeme),

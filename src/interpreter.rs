@@ -295,7 +295,6 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
         // statement.accept(self);
         match statement.accept(self) {
             Ok(value) => match self.mode {
-                PromptMode::Single => println!("{}", value),
                 _ => (),
             },
             _ => (),
@@ -351,6 +350,7 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     ) -> Result<Literal, RuntimeError> {
         match self.evaluate(initializer) {
             Ok(value) => {
+                println!("defining: {}", &name.lexeme);
                 self.environment.define(name.lexeme.clone(), value.clone());
 
                 return Ok(value);
