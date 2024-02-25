@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
@@ -24,6 +26,7 @@ impl Interpreter {
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
         let mut results = Vec::new();
         for statement in statements {
+            // println!("{} {:#?}", "calling execute on interpret:".red(), statement);
             match self.execute(statement) {
                 Ok(value) => results.push(value),
                 Err(e) => return Err(e),
@@ -34,6 +37,7 @@ impl Interpreter {
     }
 
     pub fn execute(&mut self, statement: &mut Stmt) -> Result<Literal, RuntimeError> {
+        // println!("{} {:?}", "calling accept on execute:".red(), statement);
         match statement.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -43,17 +47,13 @@ impl Interpreter {
     pub fn execute_block_stmt(
         &mut self,
         statements: &mut Vec<Stmt>,
-        environment: Environment,
+        enclosed_environment: Environment,
     ) -> Result<Literal, RuntimeError> {
         let previous = self.environment.clone();
-        self.environment = environment;
+        self.environment = enclosed_environment;
 
-        let mut results = Vec::new();
         for statement in statements {
-            match self.execute(statement) {
-                Ok(value) => results.push(value),
-                Err(e) => return Err(e),
-            }
+            self.execute(statement)?;
         }
 
         self.environment = previous;
@@ -62,6 +62,7 @@ impl Interpreter {
     }
 
     pub fn evaluate(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
+        // println!("{} {:?}", "calling accept on evaluate:".red(), expression);
         match expression.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -292,14 +293,6 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
-        // statement.accept(self);
-        match statement.accept(self) {
-            Ok(value) => match self.mode {
-                _ => (),
-            },
-            _ => (),
-        }
-
         self.evaluate(statement)
     }
 
@@ -350,7 +343,7 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     ) -> Result<Literal, RuntimeError> {
         match self.evaluate(initializer) {
             Ok(value) => {
-                println!("defining: {}", &name.lexeme);
+                // println!("defining: {}", &name.lexeme);
                 self.environment.define(name.lexeme.clone(), value.clone());
 
                 return Ok(value);
