@@ -1,5 +1,3 @@
-use colored::Colorize;
-
 use crate::ast_grammar::stmt::Stmt;
 use crate::ast_grammar::token::{self, Literal, Token, TokenType};
 use crate::error::parse_error::ParseError;

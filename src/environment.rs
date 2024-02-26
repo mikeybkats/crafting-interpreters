@@ -1,6 +1,4 @@
-use rand::distributions::Alphanumeric;
-use rand::Rng;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     ast_grammar::token::{Literal, Token},
@@ -10,37 +8,22 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Environment {
     pub values: HashMap<String, Literal>,
-    pub enclosing: Option<Box<Environment>>,
-    pub name: String,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
     pub fn new() -> Self {
-        let name: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(6)
-            .map(char::from)
-            .collect();
-
         Self {
             enclosing: None,
             values: HashMap::new(),
-            name,
         }
     }
 
     // Secondary constructor: With an enclosing environment
-    pub fn with_enclosing(enclosing: Environment) -> Self {
-        let name: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(6)
-            .map(char::from)
-            .collect();
-
+    pub fn with_enclosing(enclosing: Rc<RefCell<Environment>>) -> Self {
         Environment {
-            enclosing: Some(Box::new(enclosing)),
+            enclosing: Some(enclosing),
             values: HashMap::new(),
-            name,
         }
     }
 
@@ -58,7 +41,7 @@ impl Environment {
                 // if the env has an enclosing env, see if the name is there
                 if self.enclosing.is_some() {
                     match self.enclosing.as_mut() {
-                        Some(env) => env.assign(name, value),
+                        Some(env) => env.borrow_mut().assign(name, value),
                         _ => Err(RuntimeError::new(
                             format!("Undefined variable '{}'.", name.lexeme),
                             name,
@@ -83,28 +66,12 @@ impl Environment {
             Some(value) => return Ok(value.clone()),
             _ => {
                 if self.enclosing.is_some() {
-                    match self.enclosing.as_ref() {
-                        Some(env) => {
-                            return env.values.get(&token.lexeme).cloned().ok_or_else(|| {
-                                RuntimeError::new(
-                                    format!("Undefined variable '{}'.", token.lexeme),
-                                    token,
-                                )
-                            });
-                        }
-                        _ => Err(RuntimeError::new(
-                            format!("Undefined variable '{}'.", token.lexeme),
-                            token,
-                        )),
-                    }
-                    // if let self.enclosing.values.get(&token.lexeme) = value {
-                    //     return Ok(value.clone());
-                    // }
-                    // return self
-                    //     .enclosing
-                    //     .as_ref()
-                    //     .unwrap_or_else(|| panic!("Enclosing environment is None"))
-                    //     .get_value(token);
+                    return self
+                        .enclosing
+                        .as_ref()
+                        .unwrap_or_else(|| panic!("Enclosing environment is None"))
+                        .borrow_mut()
+                        .get_value(token);
                 } else {
                     return Err(RuntimeError::new(
                         format!("Undefined variable '{}'.", token.lexeme),

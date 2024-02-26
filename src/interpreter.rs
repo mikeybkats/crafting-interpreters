@@ -1,20 +1,19 @@
-use colored::Colorize;
-
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
 use crate::lox::PromptMode;
+use std::{cell::RefCell, rc::Rc};
 
 pub struct Interpreter {
-    environment: Environment,
+    environment: Rc<RefCell<Environment>>,
     mode: PromptMode,
 }
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            environment: Environment::new(),
+            environment: Rc::new(RefCell::new(Environment::new())),
             mode: PromptMode::Single,
         }
     }
@@ -26,7 +25,6 @@ impl Interpreter {
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
         let mut results = Vec::new();
         for statement in statements {
-            // println!("{} {:#?}", "calling execute on interpret:".red(), statement);
             match self.execute(statement) {
                 Ok(value) => results.push(value),
                 Err(e) => return Err(e),
@@ -37,7 +35,6 @@ impl Interpreter {
     }
 
     pub fn execute(&mut self, statement: &mut Stmt) -> Result<Literal, RuntimeError> {
-        // println!("{} {:?}", "calling accept on execute:".red(), statement);
         match statement.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -50,7 +47,7 @@ impl Interpreter {
         enclosed_environment: Environment,
     ) -> Result<Literal, RuntimeError> {
         let previous = self.environment.clone();
-        self.environment = enclosed_environment;
+        self.environment = Rc::new(RefCell::new(enclosed_environment));
 
         for statement in statements {
             self.execute(statement)?;
@@ -62,7 +59,6 @@ impl Interpreter {
     }
 
     pub fn evaluate(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
-        // println!("{} {:?}", "calling accept on evaluate:".red(), expression);
         match expression.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -270,7 +266,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
-        match self.environment.get_value(token) {
+        match self.environment.borrow_mut().get_value(token) {
             Ok(value) => match value {
                 Literal::Nil => Err(RuntimeError::new(
                     format!("Undefined variable '{}'.", token.lexeme),
@@ -284,7 +280,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(value)?;
-        match self.environment.assign(name, value.clone()) {
+        match self.environment.borrow_mut().assign(name, value.clone()) {
             Ok(_) => Ok(value),
             Err(e) => Err(e),
         }
@@ -343,8 +339,9 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     ) -> Result<Literal, RuntimeError> {
         match self.evaluate(initializer) {
             Ok(value) => {
-                // println!("defining: {}", &name.lexeme);
-                self.environment.define(name.lexeme.clone(), value.clone());
+                self.environment
+                    .borrow_mut()
+                    .define(name.lexeme.clone(), value.clone());
 
                 return Ok(value);
             }
