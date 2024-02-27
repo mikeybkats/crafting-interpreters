@@ -1,4 +1,4 @@
-use std::fmt::Display;
+// use std::fmt::Display;
 
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
@@ -207,6 +207,15 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
                 operator,
             )),
         }
+    }
+
+    fn visit_call_expr(
+        &mut self,
+        callee: &Expr,
+        paren: &Token,
+        arguments: &Vec<Expr>,
+    ) -> Result<Literal, RuntimeError> {
+        return Ok(Literal::Nil);
     }
 
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {

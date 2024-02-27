@@ -5,13 +5,11 @@ use getopts::Options;
 use crate::lox::Lox;
 
 mod ast_grammar;
-mod ast_printer;
 mod environment;
 mod error;
 mod interpreter;
 mod lox;
 mod parser;
-mod rpn_printer;
 mod scanner;
 
 fn main() {
