@@ -453,7 +453,52 @@ impl<'a> Parser<'a> {
             });
         }
 
-        self.primary()
+        self.call()
+    }
+
+    /// # call
+    fn call(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.primary()?;
+
+        loop {
+            if self.match_symbol(&[TokenType::LeftParen]) {
+                expr = self.finish_call(expr)?;
+            } else {
+                break;
+            }
+        }
+
+        return Ok(expr);
+    }
+
+    /// # finish_call
+    ///
+    fn finish_call(&mut self, callee: Expr) -> Result<Expr, ParseError> {
+        let mut arguments: Vec<Expr> = vec![];
+
+        if !self.check(&TokenType::RightParen) {
+            loop {
+                arguments.push(self.expression()?);
+
+                if arguments.len() >= 255 {
+                    return Err(ParseError::new(
+                        &"Can't have more than 255 arguments.".to_string(),
+                        self.peek().unwrap(),
+                    ));
+                }
+                if self.match_symbol(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+
+        Ok(Expr::Call {
+            callee: Box::new(callee),
+            paren: self
+                .consume(TokenType::RightParen, "Expect ')' after arguments.")?
+                .clone(),
+            arguments,
+        })
     }
 
     /// # Primary
@@ -576,5 +621,114 @@ impl<'a> Parser<'a> {
         }
 
         self.advance();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use colored::Colorize;
+
+    use super::*;
+    use crate::ast_grammar::token::Token;
+    use crate::ast_grammar::token::TokenType;
+
+    #[test]
+    fn test_finish_call() {
+        println!(
+            "{} {}",
+            "test_call:".green(),
+            "The finish_call function should parse arguments return a Call expression from tokens 'foo()'".blue()
+        );
+        let tokens = vec![
+            Token::new(TokenType::Identifier, "foo".to_string(), None, 0),
+            Token::new(TokenType::LeftParen, "(".to_string(), None, 0),
+            Token::new(TokenType::Identifier, "arg1".to_string(), None, 0),
+            Token::new(TokenType::Comma, ",".to_string(), None, 0),
+            Token::new(TokenType::Identifier, "arg2".to_string(), None, 0),
+            Token::new(TokenType::RightParen, ")".to_string(), None, 0),
+            Token::new(TokenType::Semicolon, ";".to_string(), None, 0),
+        ];
+        let mut parser = Parser::new(&tokens);
+        let callee = parser.primary().unwrap();
+
+        println!("{} {:#?}", "callee:".red(), callee);
+        parser.current = tokens.len() - 1;
+
+        let result = parser.finish_call(callee).unwrap_or_else(|result| {
+            println!("Error: {:#?}", result);
+            return Expr::Literal {
+                value: Some(token::Literal::Nil),
+            };
+        });
+
+        println!("{} {:#?}", "result:".green(), result);
+
+        match result {
+            Expr::Call {
+                callee,
+                paren,
+                arguments,
+            } => {
+                assert_eq!(paren.token_type, TokenType::RightParen);
+                assert_eq!(arguments.len(), 0);
+                match *callee {
+                    Expr::Variable { name } => {
+                        assert_eq!(name.lexeme, "foo");
+                    }
+                    _ => {
+                        panic!("Expected variable expression");
+                    }
+                }
+            }
+            _ => {
+                panic!("Expected call expression");
+            }
+        }
+    }
+
+    #[test]
+    fn test_call() {
+        println!(
+            "{} {}",
+            "test_call:".green(),
+            "The call function should return a Call expression from tokens 'foo()'".blue()
+        );
+        let tokens = vec![
+            Token::new(TokenType::Identifier, "foo".to_string(), None, 0),
+            Token::new(TokenType::LeftParen, "(".to_string(), None, 0),
+            Token::new(TokenType::RightParen, ")".to_string(), None, 0),
+            Token::new(TokenType::Semicolon, ";".to_string(), None, 0),
+        ];
+        let mut parser = Parser::new(&tokens);
+        let result = parser.call().unwrap_or_else(|result| {
+            println!("Error: {:#?}", result);
+            return Expr::Literal {
+                value: Some(token::Literal::Nil),
+            };
+        });
+
+        println!("{} {:#?}", "result:".green(), result);
+
+        match result {
+            Expr::Call {
+                callee,
+                paren,
+                arguments,
+            } => {
+                assert_eq!(paren.token_type, TokenType::RightParen);
+                assert_eq!(arguments.len(), 0);
+                match *callee {
+                    Expr::Variable { name } => {
+                        assert_eq!(name.lexeme, "foo");
+                    }
+                    _ => {
+                        panic!("Expected variable expression");
+                    }
+                }
+            }
+            _ => {
+                panic!("Expected call expression");
+            }
+        }
     }
 }

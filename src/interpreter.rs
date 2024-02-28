@@ -1,5 +1,7 @@
 // use std::fmt::Display;
 
+use colored::Colorize;
+
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
@@ -19,6 +21,7 @@ impl Interpreter {
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
         let mut results = Vec::new();
         for statement in statements {
+            println!("{} {:#?}", "statement: ".red(), statement);
             match self.execute(statement) {
                 Ok(value) => results.push(value),
                 Err(e) => return Err(e),
@@ -211,9 +214,9 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
     fn visit_call_expr(
         &mut self,
-        callee: &Expr,
-        paren: &Token,
-        arguments: &Vec<Expr>,
+        _callee: &Expr,
+        _paren: &Token,
+        _arguments: &Vec<Expr>,
     ) -> Result<Literal, RuntimeError> {
         return Ok(Literal::Nil);
     }
