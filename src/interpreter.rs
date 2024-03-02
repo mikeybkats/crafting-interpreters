@@ -3,8 +3,9 @@
 use colored::Colorize;
 
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
+use crate::ast_grammar::object::Object;
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
-use crate::ast_grammar::token::{Literal, Token, TokenType};
+use crate::ast_grammar::token::{Token, TokenType};
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
 
@@ -18,7 +19,7 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
+    pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Object>, RuntimeError> {
         let mut results = Vec::new();
         for statement in statements {
             println!("{} {:#?}", "statement: ".red(), statement);
@@ -31,7 +32,7 @@ impl Interpreter {
         Ok(results)
     }
 
-    pub fn execute(&mut self, statement: &mut Stmt) -> Result<Literal, RuntimeError> {
+    pub fn execute(&mut self, statement: &mut Stmt) -> Result<Object, RuntimeError> {
         match statement.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
@@ -42,7 +43,7 @@ impl Interpreter {
         &mut self,
         statements: &mut Vec<Stmt>,
         environment: Environment,
-    ) -> Result<Literal, RuntimeError> {
+    ) -> Result<Object, RuntimeError> {
         let previous = self.environment.clone();
         self.environment = environment;
 
@@ -56,32 +57,28 @@ impl Interpreter {
 
         self.environment = previous;
 
-        return Ok(Literal::Nil);
+        return Ok(Object::Nil);
     }
 
-    pub fn evaluate(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    pub fn evaluate(&mut self, expression: &Expr) -> Result<Object, RuntimeError> {
         match expression.accept(self) {
             Ok(value) => Ok(value),
             Err(e) => Err(e),
         }
     }
 
-    fn is_equal(&self, a: &Literal, b: &Literal) -> bool {
+    fn is_equal(&self, a: &Object, b: &Object) -> bool {
         match (a, b) {
-            (Literal::Num(a), Literal::Num(b)) => a == b,
-            (Literal::Str(a), Literal::Str(b)) => a == b,
-            (Literal::Bool(a), Literal::Bool(b)) => a == b,
+            (Object::Num(a), Object::Num(b)) => a == b,
+            (Object::Str(a), Object::Str(b)) => a == b,
+            (Object::Bool(a), Object::Bool(b)) => a == b,
             _ => false,
         }
     }
 
-    fn check_number_operand(
-        &self,
-        token: &Token,
-        operand: Literal,
-    ) -> Result<Literal, RuntimeError> {
+    fn check_number_operand(&self, token: &Token, operand: Object) -> Result<Object, RuntimeError> {
         match operand {
-            Literal::Num(_) => Ok(operand),
+            Object::Num(_) => Ok(operand),
             _ => {
                 return Err(RuntimeError::new(
                     "Operand must be a number.".to_string(),
@@ -94,11 +91,11 @@ impl Interpreter {
     fn check_number_operands(
         &self,
         token: &Token,
-        left: Literal,
-        right: Literal,
+        left: Object,
+        right: Object,
     ) -> Result<bool, RuntimeError> {
         match (left, right) {
-            (Literal::Num(_left), Literal::Num(_right)) => Ok(true),
+            (Object::Num(_left), Object::Num(_right)) => Ok(true),
             _ => {
                 return Err(RuntimeError::new(
                     "Operands must be numbers.".to_string(),
@@ -109,94 +106,94 @@ impl Interpreter {
     }
 }
 
-impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
+impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
     fn visit_binary_expr(
         &mut self,
         left: &Expr,
         operator: &Token,
         right: &Expr,
-    ) -> Result<Literal, RuntimeError> {
+    ) -> Result<Object, RuntimeError> {
         let left = self.evaluate(left)?;
         let right = self.evaluate(right)?;
 
         match (operator.token_type, left.clone(), right.clone()) {
             // Handle equals
             (TokenType::BangEqual, left_num, right_num) => {
-                Ok(Literal::Bool(!self.is_equal(&left_num, &right_num)))
+                Ok(Object::Bool(!self.is_equal(&left_num, &right_num)))
             }
             (TokenType::EqualEqual, left_num, right_num) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => Ok(Literal::Bool(self.is_equal(&left_num, &right_num))),
+                    Ok(_) => Ok(Object::Bool(self.is_equal(&left_num, &right_num))),
                     Err(e) => Err(e),
                 }
             }
 
             // Handle greater than
-            (TokenType::Greater, Literal::Num(left_num), Literal::Num(right_num)) => {
+            (TokenType::Greater, Object::Num(left_num), Object::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => Ok(Literal::Bool(left_num > right_num)),
+                    Ok(_) => Ok(Object::Bool(left_num > right_num)),
                     Err(e) => {
                         // TODO: handle error
                         Err(e)
                     }
                 }
             }
-            (TokenType::GreaterEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Ok(Literal::Bool(left_num >= right_num))
+            (TokenType::GreaterEqual, Object::Num(left_num), Object::Num(right_num)) => {
+                Ok(Object::Bool(left_num >= right_num))
             }
 
             // Handle less than
-            (TokenType::Less, Literal::Num(left_num), Literal::Num(right_num)) => {
+            (TokenType::Less, Object::Num(left_num), Object::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => Ok(Literal::Bool(left_num < right_num)),
+                    Ok(_) => Ok(Object::Bool(left_num < right_num)),
                     Err(e) => Err(e),
                 }
             }
-            (TokenType::LessEqual, Literal::Num(left_num), Literal::Num(right_num)) => {
+            (TokenType::LessEqual, Object::Num(left_num), Object::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => Ok(Literal::Bool(left_num <= right_num)),
+                    Ok(_) => Ok(Object::Bool(left_num <= right_num)),
                     Err(e) => Err(e),
                 }
             }
 
             // Handle subtraction
-            (TokenType::Minus, Literal::Num(left_num), Literal::Num(right_num)) => {
+            (TokenType::Minus, Object::Num(left_num), Object::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_result) => Ok(Literal::Num(left_num - right_num)),
+                    Ok(_result) => Ok(Object::Num(left_num - right_num)),
                     Err(e) => Err(e),
                 }
             }
 
             // Handle addition
-            (TokenType::Plus, Literal::Num(left_num), Literal::Num(right_num)) => {
-                Ok(Literal::Num(left_num + right_num))
+            (TokenType::Plus, Object::Num(left_num), Object::Num(right_num)) => {
+                Ok(Object::Num(left_num + right_num))
             }
-            (TokenType::Plus, Literal::Str(left_str), Literal::Str(right_str)) => {
-                Ok(Literal::Str(format!("{}{}", left_str, right_str)))
+            (TokenType::Plus, Object::Str(left_str), Object::Str(right_str)) => {
+                Ok(Object::Str(format!("{}{}", left_str, right_str)))
             }
 
             // Handle addition of number and string concatenation
-            (TokenType::Plus, Literal::Num(left_num), Literal::Str(right_str)) => {
-                Ok(Literal::Str(format!("{}{}", left_num, right_str)))
+            (TokenType::Plus, Object::Num(left_num), Object::Str(right_str)) => {
+                Ok(Object::Str(format!("{}{}", left_num, right_str)))
             }
 
             // Handle addition of string and number concatenation
-            (TokenType::Plus, Literal::Str(left_str), Literal::Num(right_num)) => {
-                Ok(Literal::Str(format!("{}{}", left_str, right_num)))
+            (TokenType::Plus, Object::Str(left_str), Object::Num(right_num)) => {
+                Ok(Object::Str(format!("{}{}", left_str, right_num)))
             }
 
             // Handle division
-            (TokenType::Slash, Literal::Num(left_num), Literal::Num(right_num)) => {
+            (TokenType::Slash, Object::Num(left_num), Object::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => Ok(Literal::Num(left_num / right_num)),
+                    Ok(_) => Ok(Object::Num(left_num / right_num)),
                     Err(e) => Err(e),
                 }
             }
 
             // Handle multiplication
-            (TokenType::Star, Literal::Num(left_num), Literal::Num(right_num)) => {
+            (TokenType::Star, Object::Num(left_num), Object::Num(right_num)) => {
                 match self.check_number_operands(operator, left, right) {
-                    Ok(_) => Ok(Literal::Num(left_num * right_num)),
+                    Ok(_) => Ok(Object::Num(left_num * right_num)),
                     Err(e) => Err(e),
                 }
             }
@@ -214,19 +211,35 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
     fn visit_call_expr(
         &mut self,
-        _callee: &Expr,
+        callee: &Expr,
         _paren: &Token,
-        _arguments: &Vec<Expr>,
-    ) -> Result<Literal, RuntimeError> {
-        return Ok(Literal::Nil);
+        arguments: &Vec<Expr>,
+    ) -> Result<Object, RuntimeError> {
+        let callee = self.evaluate(callee)?;
+
+        let processed_arguments = arguments
+            .iter()
+            .map(|argument| self.evaluate(argument))
+            .collect::<Result<Vec<Object>, RuntimeError>>()?;
+
+        // if !callee.instance_of(&Object::Callable(Box::new(self))) {
+        // return Err(RuntimeError::new(
+        //     "Can only call functions and classes.".to_string(),
+        //     _paren,
+        // ));
+        // }
+
+        // let mut arguments = Vec::new();
+
+        return Ok(Object::Nil);
     }
 
-    fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Object, RuntimeError> {
         self.evaluate(expression)
     }
 
-    fn visit_literal_expr(&mut self, value: &Option<Literal>) -> Result<Literal, RuntimeError> {
-        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
+    fn visit_object_expr(&mut self, value: &Option<Object>) -> Result<Object, RuntimeError> {
+        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0);
 
         match value {
             Some(value) => Ok(value.clone()),
@@ -239,7 +252,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         left: &Expr,
         operator: &Token,
         right: &Expr,
-    ) -> Result<Literal, RuntimeError> {
+    ) -> Result<Object, RuntimeError> {
         let left = self.evaluate(left)?;
 
         if operator.token_type == TokenType::Or {
@@ -255,30 +268,26 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         self.evaluate(right)
     }
 
-    fn visit_unary_expr(
-        &mut self,
-        operator: &Token,
-        right: &Expr,
-    ) -> Result<Literal, RuntimeError> {
-        let right_literal = self.evaluate(right)?;
-        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Literal::Nil), 0);
+    fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<Object, RuntimeError> {
+        let right_object = self.evaluate(right)?;
+        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0);
 
-        match (operator.token_type, right_literal.clone()) {
-            (TokenType::Minus, Literal::Num(num)) => {
-                match self.check_number_operand(operator, right_literal) {
-                    Ok(_result) => Ok(Literal::Num(-num)),
+        match (operator.token_type, right_object.clone()) {
+            (TokenType::Minus, Object::Num(num)) => {
+                match self.check_number_operand(operator, right_object) {
+                    Ok(_result) => Ok(Object::Num(-num)),
                     Err(e) => Err(e),
                 }
             }
-            (TokenType::Bang, _) => Ok(Literal::Bool(!right_literal.is_truthy())),
+            (TokenType::Bang, _) => Ok(Object::Bool(!right_object.is_truthy())),
             _ => Err(RuntimeError::new("No value".to_string(), &empty_token)),
         }
     }
 
-    fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
+    fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, RuntimeError> {
         match self.environment.get_value(token) {
             Ok(value) => match value {
-                Literal::Nil => Err(RuntimeError::new(
+                Object::Nil => Err(RuntimeError::new(
                     format!("Undefined variable '{}'.", token.lexeme),
                     token,
                 )),
@@ -288,7 +297,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, RuntimeError> {
         let value = self.evaluate(value)?;
         match self.environment.assign(name, value.clone()) {
             Ok(_) => Ok(value),
@@ -297,8 +306,8 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     }
 }
 
-impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
-    fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
+impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
+    fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Object, RuntimeError> {
         match statement.accept(self) {
             // TODO: fix this. it's appending a D character on numbers
             Ok(value) => {
@@ -315,7 +324,7 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
         condition: &Expr,
         then_branch: &mut Stmt,
         else_branch: &mut Option<Box<Stmt>>,
-    ) -> Result<Literal, RuntimeError> {
+    ) -> Result<Object, RuntimeError> {
         match self.evaluate(condition) {
             Ok(value) => {
                 if value.is_truthy() {
@@ -326,20 +335,16 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
             }
             Err(e) => return Err(e),
         }
-        Ok(Literal::Nil)
+        Ok(Object::Nil)
     }
 
-    fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Object, RuntimeError> {
         let value = self.evaluate(statement)?;
         println!("{}", value);
-        Ok(Literal::Nil)
+        Ok(Object::Nil)
     }
 
-    fn visit_var_stmt(
-        &mut self,
-        name: &Token,
-        initializer: &Expr,
-    ) -> Result<Literal, RuntimeError> {
+    fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, RuntimeError> {
         match self.evaluate(initializer) {
             Ok(value) => {
                 self.environment.define(name.lexeme.clone(), value.clone());
@@ -350,7 +355,7 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_block_stmt(&mut self, statements: &mut Vec<Stmt>) -> Result<Literal, RuntimeError> {
+    fn visit_block_stmt(&mut self, statements: &mut Vec<Stmt>) -> Result<Object, RuntimeError> {
         self.execute_block_stmt(
             statements,
             Environment::with_enclosing(self.environment.clone()),

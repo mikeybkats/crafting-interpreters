@@ -1,9 +1,10 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
+use crate::ast_grammar::object::Object;
 use crate::error::error::ErrorReporter;
 
 // use super to access a sibling sub module
-use crate::ast_grammar::token::{Literal, Token, TokenType};
+use crate::ast_grammar::token::{Token, TokenType};
 
 pub struct Scanner {
     source: String,
@@ -159,7 +160,7 @@ impl Scanner {
         self.add_token_with_value(token_type, None)
     }
 
-    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<Literal>) {
+    fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<Object>) {
         let lexeme = self.source[self.start..self.current].to_string();
 
         self.tokens
@@ -275,7 +276,7 @@ impl Scanner {
 
         // Trim the surrounding quotes.
         let value = &self.source[self.start + 1..self.current - 1];
-        self.add_token_with_value(TokenType::String, Some(Literal::Str(value.to_string())));
+        self.add_token_with_value(TokenType::String, Some(Object::Str(value.to_string())));
     }
 
     fn number(&mut self) {
@@ -292,6 +293,6 @@ impl Scanner {
         }
 
         let number: f64 = self.source[self.start..self.current].parse().unwrap();
-        self.add_token_with_value(TokenType::Number, Some(Literal::Num(number)))
+        self.add_token_with_value(TokenType::Number, Some(Object::Num(number)))
     }
 }

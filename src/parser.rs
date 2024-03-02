@@ -1,5 +1,6 @@
+use crate::ast_grammar::object::Object;
 use crate::ast_grammar::stmt::Stmt;
-use crate::ast_grammar::token::{self, Token, TokenType};
+use crate::ast_grammar::token::{Token, TokenType};
 use crate::error::parse_error::ParseError;
 
 use crate::ast_grammar::expr::Expr;
@@ -15,7 +16,7 @@ impl<'a> Parser<'a> {
         Self {
             current: 0,
             tokens,
-            empty_token: Token::new(TokenType::Nil, "".to_string(), Some(token::Literal::Nil), 0),
+            empty_token: Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0),
         }
     }
 
@@ -172,7 +173,7 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Var {
             name: name.clone(),
             initializer: Box::new(initializer.unwrap_or_else(|| Expr::Literal {
-                value: Some(token::Literal::Nil),
+                value: Some(Object::Nil),
             })),
         })
     }
@@ -503,7 +504,7 @@ impl<'a> Parser<'a> {
 
     /// # Primary
     ///
-    /// Primary is the highest level of precedence. This rule processes literal strings and numbers as well as booleans and all expressions:
+    /// Primary is the highest level of precedence. This rule processes Objectstrings and numbers as well as booleans and all expressions:
     ///
     /// _rule_:
     ///
@@ -512,29 +513,27 @@ impl<'a> Parser<'a> {
     fn primary(&mut self) -> Result<Expr, ParseError> {
         if self.match_symbol(&[TokenType::False]) {
             return Ok(Expr::Literal {
-                value: Some(token::Literal::Bool(false)),
+                value: Some(Object::Bool(false)),
             });
         } else if self.match_symbol(&[TokenType::True]) {
             return Ok(Expr::Literal {
-                value: Some(token::Literal::Bool(true)),
+                value: Some(Object::Bool(true)),
             });
         } else if self.match_symbol(&[TokenType::Nil]) {
             return Ok(Expr::Literal {
-                value: Some(token::Literal::Nil),
+                value: Some(Object::Nil),
             });
         } else if self.match_symbol(&[TokenType::Number, TokenType::String]) {
-            let prev_literal;
+            let prev_object;
 
             match self.previous() {
                 Some(token) => {
-                    prev_literal = token.literal.clone();
+                    prev_object = token.literal.clone();
                 }
-                None => prev_literal = None,
+                None => prev_object = None,
             }
 
-            return Ok(Expr::Literal {
-                value: prev_literal,
-            });
+            return Ok(Expr::Literal { value: prev_object });
         } else if self.match_symbol(&[TokenType::Identifier]) {
             return Ok(Expr::Variable {
                 name: self.previous().unwrap().clone(),
@@ -626,9 +625,10 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use colored::Colorize;
+    use colored::*;
 
     use super::*;
+    use crate::ast_grammar::object::Object;
     use crate::ast_grammar::token::Token;
     use crate::ast_grammar::token::TokenType;
 
@@ -637,7 +637,7 @@ mod tests {
         println!(
             "{} {}",
             "test_call:".green(),
-            "The finish_call function should parse arguments return a Call expression from tokens 'foo()'".blue()
+            "The finish_call function should parse arguments return a Call expression from tokens 'foo()'".red()
         );
         let tokens = vec![
             Token::new(TokenType::Identifier, "foo".to_string(), None, 0),
@@ -651,17 +651,17 @@ mod tests {
         let mut parser = Parser::new(&tokens);
         let callee = parser.primary().unwrap();
 
-        println!("{} {:#?}", "callee:".red(), callee);
-        parser.current = tokens.len() - 1;
+        println!("{} {:#?}", "callee:".blue(), callee);
+        parser.current = tokens.len() - 2;
 
         let result = parser.finish_call(callee).unwrap_or_else(|result| {
             println!("Error: {:#?}", result);
             return Expr::Literal {
-                value: Some(token::Literal::Nil),
+                value: Some(Object::Nil),
             };
         });
 
-        println!("{} {:#?}", "result:".green(), result);
+        println!("{} {:#?}", "result:".blue(), result);
 
         match result {
             Expr::Call {
@@ -703,7 +703,7 @@ mod tests {
         let result = parser.call().unwrap_or_else(|result| {
             println!("Error: {:#?}", result);
             return Expr::Literal {
-                value: Some(token::Literal::Nil),
+                value: Some(Object::Nil),
             };
         });
 

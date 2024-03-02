@@ -1,19 +1,19 @@
 # Problem: code has too many nested match statements
 
 ```rust
-fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Literal {
-    let right_literal = self.evaluate(right);
+fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Object {
+    let right_Object = self.evaluate(right);
 
-    match right_literal {
-        Literal::Num(num) => {
+    match right_Object {
+        Object::Num(num) => {
             match operator.token_type {
-                TokenType::Minus => Literal::Num(-num),
-                _ => Literal::Nil, // Handle other operator cases or invalid operators
+                TokenType::Minus => Object::Num(-num),
+                _ => Object::Nil, // Handle other operator cases or invalid operators
             }
         }
         _ => match operator.token_type {
-            TokenType::Bang => Literal::Bool(!right_literal.is_truthy()),
-            _ => Literal::Nil,
+            TokenType::Bang => Object::Bool(!right_Object.is_truthy()),
+            _ => Object::Nil,
         },
     }
 }
@@ -28,13 +28,13 @@ Nesting `match` statements can indeed become cumbersome, especially when dealing
 We can simplify your function by combining the `match` statements and minimizing nesting:
 
 ```rust
-fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Literal {
-    let right_literal = self.evaluate(right);
+fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Object {
+    let right_Object = self.evaluate(right);
 
-    match (operator.token_type, right_literal) {
-        (TokenType::Minus, Literal::Num(num)) => Literal::Num(-num),
-        (TokenType::Bang, _) => Literal::Bool(!right_literal.is_truthy()),
-        _ => Literal::Nil,
+    match (operator.token_type, right_Object) {
+        (TokenType::Minus, Object::Num(num)) => Object::Num(-num),
+        (TokenType::Bang, _) => Object::Bool(!right_Object.is_truthy()),
+        _ => Object::Nil,
     }
 }
 ```

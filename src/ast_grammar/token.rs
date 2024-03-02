@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
-use std::fmt;
+use super::object::Object;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
@@ -26,7 +27,7 @@ pub enum TokenType {
     Less,
     LessEqual,
 
-    // Literals.
+    // Object.
     Identifier,
     String,
     Number,
@@ -53,71 +54,10 @@ pub enum TokenType {
 }
 
 #[derive(Debug, Clone)]
-pub enum Literal {
-    Str(String),
-    Num(f64),
-    Bool(bool),
-    Nil,
-}
-
-impl Literal {
-    /// # is_truthy
-    /// returns whether the literal value is true or false in lox
-    pub fn is_truthy(&self) -> bool {
-        match self {
-            Literal::Bool(b) => *b,
-            Literal::Nil => false,
-            _ => true, // All other values (Str, Num) are truthy
-        }
-    }
-
-    /// # instance_of
-    /// returns true if the type being checked  matches the type of self
-    pub fn instance_of(&self, type_check: &Literal) -> bool {
-        match (self, type_check) {
-            (Literal::Str(_), Literal::Str(_)) => true,
-            (Literal::Num(_), Literal::Num(_)) => true,
-            (Literal::Bool(_), Literal::Bool(_)) => true,
-            (Literal::Nil, Literal::Nil) => true,
-            _ => false,
-        }
-    }
-
-    pub fn print(&self) {
-        match self {
-            Literal::Str(string) => println!("{string}"),
-            Literal::Bool(boolean) => println!("{boolean}"),
-            Literal::Num(number) => println!("{number}"),
-            Literal::Nil => println!(""),
-        }
-    }
-
-    // pub fn format(&self) -> String {
-    //     match self {
-    //         Literal::Str(string) => format!("{string}"),
-    //         Literal::Bool(boolean) => format!("{boolean}"),
-    //         Literal::Num(number) => format!("{number}"),
-    //         Literal::Nil => String::from("nil"),
-    //     }
-    // }
-}
-
-impl fmt::Display for Literal {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Literal::Str(string) => write!(f, "{}", string),
-            Literal::Bool(boolean) => write!(f, "{}", boolean),
-            Literal::Num(number) => write!(f, "{}", number),
-            Literal::Nil => write!(f, "nil"),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Option<Literal>,
+    pub literal: Option<Object>,
     pub line: usize,
 }
 
@@ -125,18 +65,9 @@ impl Token {
     pub fn new(
         token_type: TokenType,
         lexeme: String,
-        literal: Option<Literal>,
+        literal: Option<Object>,
         line: usize,
     ) -> Self {
-        // Using a literal enum with a processed literal would allow a simpler object, but
-        // what is done when there is a none value?
-        // process ahead of time or before use?
-        // let literal = match literal {
-        //     Some(Literal::Str(s)) => Literal::Str(s),
-        //     Some(Literal::Num(n)) => Literal::Num(n),
-        //     None => Literal::None,
-        // };
-
         Self {
             token_type,
             lexeme,
