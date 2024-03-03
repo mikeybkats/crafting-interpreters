@@ -1,19 +1,25 @@
-use std::fmt::Display;
-
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
 use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Literal, Token, TokenType};
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
+use crate::lox::PromptMode;
+use std::{cell::RefCell, rc::Rc};
 
 pub struct Interpreter {
-    environment: Environment,
+    environment: Rc<RefCell<Environment>>,
+    mode: PromptMode,
 }
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            environment: Environment::new(),
+            environment: Rc::new(RefCell::new(Environment::new())),
+            mode: PromptMode::Single,
         }
+    }
+
+    pub fn set_mode(&mut self, mode: PromptMode) {
+        self.mode = mode;
     }
 
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Literal>, RuntimeError> {
@@ -38,17 +44,13 @@ impl Interpreter {
     pub fn execute_block_stmt(
         &mut self,
         statements: &mut Vec<Stmt>,
-        environment: Environment,
+        enclosed_environment: Environment,
     ) -> Result<Literal, RuntimeError> {
         let previous = self.environment.clone();
-        self.environment = environment;
+        self.environment = Rc::new(RefCell::new(enclosed_environment));
 
-        let mut results = Vec::new();
         for statement in statements {
-            match self.execute(statement) {
-                Ok(value) => results.push(value),
-                Err(e) => return Err(e),
-            }
+            self.execute(statement)?;
         }
 
         self.environment = previous;
@@ -264,7 +266,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
-        match self.environment.get_value(token) {
+        match self.environment.borrow_mut().get_value(token) {
             Ok(value) => match value {
                 Literal::Nil => Err(RuntimeError::new(
                     format!("Undefined variable '{}'.", token.lexeme),
@@ -278,7 +280,7 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(value)?;
-        match self.environment.assign(name, value.clone()) {
+        match self.environment.borrow_mut().assign(name, value.clone()) {
             Ok(_) => Ok(value),
             Err(e) => Err(e),
         }
@@ -287,14 +289,6 @@ impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
 
 impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
-        match statement.accept(self) {
-            // TODO: fix this. it's appending a D character on numbers
-            Ok(value) => {
-                println!("{}", value);
-            }
-            _ => (),
-        }
-
         self.evaluate(statement)
     }
 
@@ -317,6 +311,21 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
         Ok(Literal::Nil)
     }
 
+    fn visit_while_stmt(
+        &mut self,
+        condition: &Expr,
+        body: &mut Stmt,
+    ) -> Result<Literal, RuntimeError> {
+        while self.evaluate(condition)?.is_truthy() {
+            match self.execute(body) {
+                Ok(_) => (),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(Literal::Nil)
+    }
+
     fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Literal, RuntimeError> {
         let value = self.evaluate(statement)?;
         println!("{}", value);
@@ -330,7 +339,9 @@ impl StmtVisitor<Result<Literal, RuntimeError>> for Interpreter {
     ) -> Result<Literal, RuntimeError> {
         match self.evaluate(initializer) {
             Ok(value) => {
-                self.environment.define(name.lexeme.clone(), value.clone());
+                self.environment
+                    .borrow_mut()
+                    .define(name.lexeme.clone(), value.clone());
 
                 return Ok(value);
             }

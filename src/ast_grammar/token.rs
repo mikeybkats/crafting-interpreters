@@ -92,14 +92,14 @@ impl Literal {
         }
     }
 
-    // pub fn format(&self) -> String {
-    //     match self {
-    //         Literal::Str(string) => format!("{string}"),
-    //         Literal::Bool(boolean) => format!("{boolean}"),
-    //         Literal::Num(number) => format!("{number}"),
-    //         Literal::Nil => String::from("nil"),
-    //     }
-    // }
+    pub fn value(&self) -> String {
+        match self {
+            Literal::Str(string) => format!("{string}"),
+            Literal::Bool(boolean) => format!("{boolean}"),
+            Literal::Num(number) => format!("{}", number.round() as i32),
+            Literal::Nil => String::from("nil"),
+        }
+    }
 }
 
 impl fmt::Display for Literal {
