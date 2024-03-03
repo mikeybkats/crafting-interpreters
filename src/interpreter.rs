@@ -1,5 +1,3 @@
-// use std::fmt::Display;
-
 use colored::Colorize;
 
 use crate::ast_grammar::expr::{Expr, ExprVisitor};
@@ -11,11 +9,14 @@ use crate::error::runtime_error::RuntimeError;
 
 pub struct Interpreter {
     environment: Environment,
+    globals: Environment,
 }
 impl Interpreter {
     pub fn new() -> Self {
+        let environment = Environment::new();
         Self {
-            environment: Environment::new(),
+            globals: environment.clone(),
+            environment,
         }
     }
 
@@ -212,7 +213,7 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
     fn visit_call_expr(
         &mut self,
         callee: &Expr,
-        _paren: &Token,
+        paren: &Token,
         arguments: &Vec<Expr>,
     ) -> Result<Object, RuntimeError> {
         let callee = self.evaluate(callee)?;
@@ -222,16 +223,17 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
             .map(|argument| self.evaluate(argument))
             .collect::<Result<Vec<Object>, RuntimeError>>()?;
 
-        // if !callee.instance_of(&Object::Callable(Box::new(self))) {
-        // return Err(RuntimeError::new(
-        //     "Can only call functions and classes.".to_string(),
-        //     _paren,
-        // ));
-        // }
-
-        // let mut arguments = Vec::new();
-
-        return Ok(Object::Nil);
+        match callee {
+            Object::Callable(function) => {
+                return function.call(self, processed_arguments);
+            }
+            _ => {
+                return Err(RuntimeError::new(
+                    "Can only call functions and classes.".to_string(),
+                    paren,
+                ));
+            }
+        }
     }
 
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Object, RuntimeError> {

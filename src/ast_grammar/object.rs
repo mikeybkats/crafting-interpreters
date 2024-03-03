@@ -1,12 +1,34 @@
 use crate::{error::runtime_error::RuntimeError, interpreter::Interpreter};
 use std::fmt;
 
-trait LoxCallable {
+pub trait LoxCallable {
     fn call(
         &self,
         interpreter: &Interpreter,
         arguments: Vec<Object>,
     ) -> Result<Object, RuntimeError>;
+
+    fn arity(&self) -> u8;
+}
+
+/// # LoxNativeFunction
+/// Crafting Interpreters 10.2 - "These are functions that the interpreter exposes to user code but that are implemented in the host language (in our case Java), not the language being implemented (Lox)."
+pub struct LoxNativeFunction {
+    pub arity: u8,
+}
+impl LoxCallable for LoxNativeFunction {
+    fn arity(&self) -> u8 {
+        self.arity
+    }
+
+    fn call(
+        &self,
+        _interpreter: &Interpreter,
+        _arguments: Vec<Object>,
+    ) -> Result<Object, RuntimeError> {
+        // TODO: Implement LoxFunction::call
+        return Ok(Object::Nil);
+    }
 }
 
 pub enum Object {
@@ -17,6 +39,10 @@ pub enum Object {
     Nil,
 }
 
+/// # Object
+///
+/// The main object type for the Lox language.
+///
 impl Object {
     /// # is_truthy
     /// returns whether the Object value is true or false in lox
@@ -28,20 +54,7 @@ impl Object {
         }
     }
 
-    /// # instance_of
-    /// returns true if the type being checked  matches the type of self
-    pub fn instance_of(&self, type_check: &Object) -> bool {
-        match (self, type_check) {
-            (Object::Str(_), Object::Str(_)) => true,
-            (Object::Num(_), Object::Num(_)) => true,
-            (Object::Bool(_), Object::Bool(_)) => true,
-            (Object::Callable(_), Object::Callable(_)) => true,
-            (Object::Nil, Object::Nil) => true,
-            _ => false,
-        }
-    }
-
-    pub fn print(&self) {
+    pub fn _print(&self) {
         match self {
             Object::Str(string) => println!("{string}"),
             Object::Bool(boolean) => println!("{boolean}"),
@@ -51,7 +64,7 @@ impl Object {
         }
     }
 
-    pub fn format(&self) -> String {
+    pub fn _format(&self) -> String {
         match self {
             Object::Str(string) => format!("{string}"),
             Object::Bool(boolean) => format!("{boolean}"),
