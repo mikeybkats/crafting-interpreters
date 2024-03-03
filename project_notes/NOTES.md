@@ -36,12 +36,12 @@ _finite automata_ - given a sequence of input symbols there are a finite number 
 
 _lexeme_ - blobs of characters in the raw source code from which meaning can be derived. Lexemes can be categorized as data:
 
-- token type - keywords, literals, one or two character tokens, single character tokens, ect
-- literal value - numbers, strings, ect
+- token type - keywords, Objects, one or two character tokens, single character tokens, ect
+- Object value - numbers, strings, ect
 - location information
 -
 
-_lexical grammar_ - the rules that translate the groups of text characters (lexemes) into tokens (identifiers, keywords, literals, ect)
+_lexical grammar_ - the rules that translate the groups of text characters (lexemes) into tokens (identifiers, keywords, Objects, ect)
 
 - lexical grammar can be regular or not regular (not describable through regular expressions)
 

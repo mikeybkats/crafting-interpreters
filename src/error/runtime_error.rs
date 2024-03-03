@@ -1,4 +1,4 @@
-use crate::ast_grammar::token::Token;
+use crate::grammar::token::Token;
 use std::fmt;
 
 #[derive(Debug)]

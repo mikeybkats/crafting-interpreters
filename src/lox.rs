@@ -8,7 +8,6 @@ use std::{
 };
 
 use crate::{
-    // ast_grammar::token::Literal,
     error::{error::ErrorReporter, parse_error::ParseError, runtime_error::RuntimeError},
     interpreter::Interpreter,
     parser::Parser,

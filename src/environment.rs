@@ -1,13 +1,13 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
-    ast_grammar::token::{Literal, Token},
     error::runtime_error::RuntimeError,
+    grammar::{object::Object, token::Token},
 };
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    pub values: HashMap<String, Literal>,
+    pub values: HashMap<String, Object>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
@@ -27,11 +27,7 @@ impl Environment {
         }
     }
 
-    /// # assign
-    ///
-    /// Similar to define, but only used for re-assignment of variables.
-    pub fn assign(&mut self, name: &Token, value: Literal) -> Result<Literal, RuntimeError> {
-        // if the values array contains the name, update the value
+    pub fn assign(&mut self, name: &Token, value: Object) -> Result<Object, RuntimeError> {
         match self.values.get_mut(&name.lexeme) {
             Some(v) => {
                 *v = value;
@@ -57,11 +53,11 @@ impl Environment {
         }
     }
 
-    pub fn define(&mut self, name: String, value: Literal) {
+    pub fn define(&mut self, name: String, value: Object) {
         self.values.insert(name, value);
     }
 
-    pub fn get_value(&self, token: &Token) -> Result<Literal, RuntimeError> {
+    pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {
         match self.values.get(&token.lexeme) {
             Some(value) => return Ok(value.clone()),
             _ => {
@@ -86,8 +82,8 @@ impl Environment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast_grammar::token::Token;
-    use crate::ast_grammar::token::TokenType;
+    use crate::grammar::token::Token;
+    use crate::grammar::token::TokenType;
 
     #[test]
     fn test_new_environment() {
@@ -107,10 +103,10 @@ mod tests {
         };
 
         env.values
-            .insert(token_number.lexeme.clone(), Literal::Num(42.0));
+            .insert(token_number.lexeme.clone(), Object::Num(42.0));
 
         match env.get_value(&token_number) {
-            Ok(Literal::Num(n)) => assert_eq!(n, 42.0),
+            Ok(Object::Num(n)) => assert_eq!(n, 42.0),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -123,11 +119,11 @@ mod tests {
 
         env.values.insert(
             token_string.lexeme.clone(),
-            Literal::Str("testString".to_string()),
+            Object::Str("testString".to_string()),
         );
 
         match env.get_value(&token_string) {
-            Ok(Literal::Str(s)) => assert_eq!(s, "testString"),
+            Ok(Object::Str(s)) => assert_eq!(s, "testString"),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -139,10 +135,10 @@ mod tests {
         };
 
         env.values
-            .insert(token_boolean.lexeme.clone(), Literal::Bool(false));
+            .insert(token_boolean.lexeme.clone(), Object::Bool(false));
 
         match env.get_value(&token_boolean) {
-            Ok(Literal::Bool(b)) => assert_eq!(b, false),
+            Ok(Object::Bool(b)) => assert_eq!(b, false),
             _ => panic!("Value not found or not a number"),
         };
 
@@ -153,10 +149,10 @@ mod tests {
             line: 1,
         };
 
-        env.values.insert(token_nil.lexeme.clone(), Literal::Nil);
+        env.values.insert(token_nil.lexeme.clone(), Object::Nil);
 
         match env.get_value(&token_nil) {
-            Ok(Literal::Nil) => assert!(true),
+            Ok(Object::Nil) => assert!(true),
             _ => panic!("Value not found or not a number"),
         };
     }

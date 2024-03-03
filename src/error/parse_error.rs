@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast_grammar::token::Token;
+use crate::grammar::token::Token;
 
 #[derive(Debug, Clone)]
 pub struct ParseError {
@@ -8,6 +8,7 @@ pub struct ParseError {
     token: Token,
 }
 
+/// # when a parse error occurs the parser will continue parsing the rest of the tokens
 impl ParseError {
     pub fn new(message: &str, token: &Token) -> Self {
         Self {

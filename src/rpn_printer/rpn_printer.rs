@@ -1,6 +1,6 @@
 use crate::{
-    ast_grammar::expr::{Expr, ExprVisitor},
-    ast_grammar::token::{Literal, Token},
+    grammar::expr::{Expr, ExprVisitor},
+    grammar::token::{Literal, Token},
 };
 
 #[derive(Debug)]
