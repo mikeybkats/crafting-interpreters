@@ -36,6 +36,10 @@ impl Clock {
     pub fn new() -> Self {
         Self {}
     }
+
+    pub fn _string(&self) -> String {
+        String::from("<native fn>")
+    }
 }
 impl LoxCallable for Clock {
     fn arity(&self) -> u8 {
