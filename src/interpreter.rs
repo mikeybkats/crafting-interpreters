@@ -1,11 +1,10 @@
-use colored::Colorize;
-
-use crate::ast_grammar::expr::{Expr, ExprVisitor};
-use crate::ast_grammar::object::Object;
-use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
-use crate::ast_grammar::token::{Token, TokenType};
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
+use crate::grammar::callable::Clock;
+use crate::grammar::expr::{Expr, ExprVisitor};
+use crate::grammar::object::Object;
+use crate::grammar::stmt::{Stmt, StmtVisitor};
+use crate::grammar::token::{Token, TokenType};
 use crate::lox::PromptMode;
 use std::{cell::RefCell, rc::Rc};
 
@@ -19,8 +18,15 @@ impl Interpreter {
     pub fn new() -> Self {
         let environment = Rc::new(RefCell::new(Environment::new()));
 
+        let globals = environment.clone();
+
+        globals.borrow_mut().define(
+            "clock".to_string(),
+            Object::Callable(Box::new(Clock::new())),
+        );
+
         Self {
-            globals: environment.clone(),
+            globals,
             environment,
             mode: PromptMode::Single,
         }

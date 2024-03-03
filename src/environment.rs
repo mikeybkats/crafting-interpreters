@@ -1,8 +1,8 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
-    ast_grammar::{object::Object, token::Token},
     error::runtime_error::RuntimeError,
+    grammar::{object::Object, token::Token},
 };
 
 #[derive(Debug, Clone)]
@@ -82,8 +82,8 @@ impl Environment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast_grammar::token::Token;
-    use crate::ast_grammar::token::TokenType;
+    use crate::grammar::token::Token;
+    use crate::grammar::token::TokenType;
 
     #[test]
     fn test_new_environment() {

@@ -1,9 +1,9 @@
-use crate::ast_grammar::object::Object;
-use crate::ast_grammar::stmt::Stmt;
-use crate::ast_grammar::token::{Token, TokenType};
 use crate::error::parse_error::ParseError;
+use crate::grammar::object::Object;
+use crate::grammar::stmt::Stmt;
+use crate::grammar::token::{Token, TokenType};
 
-use crate::ast_grammar::expr::Expr;
+use crate::grammar::expr::Expr;
 
 pub struct Parser<'a> {
     current: usize,
@@ -713,9 +713,9 @@ mod tests {
     use colored::*;
 
     use super::*;
-    use crate::ast_grammar::object::Object;
-    use crate::ast_grammar::token::Token;
-    use crate::ast_grammar::token::TokenType;
+    use crate::grammar::object::Object;
+    use crate::grammar::token::Token;
+    use crate::grammar::token::TokenType;
 
     #[test]
     fn test_finish_call() {

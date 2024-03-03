@@ -1,10 +1,10 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::ast_grammar::object::Object;
 use crate::error::error::ErrorReporter;
+use crate::grammar::object::Object;
 
 // use super to access a sibling sub module
-use crate::ast_grammar::token::{Token, TokenType};
+use crate::grammar::token::{Token, TokenType};
 
 pub struct Scanner {
     source: String,
