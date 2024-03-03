@@ -6,24 +6,34 @@ use crate::ast_grammar::stmt::{Stmt, StmtVisitor};
 use crate::ast_grammar::token::{Token, TokenType};
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
+use crate::lox::PromptMode;
+use std::{cell::RefCell, rc::Rc};
 
 pub struct Interpreter {
-    environment: Environment,
-    globals: Environment,
+    environment: Rc<RefCell<Environment>>,
+    globals: Rc<RefCell<Environment>>,
+    mode: PromptMode,
 }
+
 impl Interpreter {
     pub fn new() -> Self {
-        let environment = Environment::new();
+        let environment = Rc::new(RefCell::new(Environment::new()));
+
         Self {
             globals: environment.clone(),
             environment,
+            mode: PromptMode::Single,
         }
+    }
+
+    pub fn set_mode(&mut self, mode: PromptMode) {
+        self.mode = mode;
     }
 
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Object>, RuntimeError> {
         let mut results = Vec::new();
         for statement in statements {
-            println!("{} {:#?}", "statement: ".red(), statement);
+            // println!("{} {:#?}", "statement: ".red(), statement);
             match self.execute(statement) {
                 Ok(value) => results.push(value),
                 Err(e) => return Err(e),
@@ -43,17 +53,13 @@ impl Interpreter {
     pub fn execute_block_stmt(
         &mut self,
         statements: &mut Vec<Stmt>,
-        environment: Environment,
+        enclosed_environment: Environment,
     ) -> Result<Object, RuntimeError> {
         let previous = self.environment.clone();
-        self.environment = environment;
+        self.environment = Rc::new(RefCell::new(enclosed_environment));
 
-        let mut results = Vec::new();
         for statement in statements {
-            match self.execute(statement) {
-                Ok(value) => results.push(value),
-                Err(e) => return Err(e),
-            }
+            self.execute(statement)?;
         }
 
         self.environment = previous;
@@ -287,7 +293,7 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, RuntimeError> {
-        match self.environment.get_value(token) {
+        match self.environment.borrow_mut().get_value(token) {
             Ok(value) => match value {
                 Object::Nil => Err(RuntimeError::new(
                     format!("Undefined variable '{}'.", token.lexeme),
@@ -301,7 +307,7 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, RuntimeError> {
         let value = self.evaluate(value)?;
-        match self.environment.assign(name, value.clone()) {
+        match self.environment.borrow_mut().assign(name, value.clone()) {
             Ok(_) => Ok(value),
             Err(e) => Err(e),
         }
@@ -310,14 +316,6 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
 
 impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
     fn visit_expression_stmt(&mut self, statement: &Expr) -> Result<Object, RuntimeError> {
-        match statement.accept(self) {
-            // TODO: fix this. it's appending a D character on numbers
-            Ok(value) => {
-                println!("{}", value);
-            }
-            _ => (),
-        }
-
         self.evaluate(statement)
     }
 
@@ -346,10 +344,27 @@ impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
         Ok(Object::Nil)
     }
 
+    fn visit_while_stmt(
+        &mut self,
+        condition: &Expr,
+        body: &mut Stmt,
+    ) -> Result<Object, RuntimeError> {
+        while self.evaluate(condition)?.is_truthy() {
+            match self.execute(body) {
+                Ok(_) => (),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(Object::Nil)
+    }
+
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, RuntimeError> {
         match self.evaluate(initializer) {
             Ok(value) => {
-                self.environment.define(name.lexeme.clone(), value.clone());
+                self.environment
+                    .borrow_mut()
+                    .define(name.lexeme.clone(), value.clone());
 
                 return Ok(value);
             }

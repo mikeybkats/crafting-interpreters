@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     ast_grammar::{object::Object, token::Token},
@@ -8,7 +8,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Environment {
     pub values: HashMap<String, Object>,
-    pub enclosing: Option<Box<Environment>>,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
@@ -20,9 +20,9 @@ impl Environment {
     }
 
     // Secondary constructor: With an enclosing environment
-    pub fn with_enclosing(enclosing: Environment) -> Self {
+    pub fn with_enclosing(enclosing: Rc<RefCell<Environment>>) -> Self {
         Environment {
-            enclosing: Some(Box::new(enclosing)),
+            enclosing: Some(enclosing),
             values: HashMap::new(),
         }
     }
@@ -34,12 +34,15 @@ impl Environment {
                 Ok(v.clone())
             }
             _ => {
+                // if the env has an enclosing env, see if the name is there
                 if self.enclosing.is_some() {
-                    return self
-                        .enclosing
-                        .as_mut()
-                        .unwrap_or_else(|| panic!("Enclosing environment is None"))
-                        .assign(name, value);
+                    match self.enclosing.as_mut() {
+                        Some(env) => env.borrow_mut().assign(name, value),
+                        _ => Err(RuntimeError::new(
+                            format!("Undefined variable '{}'.", name.lexeme),
+                            name,
+                        )),
+                    }
                 } else {
                     return Err(RuntimeError::new(
                         format!("Undefined variable '{}'.", name.lexeme),
@@ -63,6 +66,7 @@ impl Environment {
                         .enclosing
                         .as_ref()
                         .unwrap_or_else(|| panic!("Enclosing environment is None"))
+                        .borrow_mut()
                         .get_value(token);
                 } else {
                     return Err(RuntimeError::new(

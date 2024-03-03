@@ -14,6 +14,12 @@ use crate::{
     scanner::Scanner,
 };
 
+pub enum PromptMode {
+    File,
+    Single,
+    Multiline,
+}
+
 pub enum LoxError {
     RuntimeError(RuntimeError),
     ParseError(ParseError),
@@ -54,7 +60,7 @@ impl Lox {
         let bytes = fs::read(path)?;
         let content = String::from_utf8_lossy(&bytes).to_string();
 
-        let _value_of_run = self.run(content);
+        let _value_of_run = self.run(content, PromptMode::File);
 
         if self.error_reporter.borrow_mut().had_error() {
             process::exit(65);
@@ -81,7 +87,7 @@ impl Lox {
             let mut line = String::new();
             match reader.read_line(&mut line) {
                 Ok(bytes_read) if bytes_read > 0 => {
-                    self.run(line);
+                    self.run(line, PromptMode::Single);
                 }
                 Err(error) => {
                     self.error_reporter.borrow_mut().set_error(false);
@@ -116,18 +122,20 @@ impl Lox {
             lines.push('\n');
         }
 
-        self.run(lines.to_string());
+        self.run(lines.to_string(), PromptMode::Multiline);
 
         Ok(())
     }
 
-    fn run(&self, source: String) {
+    fn run(&self, source: String, mode: PromptMode) {
         let mut scanner = Scanner::new(source, Rc::clone(&self.error_reporter));
         let tokens = scanner.scan_tokens();
 
         let mut parser = Parser::new(tokens);
 
         let mut statements = parser.parse();
+
+        self.interpreter.borrow_mut().set_mode(mode);
 
         if let Ok(stmts) = &mut statements {
             if let Err(error) = self.interpreter.borrow_mut().interpret(stmts) {
