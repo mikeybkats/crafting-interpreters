@@ -3,7 +3,7 @@ use crate::error::runtime_error::RuntimeError;
 use crate::grammar::callable::Clock;
 use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::object::Object;
-use crate::grammar::stmt::{Stmt, StmtVisitor};
+use crate::grammar::stmt::{BlockStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
 use crate::lox::PromptMode;
 use std::{cell::RefCell, rc::Rc};
@@ -58,13 +58,13 @@ impl Interpreter {
 
     pub fn execute_block_stmt(
         &mut self,
-        statements: &mut Vec<Stmt>,
+        block_stmt: &mut BlockStmt,
         enclosed_environment: Environment,
     ) -> Result<Object, RuntimeError> {
         let previous = self.environment.clone();
         self.environment = Rc::new(RefCell::new(enclosed_environment));
 
-        for statement in statements {
+        for statement in &mut block_stmt.statements {
             self.execute(statement)?;
         }
 
@@ -325,6 +325,15 @@ impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
         self.evaluate(statement)
     }
 
+    fn visit_function_stmt(
+        &mut self,
+        _name: &Token,
+        _params: &mut Vec<TokenType>,
+        _body: &BlockStmt,
+    ) -> Result<Object, RuntimeError> {
+        return Ok(Object::Nil);
+    }
+
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,
@@ -378,7 +387,7 @@ impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_block_stmt(&mut self, statements: &mut Vec<Stmt>) -> Result<Object, RuntimeError> {
+    fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> Result<Object, RuntimeError> {
         self.execute_block_stmt(
             statements,
             Environment::with_enclosing(self.environment.clone()),
