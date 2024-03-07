@@ -4,10 +4,9 @@ use getopts::Options;
 
 use crate::lox::Lox;
 
-// mod ast_printer;
-// mod rpn_printer;
 mod environment;
 mod error;
+mod function;
 mod grammar;
 mod interpreter;
 mod lox;

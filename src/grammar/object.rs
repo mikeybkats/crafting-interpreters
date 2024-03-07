@@ -5,7 +5,7 @@ pub enum Object {
     Str(String),
     Num(f64),
     Bool(bool),
-    Callable(Box<dyn LoxCallable>),
+    Callable(Box<dyn LoxCallable<Option<Object>>>),
     Nil,
 }
 

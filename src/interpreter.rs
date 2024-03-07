@@ -10,7 +10,7 @@ use std::{cell::RefCell, rc::Rc};
 
 pub struct Interpreter {
     environment: Rc<RefCell<Environment>>,
-    globals: Rc<RefCell<Environment>>,
+    pub globals: Rc<RefCell<Environment>>,
     mode: PromptMode,
 }
 
@@ -236,15 +236,13 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
             .collect::<Result<Vec<Object>, RuntimeError>>()?;
 
         match callee {
-            Object::Callable(function) => {
-                return function.call(self, processed_arguments);
-            }
-            _ => {
-                return Err(RuntimeError::new(
-                    "Can only call functions and classes.".to_string(),
-                    paren,
-                ));
-            }
+            Object::Callable(function) => function
+                .call(self, processed_arguments)
+                .ok_or_else(|| RuntimeError::new("Error calling function".to_string(), paren)),
+            _ => Err(RuntimeError::new(
+                "Can only call functions and classes.".to_string(),
+                paren,
+            )),
         }
     }
 
@@ -328,7 +326,7 @@ impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
     fn visit_function_stmt(
         &mut self,
         _name: &Token,
-        _params: &mut Vec<TokenType>,
+        _params: &mut Vec<Token>,
         _body: &BlockStmt,
     ) -> Result<Object, RuntimeError> {
         return Ok(Object::Nil);

@@ -1,6 +1,6 @@
 use crate::error::parse_error::ParseError;
 use crate::grammar::object::Object;
-use crate::grammar::stmt::{BlockStmt, Stmt};
+use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt};
 use crate::grammar::token::{Token, TokenType};
 
 use crate::grammar::expr::Expr;
@@ -291,7 +291,7 @@ impl<'a> Parser<'a> {
             &format!("Expect '(' after {} name.", kind),
         )?;
 
-        let mut parameters: Vec<TokenType> = vec![];
+        let mut parameters: Vec<Token> = vec![];
 
         if !self.check(&TokenType::RightParen) {
             loop {
@@ -302,7 +302,8 @@ impl<'a> Parser<'a> {
                     ));
                 }
 
-                parameters.push(TokenType::Identifier);
+                let param = self.consume(TokenType::Identifier, "Expect parameter name.")?;
+                parameters.push(param.clone());
 
                 if self.match_symbol(&[TokenType::Comma]) {
                     break;
@@ -320,13 +321,13 @@ impl<'a> Parser<'a> {
             &format!("Expect '{{' before {} body.", kind),
         )?;
 
-        return Ok(Stmt::Function {
+        Ok(Stmt::Function(FunStmt {
             name,
             params: parameters,
             body: self
                 .block()
                 .unwrap_or_else(|_error| BlockStmt { statements: vec![] }),
-        });
+        }))
     }
 
     fn block(&mut self) -> Result<BlockStmt, ParseError> {

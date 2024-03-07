@@ -1,11 +1,15 @@
-use super::{
-    expr::Expr,
-    token::{Token, TokenType},
-};
+use super::{expr::Expr, token::Token};
 
 #[derive(Debug, Clone)]
 pub struct BlockStmt {
     pub statements: Vec<Stmt>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FunStmt {
+    pub name: Token,
+    pub params: Vec<Token>,
+    pub body: BlockStmt,
 }
 
 #[derive(Debug, Clone)]
@@ -17,11 +21,7 @@ pub enum Stmt {
         expression: Box<Expr>,
     },
     // If you're wondering why no For statements? They are handled in the parser because they are just desugared into while loops.
-    Function {
-        name: Token,
-        params: Vec<TokenType>,
-        body: BlockStmt,
-    },
+    Function(FunStmt),
     If {
         condition: Box<Expr>,
         then_branch: Box<Stmt>,
@@ -44,7 +44,7 @@ impl Stmt {
     pub fn accept<R>(&mut self, visitor: &mut impl StmtVisitor<R>) -> R {
         match self {
             Stmt::Expression { expression } => visitor.visit_expression_stmt(expression),
-            Stmt::Function { name, params, body } => {
+            Stmt::Function(FunStmt { name, params, body }) => {
                 visitor.visit_function_stmt(name, params, body)
             }
             Stmt::If {
@@ -62,12 +62,8 @@ impl Stmt {
 
 pub trait StmtVisitor<R> {
     fn visit_expression_stmt(&mut self, expression: &Expr) -> R;
-    fn visit_function_stmt(
-        &mut self,
-        name: &Token,
-        params: &mut Vec<TokenType>,
-        body: &BlockStmt,
-    ) -> R;
+    fn visit_function_stmt(&mut self, name: &Token, params: &mut Vec<Token>, body: &BlockStmt)
+        -> R;
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,
