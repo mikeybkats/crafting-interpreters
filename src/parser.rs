@@ -303,9 +303,10 @@ impl<'a> Parser<'a> {
                 }
 
                 let param = self.consume(TokenType::Identifier, "Expect parameter name.")?;
+
                 parameters.push(param.clone());
 
-                if self.match_symbol(&[TokenType::Comma]) {
+                if !self.match_symbol(&[TokenType::Comma]) {
                     break;
                 }
             }
@@ -627,7 +628,7 @@ impl<'a> Parser<'a> {
                         self.peek().unwrap(),
                     ));
                 }
-                if self.match_symbol(&[TokenType::Comma]) {
+                if !self.match_symbol(&[TokenType::Comma]) {
                     break;
                 }
             }

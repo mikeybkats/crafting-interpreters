@@ -1,3 +1,5 @@
+use crate::error::runtime_error::RuntimeError;
+
 use super::callable::LoxCallable;
 use std::fmt;
 
@@ -5,7 +7,7 @@ pub enum Object {
     Str(String),
     Num(f64),
     Bool(bool),
-    Callable(Box<dyn LoxCallable<Option<Object>>>),
+    Callable(Box<dyn LoxCallable<Result<Object, RuntimeError>>>),
     Nil,
 }
 

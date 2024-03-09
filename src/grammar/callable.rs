@@ -1,4 +1,4 @@
-use crate::interpreter::Interpreter;
+use crate::{error::runtime_error::RuntimeError, interpreter::Interpreter};
 
 use super::object::Object;
 pub trait LoxCallable<T> {
@@ -33,13 +33,17 @@ impl Clock {
         String::from("<native fn>")
     }
 }
-impl LoxCallable<Option<Object>> for Clock {
+impl LoxCallable<Result<Object, RuntimeError>> for Clock {
     fn arity(&self) -> u8 {
         0
     }
 
-    fn call(&self, _interpreter: &mut Interpreter, _arguments: Vec<Object>) -> Option<Object> {
-        Some(Object::Num(
+    fn call(
+        &self,
+        _interpreter: &mut Interpreter,
+        _arguments: Vec<Object>,
+    ) -> Result<Object, RuntimeError> {
+        Ok(Object::Num(
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

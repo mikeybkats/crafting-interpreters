@@ -58,21 +58,21 @@ impl Environment {
     }
 
     pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {
+        println!("Values: {:#?}", self.values);
         match self.values.get(&token.lexeme) {
-            Some(value) => return Ok(value.clone()),
+            Some(value) => Ok(value.clone()),
             _ => {
                 if self.enclosing.is_some() {
-                    return self
-                        .enclosing
+                    self.enclosing
                         .as_ref()
                         .unwrap_or_else(|| panic!("Enclosing environment is None"))
                         .borrow_mut()
-                        .get_value(token);
+                        .get_value(token)
                 } else {
-                    return Err(RuntimeError::new(
+                    Err(RuntimeError::new(
                         format!("Undefined variable '{}'.", token.lexeme),
                         token,
-                    ));
+                    ))
                 }
             }
         }

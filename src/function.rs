@@ -7,21 +7,30 @@ use crate::{
     interpreter::Interpreter,
 };
 
-struct LoxFunction {
+#[derive(Debug)]
+pub struct LoxFunction {
     declaration: Rc<RefCell<FunStmt>>,
 }
 
 impl LoxFunction {
-    pub fn _new(declaration: FunStmt) -> Self {
+    pub fn new(declaration: &mut FunStmt) -> Self {
         Self {
-            declaration: Rc::new(RefCell::new(declaration)),
+            declaration: Rc::new(RefCell::new(declaration.clone())),
         }
+    }
+
+    // pub fn arity(&self) -> u8 {
+    //     self.declaration.borrow().params.len() as u8
+    // }
+
+    pub fn _to_string(&self) -> String {
+        format!("<fn {}>", self.declaration.borrow().name.lexeme)
     }
 }
 
 impl LoxCallable<Result<Object, RuntimeError>> for LoxFunction {
     fn arity(&self) -> u8 {
-        0
+        self.declaration.borrow().params.len() as u8
     }
 
     fn call(

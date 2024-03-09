@@ -44,9 +44,7 @@ impl Stmt {
     pub fn accept<R>(&mut self, visitor: &mut impl StmtVisitor<R>) -> R {
         match self {
             Stmt::Expression { expression } => visitor.visit_expression_stmt(expression),
-            Stmt::Function(FunStmt { name, params, body }) => {
-                visitor.visit_function_stmt(name, params, body)
-            }
+            Stmt::Function(fun_stmt) => visitor.visit_function_stmt(fun_stmt),
             Stmt::If {
                 condition,
                 then_branch,
@@ -62,8 +60,7 @@ impl Stmt {
 
 pub trait StmtVisitor<R> {
     fn visit_expression_stmt(&mut self, expression: &Expr) -> R;
-    fn visit_function_stmt(&mut self, name: &Token, params: &mut Vec<Token>, body: &BlockStmt)
-        -> R;
+    fn visit_function_stmt(&mut self, fun_stmt: &mut FunStmt) -> R;
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,

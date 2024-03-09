@@ -1,9 +1,12 @@
+use colored::Colorize;
+
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
+use crate::function::LoxFunction;
 use crate::grammar::callable::Clock;
 use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::object::Object;
-use crate::grammar::stmt::{BlockStmt, Stmt, StmtVisitor};
+use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
 use crate::lox::PromptMode;
 use std::{cell::RefCell, rc::Rc};
@@ -70,7 +73,7 @@ impl Interpreter {
 
         self.environment = previous;
 
-        return Ok(Object::Nil);
+        Ok(Object::Nil)
     }
 
     pub fn evaluate(&mut self, expression: &Expr) -> Result<Object, RuntimeError> {
@@ -228,6 +231,7 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
         paren: &Token,
         arguments: &Vec<Expr>,
     ) -> Result<Object, RuntimeError> {
+        println!("callee: {:#?}", callee);
         let callee = self.evaluate(callee)?;
 
         let processed_arguments = arguments
@@ -236,9 +240,7 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
             .collect::<Result<Vec<Object>, RuntimeError>>()?;
 
         match callee {
-            Object::Callable(function) => function
-                .call(self, processed_arguments)
-                .ok_or_else(|| RuntimeError::new("Error calling function".to_string(), paren)),
+            Object::Callable(function) => function.call(self, processed_arguments),
             _ => Err(RuntimeError::new(
                 "Can only call functions and classes.".to_string(),
                 paren,
@@ -297,16 +299,7 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, RuntimeError> {
-        match self.environment.borrow_mut().get_value(token) {
-            Ok(value) => match value {
-                Object::Nil => Err(RuntimeError::new(
-                    format!("Undefined variable '{}'.", token.lexeme),
-                    token,
-                )),
-                _ => Ok(value),
-            },
-            Err(e) => Err(e),
-        }
+        self.environment.borrow().get_value(token)
     }
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, RuntimeError> {
@@ -323,13 +316,14 @@ impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
         self.evaluate(statement)
     }
 
-    fn visit_function_stmt(
-        &mut self,
-        _name: &Token,
-        _params: &mut Vec<Token>,
-        _body: &BlockStmt,
-    ) -> Result<Object, RuntimeError> {
-        return Ok(Object::Nil);
+    fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, RuntimeError> {
+        let lox_function = LoxFunction::new(declaration);
+        println!("{} {:#?}", "lox_function: ".red(), lox_function);
+        self.environment.borrow_mut().define(
+            declaration.name.lexeme.clone(),
+            Object::Callable(Box::new(lox_function)),
+        );
+        Ok(Object::Nil)
     }
 
     fn visit_if_stmt(
@@ -379,9 +373,9 @@ impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
                     .borrow_mut()
                     .define(name.lexeme.clone(), value.clone());
 
-                return Ok(value);
+                Ok(value)
             }
-            Err(e) => return Err(e),
+            Err(e) => Err(e),
         }
     }
 
