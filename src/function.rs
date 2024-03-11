@@ -7,7 +7,7 @@ use crate::{
     interpreter::Interpreter,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LoxFunction {
     declaration: Rc<RefCell<FunStmt>>,
 }
@@ -18,10 +18,6 @@ impl LoxFunction {
             declaration: Rc::new(RefCell::new(declaration.clone())),
         }
     }
-
-    // pub fn arity(&self) -> u8 {
-    //     self.declaration.borrow().params.len() as u8
-    // }
 
     pub fn _to_string(&self) -> String {
         format!("<fn {}>", self.declaration.borrow().name.lexeme)

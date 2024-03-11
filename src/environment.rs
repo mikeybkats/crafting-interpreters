@@ -58,7 +58,6 @@ impl Environment {
     }
 
     pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {
-        println!("Values: {:#?}", self.values);
         match self.values.get(&token.lexeme) {
             Some(value) => Ok(value.clone()),
             _ => {

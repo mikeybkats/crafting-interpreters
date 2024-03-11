@@ -1,9 +1,7 @@
-use colored::Colorize;
-
 use crate::environment::Environment;
 use crate::error::runtime_error::RuntimeError;
 use crate::function::LoxFunction;
-use crate::grammar::callable::Clock;
+use crate::grammar::callable::{Callable, Clock};
 use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor};
@@ -25,7 +23,7 @@ impl Interpreter {
 
         globals.borrow_mut().define(
             "clock".to_string(),
-            Object::Callable(Box::new(Clock::new())),
+            Object::Callable(Callable::Clock(Clock::new())),
         );
 
         Self {
@@ -231,7 +229,6 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
         paren: &Token,
         arguments: &Vec<Expr>,
     ) -> Result<Object, RuntimeError> {
-        println!("callee: {:#?}", callee);
         let callee = self.evaluate(callee)?;
 
         let processed_arguments = arguments
@@ -298,16 +295,17 @@ impl ExprVisitor<Result<Object, RuntimeError>> for Interpreter {
         }
     }
 
-    fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, RuntimeError> {
-        self.environment.borrow().get_value(token)
-    }
-
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, RuntimeError> {
         let value = self.evaluate(value)?;
         match self.environment.borrow_mut().assign(name, value.clone()) {
             Ok(_) => Ok(value),
             Err(e) => Err(e),
         }
+    }
+
+    fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, RuntimeError> {
+        let value = self.environment.borrow().get_value(token);
+        value
     }
 }
 
@@ -318,10 +316,9 @@ impl StmtVisitor<Result<Object, RuntimeError>> for Interpreter {
 
     fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, RuntimeError> {
         let lox_function = LoxFunction::new(declaration);
-        println!("{} {:#?}", "lox_function: ".red(), lox_function);
         self.environment.borrow_mut().define(
             declaration.name.lexeme.clone(),
-            Object::Callable(Box::new(lox_function)),
+            Object::Callable(Callable::LoxFunction(lox_function)),
         );
         Ok(Object::Nil)
     }
