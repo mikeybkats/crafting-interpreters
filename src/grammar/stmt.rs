@@ -30,6 +30,10 @@ pub enum Stmt {
     Print {
         expression: Box<Expr>,
     },
+    Return {
+        keyword: Token,
+        value: Box<Expr>,
+    },
     Var {
         name: Token,
         initializer: Box<Expr>,
@@ -52,6 +56,7 @@ impl Stmt {
             } => visitor.visit_if_stmt(condition, then_branch, else_branch),
             Stmt::While { condition, body } => visitor.visit_while_stmt(condition, body),
             Stmt::Print { expression } => visitor.visit_print_stmt(expression),
+            Stmt::Return { keyword, value } => visitor.visit_return_stmt(value),
             Stmt::Var { name, initializer } => visitor.visit_var_stmt(name, initializer),
             Stmt::Block(block_stmt) => visitor.visit_block_stmt(block_stmt),
         }
@@ -69,6 +74,7 @@ pub trait StmtVisitor<R> {
     ) -> R;
     fn visit_while_stmt(&mut self, condition: &Expr, body: &mut Stmt) -> R;
     fn visit_print_stmt(&mut self, expression: &Expr) -> R;
+    fn visit_return_stmt(&mut self, value: &Expr) -> R;
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> R;
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> R;
 }

@@ -1,4 +1,4 @@
-use crate::{error::runtime_error::RuntimeError, function::LoxFunction, interpreter::Interpreter};
+use crate::{error::LoxError, function::LoxFunction, interpreter::Interpreter};
 
 use super::object::Object;
 
@@ -13,7 +13,7 @@ impl Callable {
         &self,
         interpreter: &mut Interpreter,
         arguments: Vec<Object>,
-    ) -> Result<Object, RuntimeError> {
+    ) -> Result<Object, LoxError> {
         match self {
             Callable::LoxFunction(f) => f.call(interpreter, arguments),
             Callable::Clock(c) => c.call(interpreter, arguments),
@@ -40,7 +40,7 @@ impl Clock {
         String::from("<native fn>")
     }
 }
-impl LoxCallable<Result<Object, RuntimeError>> for Clock {
+impl LoxCallable<Result<Object, LoxError>> for Clock {
     fn arity(&self) -> u8 {
         0
     }
@@ -49,7 +49,7 @@ impl LoxCallable<Result<Object, RuntimeError>> for Clock {
         &self,
         _interpreter: &mut Interpreter,
         _arguments: Vec<Object>,
-    ) -> Result<Object, RuntimeError> {
+    ) -> Result<Object, LoxError> {
         Ok(Object::Num(
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

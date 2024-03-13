@@ -7,22 +7,15 @@ use std::{
     rc::Rc,
 };
 
+use crate::error::LoxError;
 use crate::{
-    error::{error::ErrorReporter, parse_error::ParseError, runtime_error::RuntimeError},
-    interpreter::Interpreter,
-    parser::Parser,
-    scanner::Scanner,
+    error::error::ErrorReporter, interpreter::Interpreter, parser::Parser, scanner::Scanner,
 };
 
 pub enum PromptMode {
     File,
     Single,
     Multiline,
-}
-
-pub enum LoxError {
-    RuntimeError(RuntimeError),
-    ParseError(ParseError),
 }
 
 pub struct Lox {
@@ -46,6 +39,7 @@ impl Lox {
             LoxError::ParseError(error) => {
                 self.error_reporter.borrow_mut().report_parse_error(error)
             }
+            LoxError::LoxReturn(error) => println!("Lox Return {}", error),
         }
     }
 
@@ -139,7 +133,7 @@ impl Lox {
 
         if let Ok(stmts) = &mut statements {
             if let Err(error) = self.interpreter.borrow_mut().interpret(stmts) {
-                self.error(LoxError::RuntimeError(error));
+                self.error(error);
             }
         } else if let Err(error) = statements {
             self.error(LoxError::ParseError(error));

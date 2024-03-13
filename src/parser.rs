@@ -109,6 +109,9 @@ impl<'a> Parser<'a> {
         if self.match_symbol(&[TokenType::Print]) {
             return self.print_statement();
         }
+        if self.match_symbol(&[TokenType::Return]) {
+            return self.return_statement();
+        }
         if self.match_symbol(&[TokenType::While]) {
             return self.while_statement();
         }
@@ -235,6 +238,26 @@ impl<'a> Parser<'a> {
 
         Ok(Stmt::Print {
             expression: Box::new(value),
+        })
+    }
+
+    /// # return_statement
+    /// parse a return statement
+    fn return_statement(&mut self) -> Result<Stmt, ParseError> {
+        let keyword = self.previous().unwrap().clone();
+        let value = if !self.check(&TokenType::Semicolon) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        self.consume(TokenType::Semicolon, "Expect ';' after return value.")?;
+
+        Ok(Stmt::Return {
+            keyword,
+            value: Box::new(value.unwrap_or_else(|| Expr::Literal {
+                value: Some(Object::Nil),
+            })),
         })
     }
 

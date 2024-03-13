@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     environment,
-    error::runtime_error::RuntimeError,
+    error::LoxError,
     grammar::{callable::LoxCallable, object::Object, stmt::FunStmt},
     interpreter::Interpreter,
 };
@@ -24,7 +24,7 @@ impl LoxFunction {
     }
 }
 
-impl LoxCallable<Result<Object, RuntimeError>> for LoxFunction {
+impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
     fn arity(&self) -> u8 {
         self.declaration.borrow().params.len() as u8
     }
@@ -33,7 +33,7 @@ impl LoxCallable<Result<Object, RuntimeError>> for LoxFunction {
         &self,
         interpreter: &mut Interpreter,
         arguments: Vec<Object>,
-    ) -> Result<Object, RuntimeError> {
+    ) -> Result<Object, LoxError> {
         let mut environment = environment::Environment::new();
         environment.enclosing = Some(interpreter.globals.clone());
 

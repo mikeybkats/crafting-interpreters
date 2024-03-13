@@ -44,17 +44,6 @@ impl Object {
             Object::Nil => String::from("nil"),
         }
     }
-
-    // pub fn call(
-    //     &self,
-    //     interpreter: &mut Interpreter,
-    //     arguments: Vec<Object>,
-    // ) -> Result<Object, RuntimeError> {
-    //     match self {
-    //         Object::Callable(callable) => callable.call(interpreter, arguments),
-    //         _ => Ok(Object::Nil),
-    //     }
-    // }
 }
 
 impl fmt::Display for Object {
