@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::environment::Environment;
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
@@ -231,7 +233,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
         let processed_arguments = arguments
             .iter()
-            .map(|argument| self.evaluate(argument))
+            .map(|argument| {
+                println!("{} {:#?}", "argument: ".red(), argument);
+                self.evaluate(argument)
+            })
             .collect::<Result<Vec<Object>, LoxError>>()?;
 
         match callee {
@@ -356,6 +361,8 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_return_stmt(&mut self, value: &Expr) -> Result<Object, LoxError> {
         let value = self.evaluate(value)?;
+
+        // throw an error to trigger an escape from deep call stack
         Err(LoxError::LoxReturn(LoxReturn::new(Some(value))))
     }
 

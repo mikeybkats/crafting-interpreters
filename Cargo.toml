@@ -1,5 +1,5 @@
 [package]
-name = "jlox_interpreter_rust"
+name = "rlox_interpreter"
 version = "0.1.0"
 edition = "2021"
 

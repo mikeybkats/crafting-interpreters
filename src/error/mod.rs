@@ -3,6 +3,7 @@ pub mod lox_return;
 pub mod parse_error;
 pub mod runtime_error;
 
+#[derive(Debug)]
 pub enum LoxError {
     ParseError(parse_error::ParseError),
     RuntimeError(runtime_error::RuntimeError),

@@ -3,7 +3,11 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     environment,
     error::LoxError,
-    grammar::{callable::LoxCallable, object::Object, stmt::FunStmt},
+    grammar::{
+        callable::LoxCallable,
+        object::Object,
+        stmt::{BlockStmt, FunStmt},
+    },
     interpreter::Interpreter,
 };
 
@@ -37,10 +41,22 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
         let mut environment = environment::Environment::new();
         environment.enclosing = Some(interpreter.globals.clone());
 
-        for (i, param) in self.declaration.borrow_mut().params.iter().enumerate() {
+        for (i, param) in self.declaration.borrow().params.iter().enumerate() {
             environment.define(param.lexeme.clone(), arguments[i].clone());
         }
 
-        interpreter.execute_block_stmt(&mut self.declaration.borrow_mut().body, environment)
+        let mut declaration_body = std::mem::replace(
+            &mut self.declaration.borrow_mut().body,
+            BlockStmt { statements: vec![] },
+        );
+
+        match interpreter.execute_block_stmt(&mut declaration_body, environment) {
+            Ok(value) => Ok(value),
+            Err(e) => match e {
+                LoxError::RuntimeError(e) => Err(LoxError::RuntimeError(e)),
+                LoxError::LoxReturn(return_value) => Ok(return_value.value.unwrap_or(Object::Nil)),
+                LoxError::ParseError(e) => Err(LoxError::ParseError(e)),
+            },
+        }
     }
 }

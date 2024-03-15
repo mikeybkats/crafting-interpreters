@@ -2,7 +2,7 @@ use crate::grammar::object::Object;
 
 #[derive(Debug)]
 pub struct LoxReturn {
-    value: Option<Object>,
+    pub value: Option<Object>,
 }
 
 impl LoxReturn {
