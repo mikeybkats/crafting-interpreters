@@ -56,8 +56,8 @@ impl Interpreter {
 
     pub fn execute(&mut self, statement: &mut Stmt) -> Result<Object, LoxError> {
         match statement.accept(self) {
-            Ok(value) => Ok(value),
-            Err(e) => Err(e),
+            Ok(value) => return Ok(value),
+            Err(e) => return Err(e),
         }
     }
 
@@ -80,8 +80,8 @@ impl Interpreter {
 
     pub fn evaluate(&mut self, expression: &Expr) -> Result<Object, LoxError> {
         match expression.accept(self) {
-            Ok(value) => Ok(value),
-            Err(e) => Err(e),
+            Ok(value) => return Ok(value),
+            Err(e) => return Err(e),
         }
     }
 
@@ -229,17 +229,14 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         paren: &Token,
         arguments: &Vec<Expr>,
     ) -> Result<Object, LoxError> {
-        let callee = self.evaluate(callee)?;
+        let processed_callee = self.evaluate(callee)?;
 
         let processed_arguments = arguments
             .iter()
-            .map(|argument| {
-                println!("{} {:#?}", "argument: ".red(), argument);
-                self.evaluate(argument)
-            })
+            .map(|argument| self.evaluate(argument))
             .collect::<Result<Vec<Object>, LoxError>>()?;
 
-        match callee {
+        match processed_callee {
             Object::Callable(function) => function.call(self, processed_arguments),
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
                 "Can only call functions and classes.".to_string(),

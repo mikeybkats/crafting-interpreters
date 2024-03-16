@@ -5,15 +5,43 @@ use crate::{
     grammar::{object::Object, token::Token},
 };
 
+use rand::distributions::Alphanumeric;
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+fn generate_id() -> String {
+    // Obtain the current system time as a seed
+    let seed = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_nanos();
+
+    // Initialize a random number generator with the current system time as the seed
+    let rng = StdRng::seed_from_u64(seed as u64);
+
+    // Generate a random string of 5 alphanumeric characters
+    let id: String = rng
+        .sample_iter(&Alphanumeric)
+        .take(5)
+        .map(char::from)
+        .collect();
+
+    id
+}
+
 #[derive(Debug, Clone)]
 pub struct Environment {
     pub values: HashMap<String, Object>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
+    pub name: String,
 }
 
 impl Environment {
     pub fn new() -> Self {
+        let name = generate_id();
         Self {
+            name,
             enclosing: None,
             values: HashMap::new(),
         }
@@ -22,6 +50,7 @@ impl Environment {
     // Secondary constructor: With an enclosing environment
     pub fn with_enclosing(enclosing: Rc<RefCell<Environment>>) -> Self {
         Environment {
+            name: format!("{}-child", generate_id()),
             enclosing: Some(enclosing),
             values: HashMap::new(),
         }
@@ -55,6 +84,10 @@ impl Environment {
 
     pub fn define(&mut self, name: String, value: Object) {
         self.values.insert(name, value);
+    }
+
+    pub fn values_of(&self) -> &HashMap<String, Object> {
+        &self.values
     }
 
     pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {

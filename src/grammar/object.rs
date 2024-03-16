@@ -52,7 +52,7 @@ impl fmt::Display for Object {
             Object::Str(string) => write!(f, "{}", string),
             Object::Bool(boolean) => write!(f, "{}", boolean),
             Object::Num(number) => write!(f, "{}", number),
-            Object::Callable(_) => write!(f, "<LoxCallable>",),
+            Object::Callable(_) => write!(f, "Object: <LoxCallable>",),
             Object::Nil => write!(f, "nil"),
         }
     }
