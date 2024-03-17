@@ -86,7 +86,7 @@ impl Environment {
         self.values.insert(name, value);
     }
 
-    pub fn values_of(&self) -> &HashMap<String, Object> {
+    pub fn _values_of(&self) -> &HashMap<String, Object> {
         &self.values
     }
 

@@ -9,7 +9,7 @@
       "request": "launch",
       "name": "Debug",
       "program": "${workspaceFolder}/target/debug/rlox_interpreter",
-      "args": ["${workspaceFolder}/test/lox_test.lox"],
+      "args": ["${workspaceFolder}/test/fib.lox"],
       "cwd": "${workspaceFolder}"
     }
   ]

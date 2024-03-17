@@ -328,6 +328,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
             declaration.name.lexeme.clone(),
             Object::Callable(Callable::LoxFunction(lox_function)),
         );
+
         Ok(Object::Nil)
     }
 
@@ -358,6 +359,8 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_return_stmt(&mut self, value: &Expr) -> Result<Object, LoxError> {
         let value = self.evaluate(value)?;
+
+        println!("{} {}", "returning".green(), value);
 
         // throw an error to trigger an escape from deep call stack
         Err(LoxError::LoxReturn(LoxReturn::new(Some(value))))

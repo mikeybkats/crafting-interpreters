@@ -34,6 +34,7 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
         interpreter: &mut Interpreter,
         arguments: Vec<Object>,
     ) -> Result<Object, LoxError> {
+        println!("LoxFunction::call - arguments: {:#?}", arguments);
         let mut environment = environment::Environment::new();
         environment.enclosing = Some(interpreter.globals.clone());
 
@@ -42,6 +43,11 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
         for (i, param) in dec_clone_one.borrow().params.iter().enumerate() {
             environment.define(param.lexeme.clone(), arguments[i].clone());
         }
+
+        // println!(
+        //     "LoxFunction::call - environment {}: {:#?}",
+        //     environment.name, environment.values
+        // );
 
         let dec_clone_two = self.declaration.clone();
 
