@@ -1,6 +1,6 @@
 use crate::error::parse_error::ParseError;
 use crate::grammar::object::Object;
-use crate::grammar::stmt::Stmt;
+use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt};
 use crate::grammar::token::{Token, TokenType};
 
 use crate::grammar::expr::Expr;
@@ -75,6 +75,9 @@ impl<'a> Parser<'a> {
     /// Called repeatedly when parsing statments in either block or script mode
     /// This is the where the application should synchronize when the parser panics.
     fn declaration(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_symbol(&[TokenType::Fun]) {
+            return self.function("function");
+        }
         if self.match_symbol(&[TokenType::Var]) {
             match self.var_declaration() {
                 Ok(stmt) => Ok(stmt),
@@ -106,11 +109,17 @@ impl<'a> Parser<'a> {
         if self.match_symbol(&[TokenType::Print]) {
             return self.print_statement();
         }
+        if self.match_symbol(&[TokenType::Return]) {
+            return self.return_statement();
+        }
         if self.match_symbol(&[TokenType::While]) {
             return self.while_statement();
         }
         if self.match_symbol(&[TokenType::LeftBrace]) {
-            return self.block();
+            return match self.block() {
+                Ok(block) => Ok(Stmt::Block(block)),
+                Err(e) => Err(e),
+            };
         }
 
         self.expression_statement()
@@ -148,14 +157,14 @@ impl<'a> Parser<'a> {
         let mut body = self.statement();
 
         if let Some(increment) = increment {
-            body = Ok(Stmt::Block {
+            body = Ok(Stmt::Block(BlockStmt {
                 statements: vec![
                     body.unwrap(),
                     Stmt::Expression {
                         expression: Box::new(increment),
                     },
                 ],
-            })
+            }))
         }
 
         if let None = condition {
@@ -170,9 +179,9 @@ impl<'a> Parser<'a> {
         });
 
         if let Some(initializer) = initializer {
-            body = Ok(Stmt::Block {
+            body = Ok(Stmt::Block(BlockStmt {
                 statements: vec![initializer, body.unwrap()],
-            })
+            }))
         }
 
         return body;
@@ -232,6 +241,26 @@ impl<'a> Parser<'a> {
         })
     }
 
+    /// # return_statement
+    /// parse a return statement
+    fn return_statement(&mut self) -> Result<Stmt, ParseError> {
+        let keyword = self.previous().unwrap().clone();
+        let value = if !self.check(&TokenType::Semicolon) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        self.consume(TokenType::Semicolon, "Expect ';' after return value.")?;
+
+        Ok(Stmt::Return {
+            keyword,
+            value: Box::new(value.unwrap_or_else(|| Expr::Literal {
+                value: Some(Object::Nil),
+            })),
+        })
+    }
+
     /// # var_declaration
     /// parse a variable declaration
     fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
@@ -275,7 +304,57 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn block(&mut self) -> Result<Stmt, ParseError> {
+    fn function(&mut self, kind: &str) -> Result<Stmt, ParseError> {
+        let name = self
+            .consume(TokenType::Identifier, &format!("Expect {} name.", kind))?
+            .clone();
+
+        self.consume(
+            TokenType::LeftParen,
+            &format!("Expect '(' after {} name.", kind),
+        )?;
+
+        let mut parameters: Vec<Token> = vec![];
+
+        if !self.check(&TokenType::RightParen) {
+            loop {
+                if parameters.len() >= 255 {
+                    return Err(ParseError::new(
+                        &"Can't have more than 255 parameters.".to_string(),
+                        self.peek().unwrap(),
+                    ));
+                }
+
+                let param = self.consume(TokenType::Identifier, "Expect parameter name.")?;
+
+                parameters.push(param.clone());
+
+                if !self.match_symbol(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(
+            TokenType::RightParen,
+            &format!("Expect ')' after {} parameters.", kind),
+        )?;
+
+        self.consume(
+            TokenType::LeftBrace,
+            &format!("Expect '{{' before {} body.", kind),
+        )?;
+
+        Ok(Stmt::Function(FunStmt {
+            name,
+            params: parameters,
+            body: self
+                .block()
+                .unwrap_or_else(|_error| BlockStmt { statements: vec![] }),
+        }))
+    }
+
+    fn block(&mut self) -> Result<BlockStmt, ParseError> {
         let mut statements = Vec::new();
 
         while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
@@ -287,7 +366,7 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
 
-        Ok(Stmt::Block { statements })
+        Ok(BlockStmt { statements })
     }
 
     /// # assignment
@@ -572,7 +651,7 @@ impl<'a> Parser<'a> {
                         self.peek().unwrap(),
                     ));
                 }
-                if self.match_symbol(&[TokenType::Comma]) {
+                if !self.match_symbol(&[TokenType::Comma]) {
                     break;
                 }
             }

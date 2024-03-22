@@ -1,0 +1,8 @@
+fun add(a, b) {
+  if (a == 1) {
+    print add(a + 1, b);
+  }
+  return a + b;
+}
+
+print add(1, 2); 

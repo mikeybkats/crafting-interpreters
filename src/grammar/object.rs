@@ -1,11 +1,12 @@
-use super::callable::LoxCallable;
 use std::fmt;
+
+use super::callable::Callable;
 
 pub enum Object {
     Str(String),
     Num(f64),
     Bool(bool),
-    Callable(Box<dyn LoxCallable>),
+    Callable(Callable),
     Nil,
 }
 
@@ -29,7 +30,7 @@ impl Object {
             Object::Str(string) => println!("{string}"),
             Object::Bool(boolean) => println!("{boolean}"),
             Object::Num(number) => println!("{number}"),
-            Object::Callable(_) => println!("<function>"),
+            Object::Callable(_) => println!("<LoxCallable>"),
             Object::Nil => println!(""),
         }
     }
@@ -39,7 +40,7 @@ impl Object {
             Object::Str(string) => format!("{string}"),
             Object::Bool(boolean) => format!("{boolean}"),
             Object::Num(number) => format!("{number}"),
-            Object::Callable(_) => format!("<function>"),
+            Object::Callable(_) => format!("<LoxCallable>"),
             Object::Nil => String::from("nil"),
         }
     }
@@ -51,7 +52,7 @@ impl fmt::Display for Object {
             Object::Str(string) => write!(f, "{}", string),
             Object::Bool(boolean) => write!(f, "{}", boolean),
             Object::Num(number) => write!(f, "{}", number),
-            Object::Callable(_) => write!(f, "<function>",),
+            Object::Callable(_) => write!(f, "Object: <LoxCallable>",),
             Object::Nil => write!(f, "nil"),
         }
     }
@@ -63,7 +64,7 @@ impl fmt::Debug for Object {
             Object::Str(s) => write!(f, "Str({:?})", s),
             Object::Num(n) => write!(f, "Num({})", n),
             Object::Bool(b) => write!(f, "Bool({})", b),
-            Object::Callable(_) => write!(f, "Callable(<function>)"),
+            Object::Callable(_) => write!(f, "Callable(<LoxCallable>)"),
             Object::Nil => write!(f, "Nil"),
         }
     }
@@ -75,7 +76,7 @@ impl Clone for Object {
             Object::Str(s) => Object::Str(s.clone()),
             Object::Num(n) => Object::Num(*n),
             Object::Bool(b) => Object::Bool(*b),
-            Object::Callable(_) => Object::Nil, // Choose to return Nil for Callable
+            Object::Callable(callable) => Object::Callable(callable.clone()), // Choose to return Nil for Callable
             Object::Nil => Object::Nil,
         }
     }
