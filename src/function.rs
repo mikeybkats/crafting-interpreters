@@ -13,7 +13,7 @@ pub struct LoxFunction {
 }
 
 impl LoxFunction {
-    pub fn new(declaration: &mut FunStmt) -> Self {
+    pub fn new(declaration: &FunStmt) -> Self {
         Self {
             declaration: Rc::new(RefCell::new(declaration.clone())),
         }
@@ -34,32 +34,19 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
         interpreter: &mut Interpreter,
         arguments: Vec<Object>,
     ) -> Result<Object, LoxError> {
-        println!("LoxFunction::call - arguments: {:#?}", arguments);
-        let mut environment = environment::Environment::new();
-        environment.enclosing = Some(interpreter.globals.clone());
+        let mut environment = environment::Environment::with_enclosing(interpreter.globals.clone());
 
-        let dec_clone_one = self.declaration.clone();
-
-        for (i, param) in dec_clone_one.borrow().params.iter().enumerate() {
+        for (i, param) in self.declaration.borrow().params.iter().enumerate() {
             environment.define(param.lexeme.clone(), arguments[i].clone());
         }
 
-        // println!(
-        //     "LoxFunction::call - environment {}: {:#?}",
-        //     environment.name, environment.values
-        // );
-
-        let dec_clone_two = self.declaration.clone();
-
-        let mut declaration_body = dec_clone_two.borrow_mut().body.clone();
-        return match interpreter.execute_block_stmt(&mut declaration_body, environment) {
+        return match interpreter
+            .execute_block_stmt(&mut self.declaration.borrow_mut().body, environment)
+        {
             Ok(value) => Ok(value),
             Err(e) => match e {
                 LoxError::RuntimeError(e) => Err(LoxError::RuntimeError(e)),
-                LoxError::LoxReturn(return_value) => {
-                    // println!("LoxFunction::call - LoxReturn: {:?}", return_value);
-                    return Ok(return_value.value.unwrap_or(Object::Nil));
-                }
+                LoxError::LoxReturn(return_value) => Err(LoxError::LoxReturn(return_value)),
                 LoxError::ParseError(e) => Err(LoxError::ParseError(e)),
             },
         };

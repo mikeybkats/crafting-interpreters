@@ -1,5 +1,3 @@
-use colored::Colorize;
-
 use crate::environment::Environment;
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
@@ -67,13 +65,24 @@ impl Interpreter {
         enclosed_environment: Environment,
     ) -> Result<Object, LoxError> {
         let previous = self.environment.clone();
+
         self.environment = Rc::new(RefCell::new(enclosed_environment));
 
         for statement in &mut block_stmt.statements {
-            self.execute(statement)?;
+            match self.execute(statement) {
+                Ok(_) => (),
+                Err(e) => match e {
+                    LoxError::LoxReturn(return_value) => {
+                        self.environment = previous;
+                        return Ok(return_value.value.unwrap_or(Object::Nil));
+                    }
+                    _ => {
+                        self.environment = previous;
+                        return Err(e);
+                    }
+                },
+            }
         }
-
-        self.environment = previous;
 
         Ok(Object::Nil)
     }
@@ -359,8 +368,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_return_stmt(&mut self, value: &Expr) -> Result<Object, LoxError> {
         let value = self.evaluate(value)?;
-
-        println!("{} {}", "returning".green(), value);
 
         // throw an error to trigger an escape from deep call stack
         Err(LoxError::LoxReturn(LoxReturn::new(Some(value))))

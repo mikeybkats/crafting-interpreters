@@ -1,0 +1,11 @@
+fun addOne(a) {
+    print a;
+    return a + 1; 
+}
+
+fun addTwo(a){
+    var b = a;
+    print addOne(a - 1) + addOne(a - 1);
+}
+
+addTwo(5);

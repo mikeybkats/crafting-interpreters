@@ -39,9 +39,8 @@ pub struct Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        let name = generate_id();
         Self {
-            name,
+            name: generate_id(),
             enclosing: None,
             values: HashMap::new(),
         }
@@ -93,20 +92,13 @@ impl Environment {
     pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {
         match self.values.get(&token.lexeme) {
             Some(value) => Ok(value.clone()),
-            _ => {
-                if self.enclosing.is_some() {
-                    self.enclosing
-                        .as_ref()
-                        .unwrap_or_else(|| panic!("Enclosing environment is None"))
-                        .borrow_mut()
-                        .get_value(token)
-                } else {
-                    Err(RuntimeError::new(
-                        format!("Undefined variable '{}'.", token.lexeme),
-                        token,
-                    ))
-                }
-            }
+            _ => match self.enclosing.as_deref() {
+                Some(env) => env.borrow().get_value(token),
+                None => Err(RuntimeError::new(
+                    format!("Undefined variable '{}'.", token.lexeme),
+                    token,
+                )),
+            },
         }
     }
 }
