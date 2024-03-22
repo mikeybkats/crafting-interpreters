@@ -34,15 +34,19 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
         interpreter: &mut Interpreter,
         arguments: Vec<Object>,
     ) -> Result<Object, LoxError> {
-        let mut environment = environment::Environment::with_enclosing(interpreter.globals.clone());
+        let mut environment = environment::Environment::new();
+        environment.enclosing = Some(interpreter.globals.clone());
 
-        for (i, param) in self.declaration.borrow().params.iter().enumerate() {
+        let dec_clone_one = self.declaration.clone();
+
+        for (i, param) in dec_clone_one.borrow().params.iter().enumerate() {
             environment.define(param.lexeme.clone(), arguments[i].clone());
         }
 
-        return match interpreter
-            .execute_block_stmt(&mut self.declaration.borrow_mut().body, environment)
-        {
+        let dec_clone_two = self.declaration.clone();
+
+        let mut declaration_body = dec_clone_two.borrow_mut().body.clone();
+        return match interpreter.execute_block_stmt(&mut declaration_body, environment) {
             Ok(value) => Ok(value),
             Err(e) => match e {
                 LoxError::RuntimeError(e) => Err(LoxError::RuntimeError(e)),
