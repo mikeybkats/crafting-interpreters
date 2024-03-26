@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    environment,
+    environment::{self, Environment},
     error::LoxError,
     grammar::{callable::LoxCallable, object::Object, stmt::FunStmt},
     interpreter::Interpreter,
@@ -10,12 +10,14 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct LoxFunction {
     declaration: Rc<RefCell<FunStmt>>,
+    closure: Rc<RefCell<environment::Environment>>,
 }
 
 impl LoxFunction {
-    pub fn new(declaration: &FunStmt) -> Self {
+    pub fn new(declaration: &FunStmt, closure: Rc<RefCell<Environment>>) -> Self {
         Self {
             declaration: Rc::new(RefCell::new(declaration.clone())),
+            closure,
         }
     }
 
@@ -35,7 +37,8 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
         arguments: Vec<Object>,
     ) -> Result<Object, LoxError> {
         let mut environment = environment::Environment::new();
-        environment.enclosing = Some(interpreter.globals.clone());
+        // environment.enclosing = Some(interpreter.globals.clone());
+        environment.enclosing = Some(self.closure.clone());
 
         let dec_clone_one = self.declaration.clone();
 

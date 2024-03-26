@@ -7,6 +7,7 @@ pub enum Object {
     Num(f64),
     Bool(bool),
     Callable(Callable),
+    // Return(Box<Object>), // TODO: Implement Return and remove the return error type
     Nil,
 }
 
