@@ -332,7 +332,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
-        let lox_function = LoxFunction::new(declaration);
+        let lox_function = LoxFunction::new(declaration, self.environment.clone());
         self.environment.borrow_mut().define(
             declaration.name.lexeme.clone(),
             Object::Callable(Callable::LoxFunction(lox_function)),
