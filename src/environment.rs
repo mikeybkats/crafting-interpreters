@@ -5,7 +5,6 @@ use crate::{
     grammar::{object::Object, token::Token},
 };
 
-use colored::Colorize;
 use rand::distributions::Alphanumeric;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};

@@ -1,7 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-use colored::Colorize;
-
 use crate::{
     environment::{self, Environment},
     error::LoxError,
