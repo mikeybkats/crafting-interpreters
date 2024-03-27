@@ -5,6 +5,9 @@ use crate::grammar::token::{Token, TokenType};
 
 use crate::grammar::expr::Expr;
 
+/// # Parser
+///
+/// Takes a list of tokens and parses them into an abstract syntax tree (AST), which the interpreter uses to evaluate the program.
 pub struct Parser<'a> {
     current: usize,
     tokens: &'a Vec<Token>,
@@ -304,6 +307,8 @@ impl<'a> Parser<'a> {
         })
     }
 
+    /// # function
+    /// parse a function declaration
     fn function(&mut self, kind: &str) -> Result<Stmt, ParseError> {
         let name = self
             .consume(TokenType::Identifier, &format!("Expect {} name.", kind))?
@@ -622,6 +627,7 @@ impl<'a> Parser<'a> {
     }
 
     /// # call
+    /// Parses a call expression
     fn call(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.primary()?;
 
@@ -643,6 +649,9 @@ impl<'a> Parser<'a> {
 
         if !self.check(&TokenType::RightParen) {
             loop {
+                // TODO: finish call checks for expressions. This needs to change so that annonymous functions can be passed as arguments.
+                // So that a function declaration could be an argument to another function.
+                // This is a feature that is not yet implemented.
                 arguments.push(self.expression()?);
 
                 if arguments.len() >= 255 {
