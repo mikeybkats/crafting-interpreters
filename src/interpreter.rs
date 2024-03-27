@@ -42,7 +42,6 @@ impl Interpreter {
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Object>, LoxError> {
         let mut results = Vec::new();
         for statement in statements {
-            // println!("{} {:#?}", "statement: ".red(), statement);
             match self.execute(statement) {
                 Ok(value) => results.push(value),
                 Err(e) => return Err(e),
@@ -77,12 +76,13 @@ impl Interpreter {
                         return Ok(return_value.value.unwrap_or(Object::Nil));
                     }
                     _ => {
-                        self.environment = previous;
                         return Err(e);
                     }
                 },
             }
         }
+
+        self.environment = previous;
 
         Ok(Object::Nil)
     }

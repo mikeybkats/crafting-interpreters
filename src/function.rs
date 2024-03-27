@@ -1,5 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
+use colored::Colorize;
+
 use crate::{
     environment::{self, Environment},
     error::LoxError,
@@ -36,9 +38,7 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
         interpreter: &mut Interpreter,
         arguments: Vec<Object>,
     ) -> Result<Object, LoxError> {
-        let mut environment = environment::Environment::new();
-        // environment.enclosing = Some(interpreter.globals.clone());
-        environment.enclosing = Some(self.closure.clone());
+        let mut environment = environment::Environment::with_enclosing(self.closure.clone());
 
         let dec_clone_one = self.declaration.clone();
 

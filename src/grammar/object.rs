@@ -7,7 +7,7 @@ pub enum Object {
     Num(f64),
     Bool(bool),
     Callable(Callable),
-    // Return(Box<Object>), // TODO: Implement Return and remove the return error type
+    // Return(Box<Object>), // TODO: Implement Return and remove the return error type. The LoxReturn error type is not idiomatic Rust
     Nil,
 }
 
