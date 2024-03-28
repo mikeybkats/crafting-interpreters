@@ -11,6 +11,7 @@ mod grammar;
 mod interpreter;
 mod lox;
 mod parser;
+mod resolver;
 mod scanner;
 
 fn main() {
