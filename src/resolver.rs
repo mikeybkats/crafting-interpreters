@@ -54,7 +54,7 @@ impl Resolver<'_> {
     }
 
     /// # Declare
-    /// as we visit expressions, we need to know if we’re inside the initializer for some variable. We do that by splitting binding into two steps. The first is declaring it.
+    /// "As we visit expressions, we need to know if we’re inside the initializer for some variable. We do that by splitting binding into two steps. The first is declaring it."
     fn declare(&mut self, name: &Token) {
         if self.scopes.is_empty() {
             return;
@@ -65,6 +65,12 @@ impl Resolver<'_> {
         if let Some(scope) = scope {
             scope.insert(name.lexeme.clone(), false);
         }
+    }
+
+    /// # Define
+    /// "After declaring the variable, we resolve its initializer expression in that same scope where the new variable now exists but is unavailable."
+    fn define(&mut self, name: &Token) {
+        unimplemented!()
     }
 }
 
