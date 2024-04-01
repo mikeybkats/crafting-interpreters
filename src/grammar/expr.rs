@@ -60,7 +60,7 @@ impl Expr {
                 arguments,
             } => visitor.visit_call_expr(callee, paren, arguments),
             Expr::Grouping { expression } => visitor.visit_grouping_expr(expression),
-            Expr::Literal { value } => visitor.visit_object_expr(value),
+            Expr::Literal { value } => visitor.visit_literal_expr(value),
             Expr::Logical {
                 left,
                 operator,
@@ -77,7 +77,7 @@ pub trait ExprVisitor<R> {
     fn visit_binary_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_call_expr(&mut self, callee: &Expr, paren: &Token, arguments: &Vec<Expr>) -> R;
     fn visit_grouping_expr(&mut self, expression: &Expr) -> R;
-    fn visit_object_expr(&mut self, value: &Option<Object>) -> R;
+    fn visit_literal_expr(&mut self, value: &Option<Object>) -> R;
     fn visit_logical_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> R;
     fn visit_variable_expr(&mut self, name: &Token) -> R;

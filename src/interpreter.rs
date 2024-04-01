@@ -127,6 +127,10 @@ impl Interpreter {
             ))),
         }
     }
+
+    pub fn resolve(&self, _token: &Token, _depth: usize) -> Result<Object, LoxError> {
+        unimplemented!()
+    }
 }
 
 impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
@@ -258,7 +262,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         self.evaluate(expression)
     }
 
-    fn visit_object_expr(&mut self, value: &Option<Object>) -> Result<Object, LoxError> {
+    fn visit_literal_expr(&mut self, value: &Option<Object>) -> Result<Object, LoxError> {
         let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0);
 
         match value {
@@ -366,7 +370,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
         Ok(Object::Nil)
     }
 
-    fn visit_return_stmt(&mut self, value: &Expr) -> Result<Object, LoxError> {
+    fn visit_return_stmt(&mut self, _token: &Token, value: &Expr) -> Result<Object, LoxError> {
         let value = self.evaluate(value)?;
 
         // throw an error to trigger an escape from deep call stack
