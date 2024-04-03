@@ -10,7 +10,7 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-fn generate_id() -> String {
+pub fn generate_id() -> String {
     // Obtain the current system time as a seed
     let seed = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -90,6 +90,7 @@ impl Environment {
     }
 
     pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {
+        println!("Looking for value: {:#?}", token);
         match self.values.get(&token.lexeme) {
             Some(value) => Ok(value.clone()),
             _ => match self.enclosing.as_deref() {
@@ -101,6 +102,15 @@ impl Environment {
             },
         }
     }
+
+    // pub fn get_at(&self, distance: usize, name: &str) -> Result<Object, RuntimeError> {
+    //     self.ancestor(distance)?.borrow().values.get(name).cloned().ok_or_else(|| {
+    //         RuntimeError::new(
+    //             format!("Undefined variable '{}'.", name),
+    //             &Token::new(crate::grammar::token::TokenType::Identifier, name.to_string(), None, 1),
+    //         )
+    //     })
+    // }
 }
 
 #[cfg(test)]
@@ -119,12 +129,7 @@ mod tests {
     fn test_get_value() {
         let mut env = Environment::new();
 
-        let token_number = Token {
-            token_type: TokenType::Number,
-            lexeme: "testNumber".to_string(),
-            literal: None,
-            line: 1,
-        };
+        let token_number = Token::new(TokenType::Number, "testNumber".to_string(), None, 1);
 
         env.values
             .insert(token_number.lexeme.clone(), Object::Num(42.0));
@@ -134,12 +139,7 @@ mod tests {
             _ => panic!("Value not found or not a number"),
         };
 
-        let token_string = Token {
-            token_type: TokenType::String,
-            lexeme: "testString".to_string(),
-            literal: None,
-            line: 1,
-        };
+        let token_string = Token::new(TokenType::String, "testString".to_string(), None, 1);
 
         env.values.insert(
             token_string.lexeme.clone(),
@@ -151,12 +151,7 @@ mod tests {
             _ => panic!("Value not found or not a number"),
         };
 
-        let token_boolean = Token {
-            token_type: TokenType::False,
-            lexeme: "testBoolean".to_string(),
-            literal: None,
-            line: 1,
-        };
+        let token_boolean = Token::new(TokenType::False, "testBoolean".to_string(), None, 1);
 
         env.values
             .insert(token_boolean.lexeme.clone(), Object::Bool(false));
@@ -166,12 +161,7 @@ mod tests {
             _ => panic!("Value not found or not a number"),
         };
 
-        let token_nil = Token {
-            token_type: TokenType::Nil,
-            lexeme: "testNil".to_string(),
-            literal: None,
-            line: 1,
-        };
+        let token_nil = Token::new(TokenType::Nil, "testNil".to_string(), None, 1);
 
         env.values.insert(token_nil.lexeme.clone(), Object::Nil);
 

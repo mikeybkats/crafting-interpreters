@@ -80,11 +80,18 @@ impl Resolver {
         }
     }
 
+    /// # Resolve Local
+    ///
+    /// ### Stores the variable and its depth in a side table.  
+    ///
+    /// Each time a variable is visited, the resolve_local method saves the depth of the scope between where the variable is defined and the current scope.
+    ///
+    /// "We start at the innermost scope and work outwards, looking in each map for a matching name. If we find the variable, we resolve it, passing in the number of scopes between the current innermost scope and the scope where the variable was found."
     fn resolve_local(&mut self, name: &Token) -> Result<Object, LoxError> {
         let scopes = &self.scopes;
-        for scope in scopes.into_iter().rev() {
-            if scope.contains_key(&name.lexeme) {
-                return self.interpreter.resolve(name, scopes.len() - 1);
+        for (i, scope) in scopes.into_iter().rev().enumerate() {
+            if scope.contains_key(&name.id) {
+                return self.interpreter.resolve(name, scopes.len() - 1 - i);
             }
         }
 

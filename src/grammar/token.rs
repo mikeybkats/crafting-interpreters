@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use crate::environment::generate_id;
+
 use super::object::Object;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -59,6 +61,7 @@ pub struct Token {
     pub lexeme: String,
     pub literal: Option<Object>,
     pub line: usize,
+    pub id: String,
 }
 
 impl Token {
@@ -69,6 +72,7 @@ impl Token {
         line: usize,
     ) -> Self {
         Self {
+            id: format!("{}-{}", lexeme.clone(), generate_id()),
             token_type,
             lexeme,
             literal,

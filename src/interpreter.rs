@@ -8,13 +8,13 @@ use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
-use crate::lox::PromptMode;
+use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Interpreter {
     environment: Rc<RefCell<Environment>>,
     pub globals: Rc<RefCell<Environment>>,
-    mode: PromptMode,
+    locals: Rc<RefCell<HashMap<String, usize>>>,
 }
 
 impl Interpreter {
@@ -31,12 +31,8 @@ impl Interpreter {
         Self {
             globals,
             environment,
-            mode: PromptMode::Single,
+            locals: Rc::new(RefCell::new(HashMap::new())),
         }
-    }
-
-    pub fn set_mode(&mut self, mode: PromptMode) {
-        self.mode = mode;
     }
 
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Object>, LoxError> {
@@ -56,6 +52,14 @@ impl Interpreter {
             Ok(value) => return Ok(value),
             Err(e) => return Err(e),
         }
+    }
+
+    pub fn resolve(&mut self, token: &Token, depth: usize) -> Result<Object, LoxError> {
+        self.locals.borrow_mut().insert(token.lexeme.clone(), depth);
+
+        println!("locals: {:?}", self.locals);
+
+        Ok(Object::Nil)
     }
 
     pub fn execute_block_stmt(
@@ -128,8 +132,25 @@ impl Interpreter {
         }
     }
 
-    pub fn resolve(&self, _token: &Token, _depth: usize) -> Result<Object, LoxError> {
-        unimplemented!()
+    fn look_up_variable(&self, name: &Token, expr: &Expr) -> Result<Object, LoxError> {
+        let distance = self.locals.borrow().get(&name.id);
+
+        match distance {
+            Some(distance) => {
+                let value = self.environment.borrow().get_at(*distance, &name);
+                match value {
+                    Ok(value) => Ok(value),
+                    Err(e) => Err(LoxError::RuntimeError(e)),
+                }
+            }
+            None => {
+                let value = self.globals.borrow().get_value(name);
+                match value {
+                    Ok(value) => Ok(value),
+                    Err(e) => Err(LoxError::RuntimeError(e)),
+                }
+            }
+        }
     }
 }
 
@@ -323,10 +344,11 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, LoxError> {
-        self.environment
-            .borrow()
-            .get_value(token)
-            .or_else(|error| Err(LoxError::RuntimeError(error)))
+        // self.environment
+        //     .borrow()
+        //     .get_value(token)
+        //     .or_else(|error| Err(LoxError::RuntimeError(error)))
+        self.look_up_variable(expr.name, expr)?;
     }
 }
 
