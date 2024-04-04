@@ -14,7 +14,7 @@ use std::{cell::RefCell, rc::Rc};
 pub struct Interpreter {
     environment: Rc<RefCell<Environment>>,
     pub globals: Rc<RefCell<Environment>>,
-    locals: Rc<RefCell<HashMap<String, usize>>>,
+    locals: Rc<RefCell<HashMap<Expr, usize>>>,
 }
 
 impl Interpreter {
@@ -54,8 +54,8 @@ impl Interpreter {
         }
     }
 
-    pub fn resolve(&mut self, token: &Token, depth: usize) -> Result<Object, LoxError> {
-        self.locals.borrow_mut().insert(token.lexeme.clone(), depth);
+    pub fn resolve(&mut self, expr: &Expr, depth: usize) -> Result<Object, LoxError> {
+        self.locals.borrow_mut().insert(expr.clone(), depth);
 
         println!("locals: {:?}", self.locals);
 
@@ -133,11 +133,11 @@ impl Interpreter {
     }
 
     fn look_up_variable(&self, name: &Token, expr: &Expr) -> Result<Object, LoxError> {
-        let distance = self.locals.borrow().get(&name.id);
+        let distance = self.locals.borrow().get(&expr);
 
         match distance {
             Some(distance) => {
-                let value = self.environment.borrow().get_at(*distance, &name);
+                let value = self.environment.borrow().get_at(*distance, &name.lexeme);
                 match value {
                     Ok(value) => Ok(value),
                     Err(e) => Err(LoxError::RuntimeError(e)),
@@ -343,12 +343,15 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
-    fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, LoxError> {
+    fn visit_variable_expr(&mut self, expr: &Expr) -> Result<Object, LoxError> {
+        match expr {
+            Expr::Variable { name } => Ok(self.look_up_variable(&name, expr)?),
+            _ => Ok(Object::Nil),
+        }
         // self.environment
         //     .borrow()
         //     .get_value(token)
         //     .or_else(|error| Err(LoxError::RuntimeError(error)))
-        self.look_up_variable(expr.name, expr)?;
     }
 }
 

@@ -87,11 +87,11 @@ impl Resolver {
     /// Each time a variable is visited, the resolve_local method saves the depth of the scope between where the variable is defined and the current scope.
     ///
     /// "We start at the innermost scope and work outwards, looking in each map for a matching name. If we find the variable, we resolve it, passing in the number of scopes between the current innermost scope and the scope where the variable was found."
-    fn resolve_local(&mut self, name: &Token) -> Result<Object, LoxError> {
+    fn resolve_local(&mut self, value: &Expr, name: &Token) -> Result<Object, LoxError> {
         let scopes = &self.scopes;
         for (i, scope) in scopes.into_iter().rev().enumerate() {
             if scope.contains_key(&name.id) {
-                return self.interpreter.resolve(name, scopes.len() - 1 - i);
+                return self.interpreter.resolve(value, scopes.len() - 1 - i);
             }
         }
 
@@ -159,19 +159,27 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(right)
     }
 
-    fn visit_variable_expr(&mut self, variable: &Token) -> Result<Object, LoxError> {
-        match self.scopes.last() {
-            Some(_scope) => self.resolve_local(variable),
-            _ => Err(LoxError::RuntimeError(RuntimeError::new(
-                format!("Cannot read local variable in its own initializer."),
-                variable,
-            ))),
+    fn visit_variable_expr(&mut self, variable: &Expr) -> Result<Object, LoxError> {
+        match variable {
+            Expr::Variable { name } => match self.scopes.last() {
+                Some(scope) => {
+                    if let Some(false) = scope.get(&name.lexeme) {
+                        return Err(LoxError::RuntimeError(RuntimeError::new(
+                            format!("Cannot read local variable in its own initializer."),
+                            &name.clone(),
+                        )));
+                    }
+                    self.resolve_local(variable, &name)
+                }
+                _ => Ok(Object::Nil),
+            },
+            _ => Ok(Object::Nil),
         }
     }
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
         self.resolve_expr(value)?;
-        self.resolve_local(name)
+        self.resolve_local(value, name)
     }
 }
 

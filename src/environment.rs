@@ -103,14 +103,15 @@ impl Environment {
         }
     }
 
-    // pub fn get_at(&self, distance: usize, name: &str) -> Result<Object, RuntimeError> {
-    //     self.ancestor(distance)?.borrow().values.get(name).cloned().ok_or_else(|| {
-    //         RuntimeError::new(
-    //             format!("Undefined variable '{}'.", name),
-    //             &Token::new(crate::grammar::token::TokenType::Identifier, name.to_string(), None, 1),
-    //         )
-    //     })
-    // }
+    pub fn get_at(&self, distance: usize, name: &str) -> Result<Object, RuntimeError> {
+        unimplemented!()
+        //     self.ancestor(distance)?.borrow().values.get(name).cloned().ok_or_else(|| {
+        //         RuntimeError::new(
+        //             format!("Undefined variable '{}'.", name),
+        //             &Token::new(crate::grammar::token::TokenType::Identifier, name.to_string(), None, 1),
+        //         )
+        //     })
+    }
 }
 
 #[cfg(test)]
