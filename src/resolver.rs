@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     error::{runtime_error::RuntimeError, LoxError},
@@ -16,13 +16,13 @@ use crate::{
 /// The resolver visits every node in the syntax tree and resolves the scope of each variable.
 ///
 /// It helps optimize the code by resolving variable scopes at compile time.
-struct Resolver {
-    interpreter: Interpreter,
+pub struct Resolver {
+    interpreter: Rc<RefCell<Interpreter>>,
     scopes: Vec<HashMap<String, bool>>,
 }
 
 impl Resolver {
-    pub fn _new(interpreter: Interpreter) -> Self {
+    pub fn new(interpreter: Rc<RefCell<Interpreter>>) -> Self {
         Self {
             interpreter,
             scopes: Vec::new(),
@@ -33,7 +33,7 @@ impl Resolver {
         self.scopes.push(HashMap::new());
     }
 
-    fn resolve(&mut self, statements: &mut Vec<Stmt>) -> Result<Object, LoxError> {
+    pub fn resolve(&mut self, statements: &mut Vec<Stmt>) -> Result<Object, LoxError> {
         for statement in statements {
             self.resolve_stmt(statement)?;
         }
@@ -91,7 +91,11 @@ impl Resolver {
         let scopes = &self.scopes;
         for (i, scope) in scopes.into_iter().rev().enumerate() {
             if scope.contains_key(&name.id) {
-                return self.interpreter.resolve(value, scopes.len() - 1 - i);
+                return self
+                    .interpreter
+                    .clone()
+                    .borrow_mut()
+                    .resolve(value, scopes.len() - 1 - i);
             }
         }
 

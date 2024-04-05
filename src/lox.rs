@@ -8,6 +8,7 @@ use std::{
 };
 
 use crate::error::LoxError;
+use crate::resolver::Resolver;
 use crate::{
     error::error::ErrorReporter, interpreter::Interpreter, parser::Parser, scanner::Scanner,
 };
@@ -124,6 +125,11 @@ impl Lox {
         let mut statements = parser.parse();
 
         if let Ok(stmts) = &mut statements {
+            let mut resolver = Resolver::new(self.interpreter.clone());
+            if let Err(error) = resolver.resolve(stmts) {
+                self.error(error);
+            };
+
             if let Err(error) = self.interpreter.borrow_mut().interpret(stmts) {
                 self.error(error);
             }
