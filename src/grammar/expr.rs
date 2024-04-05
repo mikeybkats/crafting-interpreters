@@ -68,7 +68,7 @@ impl Expr {
                 right,
             } => visitor.visit_logical_expr(left, operator, right),
             Expr::Unary { operator, right } => visitor.visit_unary_expr(operator, right),
-            Expr::Variable { name: Token } => visitor.visit_variable_expr(&self),
+            Expr::Variable { name } => visitor.visit_variable_expr(&self, name),
         }
     }
 }
@@ -156,7 +156,7 @@ impl PartialEq for Expr {
                 },
             ) => operator1.lexeme == operator2.lexeme && right1 == right2,
             (Expr::Variable { name: name1 }, Expr::Variable { name: name2 }) => {
-                name1.lexeme == name2.lexeme
+                name1.lexeme == name2.lexeme && name1.token_type == name2.token_type
             }
             _ => false,
         }
@@ -238,7 +238,7 @@ pub trait ExprVisitor<R> {
     fn visit_literal_expr(&mut self, value: &Option<Object>) -> R;
     fn visit_logical_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> R;
-    fn visit_variable_expr(&mut self, expr: &Expr) -> R;
+    fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> R;
 }
 
 #[cfg(test)]
@@ -348,5 +348,398 @@ mod tests {
         );
     }
 
-    // Add more tests here to cover other cases and other variants of Expr
+    #[test]
+    fn test_variable_expression_equality() {
+        let var_expr_1 = Expr::Variable {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "2".to_string(),
+                literal: Some(Object::Str("2".to_string())),
+                line: 200,
+                id: "variable_expr_1".to_string(),
+            },
+        };
+        let var_expr_2 = Expr::Variable {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "2".to_string(),
+                literal: Some(Object::Str("2".to_string())),
+                line: 500,
+                id: "variable_expr_2".to_string(),
+            },
+        };
+
+        assert_eq!(
+            var_expr_1, var_expr_2,
+            "Testing equality with var expr 1 and var expr 2"
+        );
+    }
+
+    #[test]
+    fn test_variable_expression_inequality() {
+        let var_expr_1 = Expr::Variable {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "2".to_string(),
+                literal: Some(Object::Str("2".to_string())),
+                line: 200,
+                id: "variable_expr_1".to_string(),
+            },
+        };
+        let var_expr_2 = Expr::Variable {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "3".to_string(),
+                literal: Some(Object::Str("3".to_string())),
+                line: 500,
+                id: "variable_expr_2".to_string(),
+            },
+        };
+
+        assert_ne!(
+            var_expr_1, var_expr_2,
+            "Testing inequality with var expr 1 and var expr 2"
+        );
+    }
+
+    #[test]
+    fn test_grouping_expression_equality() {
+        let expr1 = Expr::Grouping {
+            expression: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        let expr2 = Expr::Grouping {
+            expression: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        assert_eq!(
+            expr1, expr2,
+            "Grouping expressions with the same value should be equal"
+        );
+    }
+
+    #[test]
+    fn test_grouping_expression_inequality() {
+        let expr1 = Expr::Grouping {
+            expression: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        let expr2 = Expr::Grouping {
+            expression: Box::new(Expr::Literal {
+                value: Some(Object::Num(24.0)),
+            }),
+        };
+        assert_ne!(
+            expr1, expr2,
+            "Grouping expressions with different values should not be equal"
+        );
+    }
+
+    #[test]
+    fn test_unary_expression_equality() {
+        let expr1 = Expr::Unary {
+            operator: Token {
+                token_type: TokenType::Minus,
+                lexeme: "-".to_string(),
+                literal: None,
+                line: 1,
+                id: "operator_id".to_string(),
+            },
+            right: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        let expr2 = Expr::Unary {
+            operator: Token {
+                token_type: TokenType::Minus,
+                lexeme: "-".to_string(),
+                literal: None,
+                line: 1,
+                id: "operator_id".to_string(),
+            },
+            right: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        assert_eq!(
+            expr1, expr2,
+            "Unary expressions with the same value should be equal"
+        );
+    }
+
+    #[test]
+    fn test_unary_expression_inequality() {
+        let expr1 = Expr::Unary {
+            operator: Token {
+                token_type: TokenType::Minus,
+                lexeme: "-".to_string(),
+                literal: None,
+                line: 1,
+                id: "operator_id".to_string(),
+            },
+            right: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        let expr2 = Expr::Unary {
+            operator: Token {
+                token_type: TokenType::Minus,
+                lexeme: "-".to_string(),
+                literal: None,
+                line: 1,
+                id: "operator_id".to_string(),
+            },
+            right: Box::new(Expr::Literal {
+                value: Some(Object::Num(24.0)),
+            }),
+        };
+        assert_ne!(
+            expr1, expr2,
+            "Unary expressions with different values should not be equal"
+        );
+    }
+
+    #[test]
+    fn test_logical_expression_equality() {
+        let left_expr = Box::new(Expr::Literal {
+            value: Some(Object::Bool(true)),
+        });
+        let right_expr = Box::new(Expr::Literal {
+            value: Some(Object::Bool(false)),
+        });
+        let operator = Token {
+            token_type: TokenType::And, // Adjust according to your TokenType definition
+            lexeme: "and".to_string(),
+            literal: None,
+            line: 1,
+            id: "operator_id".to_string(),
+        };
+
+        let expr1 = Expr::Logical {
+            left: left_expr.clone(),
+            operator: operator.clone(),
+            right: right_expr.clone(),
+        };
+        let expr2 = Expr::Logical {
+            left: left_expr,
+            operator: operator,
+            right: right_expr,
+        };
+
+        assert_eq!(
+            expr1, expr2,
+            "Logical expressions with the same structure should be equal"
+        );
+    }
+
+    #[test]
+    fn test_logical_expression_inequality_different_operators() {
+        let left_expr = Box::new(Expr::Literal {
+            value: Some(Object::Bool(true)),
+        });
+        let right_expr = Box::new(Expr::Literal {
+            value: Some(Object::Bool(false)),
+        });
+        let operator1 = Token {
+            token_type: TokenType::And, // Adjust according to your TokenType definition
+            lexeme: "and".to_string(),
+            literal: None,
+            line: 1,
+            id: "operator1_id".to_string(),
+        };
+        let operator2 = Token {
+            token_type: TokenType::Or, // Adjust according to your TokenType definition
+            lexeme: "or".to_string(),
+            literal: None,
+            line: 1,
+            id: "operator2_id".to_string(),
+        };
+
+        let expr1 = Expr::Logical {
+            left: left_expr.clone(),
+            operator: operator1,
+            right: right_expr.clone(),
+        };
+        let expr2 = Expr::Logical {
+            left: left_expr,
+            operator: operator2,
+            right: right_expr,
+        };
+
+        assert_ne!(
+            expr1, expr2,
+            "Logical expressions with different operators should not be equal"
+        );
+    }
+
+    #[test]
+    fn test_assign_expression_equality() {
+        let expr1 = Expr::Assign {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "x".to_string(),
+                literal: Some(Object::Str("x".to_string())),
+                line: 200,
+                id: "assign_expr_1".to_string(),
+            },
+            value: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        let expr2 = Expr::Assign {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "x".to_string(),
+                literal: Some(Object::Str("x".to_string())),
+                line: 200,
+                id: "assign_expr_1".to_string(),
+            },
+            value: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+
+        assert_eq!(
+            expr1, expr2,
+            "Testing equality with assign expr 1 and assign expr 2"
+        );
+    }
+
+    #[test]
+    fn test_assign_expression_inequality() {
+        let expr1 = Expr::Assign {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "x".to_string(),
+                literal: Some(Object::Str("x".to_string())),
+                line: 200,
+                id: "assign_expr_1".to_string(),
+            },
+            value: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+        let expr2 = Expr::Assign {
+            name: Token {
+                token_type: TokenType::String,
+                lexeme: "y".to_string(),
+                literal: Some(Object::Str("y".to_string())),
+                line: 200,
+                id: "assign_expr_2".to_string(),
+            },
+            value: Box::new(Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }),
+        };
+
+        assert_ne!(
+            expr1, expr2,
+            "Testing inequality with assign expr 1 and assign expr 2"
+        );
+    }
+
+    #[test]
+    fn test_call_expression_equality() {
+        let expr1 = Expr::Call {
+            callee: Box::new(Expr::Variable {
+                name: Token {
+                    token_type: TokenType::String,
+                    lexeme: "x".to_string(),
+                    literal: Some(Object::Str("x".to_string())),
+                    line: 200,
+                    id: "call_expr_1".to_string(),
+                },
+            }),
+            paren: Token {
+                token_type: TokenType::LeftParen,
+                lexeme: "(".to_string(),
+                literal: None,
+                line: 200,
+                id: "call_expr_1".to_string(),
+            },
+            arguments: vec![Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }],
+        };
+        let expr2 = Expr::Call {
+            callee: Box::new(Expr::Variable {
+                name: Token {
+                    token_type: TokenType::String,
+                    lexeme: "x".to_string(),
+                    literal: Some(Object::Str("x".to_string())),
+                    line: 200,
+                    id: "call_expr_1".to_string(),
+                },
+            }),
+            paren: Token {
+                token_type: TokenType::LeftParen,
+                lexeme: "(".to_string(),
+                literal: None,
+                line: 200,
+                id: "call_expr_1".to_string(),
+            },
+            arguments: vec![Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }],
+        };
+
+        assert_eq!(
+            expr1, expr2,
+            "Testing equality with call expr 1 and call expr 2"
+        );
+    }
+
+    #[test]
+    fn test_call_expression_inequality() {
+        let expr1 = Expr::Call {
+            callee: Box::new(Expr::Variable {
+                name: Token {
+                    token_type: TokenType::String,
+                    lexeme: "x".to_string(),
+                    literal: Some(Object::Str("x".to_string())),
+                    line: 200,
+                    id: "call_expr_1".to_string(),
+                },
+            }),
+            paren: Token {
+                token_type: TokenType::LeftParen,
+                lexeme: "(".to_string(),
+                literal: None,
+                line: 200,
+                id: "call_expr_1".to_string(),
+            },
+            arguments: vec![Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }],
+        };
+        let expr2 = Expr::Call {
+            callee: Box::new(Expr::Variable {
+                name: Token {
+                    token_type: TokenType::String,
+                    lexeme: "y".to_string(),
+                    literal: Some(Object::Str("y".to_string())),
+                    line: 200,
+                    id: "call_expr_2".to_string(),
+                },
+            }),
+            paren: Token {
+                token_type: TokenType::LeftParen,
+                lexeme: "(".to_string(),
+                literal: None,
+                line: 200,
+                id: "call_expr_2".to_string(),
+            },
+            arguments: vec![Expr::Literal {
+                value: Some(Object::Num(42.0)),
+            }],
+        };
+
+        assert_ne!(
+            expr1, expr2,
+            "Testing inequality with call expr 1 and call expr 2"
+        );
+    }
 }

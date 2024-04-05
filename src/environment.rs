@@ -1,5 +1,3 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
-
 use crate::{
     error::runtime_error::RuntimeError,
     grammar::{object::Object, token::Token},
@@ -8,7 +6,12 @@ use crate::{
 use rand::distributions::Alphanumeric;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    rc::Rc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 pub fn generate_id() -> String {
     // Obtain the current system time as a seed
@@ -85,6 +88,19 @@ impl Environment {
         self.values.insert(name, value);
     }
 
+    fn ancestor(&self, distance: usize) -> Option<Rc<RefCell<Environment>>> {
+        let mut env = self.enclosing.clone();
+        for _ in 0..distance {
+            match env {
+                Some(e) => {
+                    env = e.borrow().enclosing.clone();
+                }
+                None => break,
+            }
+        }
+        return env;
+    }
+
     pub fn _values_of(&self) -> &HashMap<String, Object> {
         &self.values
     }
@@ -103,14 +119,38 @@ impl Environment {
         }
     }
 
-    pub fn get_at(&self, distance: usize, name: &str) -> Result<Object, RuntimeError> {
-        unimplemented!()
-        //     self.ancestor(distance)?.borrow().values.get(name).cloned().ok_or_else(|| {
-        //         RuntimeError::new(
-        //             format!("Undefined variable '{}'.", name),
-        //             &Token::new(crate::grammar::token::TokenType::Identifier, name.to_string(), None, 1),
-        //         )
-        //     })
+    pub fn get_at(&self, distance: usize, token: &Token) -> Result<Object, RuntimeError> {
+        let ancestor = self.ancestor(distance);
+        let name = &token.lexeme;
+        if let Some(a) = ancestor {
+            a.borrow()
+                .values
+                .get(name)
+                .cloned()
+                .ok_or_else(|| RuntimeError::new(format!("Undefined variable '{}'.", name), token))
+        } else {
+            return Ok(Object::Nil);
+        }
+    }
+
+    pub fn assign_at(
+        &mut self,
+        distance: usize,
+        token: &Token,
+        value: Object,
+    ) -> Result<Object, RuntimeError> {
+        match self.ancestor(distance) {
+            Some(a) => {
+                a.borrow_mut()
+                    .values
+                    .insert(token.lexeme.clone(), value.clone());
+                Ok(value)
+            }
+            None => Err(RuntimeError::new(
+                format!("Undefined variable '{}'.", token.lexeme),
+                token,
+            )),
+        }
     }
 }
 

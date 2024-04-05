@@ -159,7 +159,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(right)
     }
 
-    fn visit_variable_expr(&mut self, variable: &Expr) -> Result<Object, LoxError> {
+    fn visit_variable_expr(&mut self, variable: &Expr, _name: &Token) -> Result<Object, LoxError> {
         match variable {
             Expr::Variable { name } => match self.scopes.last() {
                 Some(scope) => {

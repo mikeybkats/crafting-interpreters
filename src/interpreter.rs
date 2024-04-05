@@ -133,11 +133,12 @@ impl Interpreter {
     }
 
     fn look_up_variable(&self, name: &Token, expr: &Expr) -> Result<Object, LoxError> {
-        let distance = self.locals.borrow().get(&expr);
+        let locals = self.locals.borrow();
+        let distance = locals.get(&expr);
 
         match distance {
             Some(distance) => {
-                let value = self.environment.borrow().get_at(*distance, &name.lexeme);
+                let value = self.environment.borrow().get_at(*distance, name);
                 match value {
                     Ok(value) => Ok(value),
                     Err(e) => Err(LoxError::RuntimeError(e)),
@@ -336,14 +337,32 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
-        let value = self.evaluate(value)?;
-        match self.environment.borrow_mut().assign(name, value.clone()) {
-            Ok(_) => Ok(value),
+        let value_obj = self.evaluate(value)?;
+        match self
+            .environment
+            .borrow_mut()
+            .assign(name, value_obj.clone())
+        {
+            Ok(_) => {
+                let locals = self.locals.borrow();
+                match locals.get(&value) {
+                    Some(distance) => self
+                        .environment
+                        .borrow_mut()
+                        .assign_at(*distance, name, value_obj)
+                        .or_else(|error| Err(LoxError::RuntimeError(error))),
+                    None => self
+                        .globals
+                        .borrow_mut()
+                        .assign(name, value_obj)
+                        .or_else(|error| Err(LoxError::RuntimeError(error))),
+                }
+            }
             Err(e) => Err(LoxError::RuntimeError(e)),
         }
     }
 
-    fn visit_variable_expr(&mut self, expr: &Expr) -> Result<Object, LoxError> {
+    fn visit_variable_expr(&mut self, expr: &Expr, _name: &Token) -> Result<Object, LoxError> {
         match expr {
             Expr::Variable { name } => Ok(self.look_up_variable(&name, expr)?),
             _ => Ok(Object::Nil),
