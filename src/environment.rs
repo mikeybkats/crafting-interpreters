@@ -70,13 +70,13 @@ impl Environment {
                     match self.enclosing.as_mut() {
                         Some(env) => env.borrow_mut().assign(name, value),
                         _ => Err(RuntimeError::new(
-                            format!("Undefined variable '{}'.", name.lexeme),
+                            format!("Undefined variable '{}' -- in assign().", name.lexeme),
                             name,
                         )),
                     }
                 } else {
                     return Err(RuntimeError::new(
-                        format!("Undefined variable '{}'.", name.lexeme),
+                        format!("Undefined variable '{}' -- in assign().", name.lexeme),
                         name,
                     ));
                 }
@@ -89,6 +89,10 @@ impl Environment {
     }
 
     fn ancestor(&self, distance: usize) -> Option<Rc<RefCell<Environment>>> {
+        if distance == 0 {
+            return Some(Rc::new(RefCell::new(self.clone())));
+        }
+
         let mut env = self.enclosing.clone();
         for _ in 0..distance {
             match env {
@@ -106,13 +110,15 @@ impl Environment {
     }
 
     pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {
-        println!("Looking for value: {:#?}", token);
         match self.values.get(&token.lexeme) {
             Some(value) => Ok(value.clone()),
             _ => match self.enclosing.as_deref() {
                 Some(env) => env.borrow().get_value(token),
                 None => Err(RuntimeError::new(
-                    format!("Undefined variable '{}'.", token.lexeme),
+                    format!(
+                        "Undefined variable '{}' -- in Environment::get_value().",
+                        token.lexeme
+                    ),
                     token,
                 )),
             },
@@ -122,12 +128,14 @@ impl Environment {
     pub fn get_at(&self, distance: usize, token: &Token) -> Result<Object, RuntimeError> {
         let ancestor = self.ancestor(distance);
         let name = &token.lexeme;
+
         if let Some(a) = ancestor {
-            a.borrow()
-                .values
-                .get(name)
-                .cloned()
-                .ok_or_else(|| RuntimeError::new(format!("Undefined variable '{}'.", name), token))
+            a.borrow().values.get(name).cloned().ok_or_else(|| {
+                RuntimeError::new(
+                    format!("Undefined variable '{}' -- in Environment::get_at().", name),
+                    token,
+                )
+            })
         } else {
             return Ok(Object::Nil);
         }
@@ -147,7 +155,10 @@ impl Environment {
                 Ok(value)
             }
             None => Err(RuntimeError::new(
-                format!("Undefined variable '{}'.", token.lexeme),
+                format!(
+                    "Undefined variable '{}' -- in Environment::assign_at().",
+                    token.lexeme
+                ),
                 token,
             )),
         }

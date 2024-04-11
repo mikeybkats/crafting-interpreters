@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::environment::generate_id;
+use std::hash::{Hash, Hasher};
 
 use super::object::Object;
 
@@ -61,7 +61,6 @@ pub struct Token {
     pub lexeme: String,
     pub literal: Option<Object>,
     pub line: usize,
-    pub id: String,
 }
 
 impl Token {
@@ -72,7 +71,6 @@ impl Token {
         line: usize,
     ) -> Self {
         Self {
-            id: format!("{}-{}", lexeme.clone(), generate_id()),
             token_type,
             lexeme,
             literal,
@@ -82,5 +80,19 @@ impl Token {
 
     fn to_string(&self) -> String {
         format!("{:?} {} {:?}", self.token_type, self.lexeme, self.literal)
+    }
+}
+
+impl PartialEq for Token {
+    fn eq(&self, other: &Self) -> bool {
+        self.token_type == other.token_type && self.lexeme == other.lexeme
+    }
+}
+
+impl Eq for Token {}
+
+impl Hash for Token {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.lexeme.hash(state);
     }
 }

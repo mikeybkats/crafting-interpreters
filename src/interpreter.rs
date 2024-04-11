@@ -11,9 +11,11 @@ use crate::grammar::token::{Token, TokenType};
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
+/// # Interpreter
 pub struct Interpreter {
     environment: Rc<RefCell<Environment>>,
     pub globals: Rc<RefCell<Environment>>,
+    /// Locals stores the distance of a variable from the current scope. A given expression is so many scopes away from the current scope
     locals: Rc<RefCell<HashMap<Expr, usize>>>,
 }
 
@@ -56,8 +58,6 @@ impl Interpreter {
 
     pub fn resolve(&mut self, expr: &Expr, depth: usize) -> Result<Object, LoxError> {
         self.locals.borrow_mut().insert(expr.clone(), depth);
-
-        println!("locals: {:?}", self.locals);
 
         Ok(Object::Nil)
     }
@@ -274,7 +274,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         match processed_callee {
             Object::Callable(function) => function.call(self, processed_arguments),
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
-                "Can only call functions and classes.".to_string(),
+                "Can only call functions and classes. -- visit_call_expr()".to_string(),
                 paren,
             ))),
         }
@@ -336,40 +336,39 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
+    /// ## visit_assign_expr
+    /// Runs only on resassignment
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
         let value_obj = self.evaluate(value)?;
-        match self
-            .environment
-            .borrow_mut()
-            .assign(name, value_obj.clone())
-        {
-            Ok(_) => {
-                let locals = self.locals.borrow();
-                match locals.get(&value) {
-                    Some(distance) => self
-                        .environment
-                        .borrow_mut()
-                        .assign_at(*distance, name, value_obj)
-                        .or_else(|error| Err(LoxError::RuntimeError(error))),
-                    None => self
-                        .globals
-                        .borrow_mut()
-                        .assign(name, value_obj)
-                        .or_else(|error| Err(LoxError::RuntimeError(error))),
-                }
-            }
-            Err(e) => Err(LoxError::RuntimeError(e)),
+        // match self
+        //     .environment
+        //     .borrow_mut()
+        //     .assign(name, value_obj.clone())
+        // {
+        //     Ok(_) => Ok(value_obj),
+        //     Err(e) => Err(LoxError::RuntimeError(e)),
+        // }
+        let locals = self.locals.borrow();
+        match locals.get(&value) {
+            Some(distance) => self
+                .environment
+                .borrow_mut()
+                .assign_at(*distance, name, value_obj)
+                .or_else(|error| Err(LoxError::RuntimeError(error))),
+            None => self
+                .globals
+                .borrow_mut()
+                .assign(name, value_obj)
+                .or_else(|error| Err(LoxError::RuntimeError(error))),
         }
     }
 
-    fn visit_variable_expr(&mut self, expr: &Expr, _name: &Token) -> Result<Object, LoxError> {
-        match expr {
-            Expr::Variable { name } => Ok(self.look_up_variable(&name, expr)?),
-            _ => Ok(Object::Nil),
-        }
+    fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> Result<Object, LoxError> {
+        self.look_up_variable(name, expr)
+
         // self.environment
         //     .borrow()
-        //     .get_value(token)
+        //     .get_value(name)
         //     .or_else(|error| Err(LoxError::RuntimeError(error)))
     }
 }
