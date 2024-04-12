@@ -136,9 +136,13 @@ impl Interpreter {
         let locals = self.locals.borrow();
         let distance = locals.get(&expr);
 
+        // println!("looking up variable: {}", name.lexeme);
+
         match distance {
             Some(distance) => {
+                // println!("distance: {}", distance);
                 let value = self.environment.borrow().get_at(*distance, name);
+                // println!("value: {:?}", value);
                 match value {
                     Ok(value) => Ok(value),
                     Err(e) => Err(LoxError::RuntimeError(e)),
@@ -445,6 +449,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> Result<Object, LoxError> {
+        println!("visiting block stmt interpreter");
         self.execute_block_stmt(
             statements,
             Environment::with_enclosing(self.environment.clone()),

@@ -1,3 +1,5 @@
+use std::clone;
+
 use crate::error::parse_error::ParseError;
 use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt};
@@ -160,13 +162,21 @@ impl<'a> Parser<'a> {
         let mut body = self.statement();
 
         if let Some(increment) = increment {
+            let mut body_statements = vec![];
+            if let Ok(body) = body {
+                body_statements = match body {
+                    Stmt::Block(block) => block.statements,
+                    _ => vec![body],
+                };
+            }
             body = Ok(Stmt::Block(BlockStmt {
-                statements: vec![
-                    body.unwrap(),
-                    Stmt::Expression {
+                statements: {
+                    let mut v = body_statements;
+                    v.push(Stmt::Expression {
                         expression: Box::new(increment),
-                    },
-                ],
+                    });
+                    v
+                },
             }))
         }
 
@@ -186,6 +196,8 @@ impl<'a> Parser<'a> {
                 statements: vec![initializer, body.unwrap()],
             }))
         }
+
+        // println!("body: {:#?}", body);
 
         return body;
     }

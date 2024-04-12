@@ -59,6 +59,7 @@ impl Environment {
     }
 
     pub fn assign(&mut self, name: &Token, value: Object) -> Result<Object, RuntimeError> {
+        println!("Assigning: {:?}", name.lexeme);
         match self.values.get_mut(&name.lexeme) {
             Some(v) => {
                 *v = value;
@@ -129,6 +130,8 @@ impl Environment {
         let ancestor = self.ancestor(distance);
         let name = &token.lexeme;
 
+        // println!("ancestor: {:#?}", ancestor);
+
         if let Some(a) = ancestor {
             a.borrow().values.get(name).cloned().ok_or_else(|| {
                 RuntimeError::new(
@@ -147,6 +150,7 @@ impl Environment {
         token: &Token,
         value: Object,
     ) -> Result<Object, RuntimeError> {
+        println!("Assigning at distance: {}", distance);
         match self.ancestor(distance) {
             Some(a) => {
                 a.borrow_mut()

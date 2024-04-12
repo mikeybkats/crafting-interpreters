@@ -238,11 +238,12 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     }
 
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> Result<Object, LoxError> {
+        println!("visiting block statement");
         self.begin_scope();
-        let result = self.resolve(&mut statements.statements);
+        self.resolve(&mut statements.statements)?;
         self.end_scope();
 
-        result
+        Ok(Object::Nil)
     }
 
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, LoxError> {

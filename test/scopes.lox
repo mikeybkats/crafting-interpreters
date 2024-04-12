@@ -1,13 +1,13 @@
 fun printVars(a, aa){
-    print a;
-    print aa;
+  print a;
+  print aa;
 }
 
 var foo = 1;
 printVars(foo, foo);
 
 {   
-    foo = 2;
-    var foo_b = 2;
-    printVars(foo, foo_b);
+  foo = 2;
+  var foo_b = 2;
+  printVars(foo, foo_b);
 }
