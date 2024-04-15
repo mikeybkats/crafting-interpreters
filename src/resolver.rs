@@ -96,14 +96,12 @@ impl Resolver {
     /// "We start at the innermost scope and work outwards, looking in each map for a matching name. If we find the variable, we resolve it, passing in the number of scopes between the current innermost scope and the scope where the variable was found."
     fn resolve_local(&mut self, value: &Expr, name: &Token) -> Result<Object, LoxError> {
         let scopes = &self.scopes;
+        // println!("Scopes: {:?}", scopes);
 
         for (i, scope) in scopes.into_iter().rev().enumerate() {
             if scope.contains_key(&name.lexeme) {
-                return self
-                    .interpreter
-                    .clone()
-                    .borrow_mut()
-                    .resolve(value, scopes.len() - 1 - i);
+                // println!("Resolving Local Variable: {:#?} -- depth: {}", name, i);
+                return self.interpreter.clone().borrow_mut().resolve(value, i);
             }
         }
 
@@ -120,7 +118,7 @@ impl Resolver {
             self.define(param);
         }
 
-        self.resolve(&mut fun_stmt.body.statements)?;
+        self.resolve(&mut fun_stmt.body)?;
         self.end_scope();
 
         Ok(Object::Nil)
@@ -176,6 +174,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
     }
 
     fn visit_variable_expr(&mut self, variable: &Expr, name: &Token) -> Result<Object, LoxError> {
+        // println!("Resolving Variable Expr");
         if let Some(scope) = self.scopes.last() {
             if let Some(&false) = scope.get(&name.lexeme) {
                 return Err(LoxError::RuntimeError(RuntimeError::new(
@@ -189,6 +188,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
     }
 
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
+        // println!("resolving assign expr");
         self.resolve_expr(value)?;
         self.resolve_local(value, name)
     }
@@ -196,7 +196,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
 
 impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     fn visit_expression_stmt(&mut self, stmt: &Expr) -> Result<Object, LoxError> {
-        // stmt.accept(self)
+        // println!("Resolving Expression Stmt");
         self.resolve_expr(stmt)
     }
 
@@ -238,7 +238,8 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     }
 
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> Result<Object, LoxError> {
-        println!("visiting block statement");
+        // println!("Resolving Block Stmt");
+        // println!("Resolving Block Stmt: {:#?}", statements);
         self.begin_scope();
         self.resolve(&mut statements.statements)?;
         self.end_scope();
@@ -247,6 +248,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     }
 
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, LoxError> {
+        // println!("Resolving Var Stmt -- name: {:#?}", name.lexeme);
         self.declare(name);
         self.resolve_expr(initializer)?;
         self.define(name);

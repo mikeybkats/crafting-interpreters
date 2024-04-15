@@ -1,5 +1,4 @@
-use std::clone;
-
+use crate::environment::generate_id;
 use crate::error::parse_error::ParseError;
 use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt};
@@ -21,7 +20,13 @@ impl<'a> Parser<'a> {
         Self {
             current: 0,
             tokens,
-            empty_token: Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0),
+            empty_token: Token::new(
+                TokenType::Nil,
+                "".to_string(),
+                Some(Object::Nil),
+                0,
+                generate_id(),
+            ),
         }
     }
 
@@ -197,8 +202,6 @@ impl<'a> Parser<'a> {
             }))
         }
 
-        // println!("body: {:#?}", body);
-
         return body;
     }
 
@@ -367,7 +370,8 @@ impl<'a> Parser<'a> {
             params: parameters,
             body: self
                 .block()
-                .unwrap_or_else(|_error| BlockStmt { statements: vec![] }),
+                .unwrap_or_else(|_error| BlockStmt { statements: vec![] })
+                .statements,
         }))
     }
 
@@ -825,13 +829,49 @@ mod tests {
             "The finish_call function should parse arguments return a Call expression from tokens 'foo()'".red()
         );
         let tokens = vec![
-            Token::new(TokenType::Identifier, "foo".to_string(), None, 0),
-            Token::new(TokenType::LeftParen, "(".to_string(), None, 0),
-            Token::new(TokenType::Identifier, "arg1".to_string(), None, 0),
-            Token::new(TokenType::Comma, ",".to_string(), None, 0),
-            Token::new(TokenType::Identifier, "arg2".to_string(), None, 0),
-            Token::new(TokenType::RightParen, ")".to_string(), None, 0),
-            Token::new(TokenType::Semicolon, ";".to_string(), None, 0),
+            Token::new(
+                TokenType::Identifier,
+                "foo".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(
+                TokenType::LeftParen,
+                "(".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(
+                TokenType::Identifier,
+                "arg1".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(TokenType::Comma, ",".to_string(), None, 0, generate_id()),
+            Token::new(
+                TokenType::Identifier,
+                "arg2".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(
+                TokenType::RightParen,
+                ")".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(
+                TokenType::Semicolon,
+                ";".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
         ];
         let mut parser = Parser::new(&tokens);
         let callee = parser.primary().unwrap();
@@ -879,10 +919,34 @@ mod tests {
             "The call function should return a Call expression from tokens 'foo()'".blue()
         );
         let tokens = vec![
-            Token::new(TokenType::Identifier, "foo".to_string(), None, 0),
-            Token::new(TokenType::LeftParen, "(".to_string(), None, 0),
-            Token::new(TokenType::RightParen, ")".to_string(), None, 0),
-            Token::new(TokenType::Semicolon, ";".to_string(), None, 0),
+            Token::new(
+                TokenType::Identifier,
+                "foo".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(
+                TokenType::LeftParen,
+                "(".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(
+                TokenType::RightParen,
+                ")".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
+            Token::new(
+                TokenType::Semicolon,
+                ";".to_string(),
+                None,
+                0,
+                generate_id(),
+            ),
         ];
         let mut parser = Parser::new(&tokens);
         let result = parser.call().unwrap_or_else(|result| {

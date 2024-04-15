@@ -9,7 +9,7 @@ pub struct BlockStmt {
 pub struct FunStmt {
     pub name: Token,
     pub params: Vec<Token>,
-    pub body: BlockStmt,
+    pub body: Vec<Stmt>,
 }
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,6 @@ pub enum Stmt {
     Expression {
         expression: Box<Expr>,
     },
-    // If you're wondering why no For statements? They are handled in the parser because they are just desugared into while loops.
     Function(FunStmt),
     If {
         condition: Box<Expr>,
@@ -38,6 +37,7 @@ pub enum Stmt {
         name: Token,
         initializer: Box<Expr>,
     },
+    // If you're wondering why no For statements? They are handled in the parser because they are just desugared into while loops.
     While {
         condition: Box<Expr>,
         body: Box<Stmt>,

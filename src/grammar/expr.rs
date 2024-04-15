@@ -155,9 +155,7 @@ impl PartialEq for Expr {
                     right: right2,
                 },
             ) => operator1.lexeme == operator2.lexeme && right1 == right2,
-            (Expr::Variable { name: name1 }, Expr::Variable { name: name2 }) => {
-                name1.lexeme == name2.lexeme && name1.token_type == name2.token_type
-            }
+            (Expr::Variable { name: name1 }, Expr::Variable { name: name2 }) => name1 == name2,
             _ => false,
         }
     }
@@ -224,7 +222,7 @@ impl Hash for Expr {
                 right.hash(state);
             }
             Expr::Variable { name } => {
-                name.lexeme.hash(state);
+                name.hash(state);
             }
         }
     }
@@ -243,7 +241,7 @@ pub trait ExprVisitor<R> {
 
 #[cfg(test)]
 mod tests {
-    use crate::grammar::token::TokenType;
+    use crate::{environment::generate_id, grammar::token::TokenType};
 
     use super::*; // Import everything from the outer module
 
@@ -288,6 +286,7 @@ mod tests {
             lexeme: "+".to_string(),
             literal: None,
             line: 1,
+            _id: generate_id(),
         };
 
         let expr1 = Expr::Binary {
@@ -320,12 +319,14 @@ mod tests {
             lexeme: "+".to_string(),
             literal: None,
             line: 1,
+            _id: generate_id(),
         };
         let operator2 = Token {
             token_type: TokenType::Minus, // Adjust according to your TokenType definition
             lexeme: "-".to_string(),
             literal: None,
             line: 1,
+            _id: generate_id(),
         };
 
         let expr1 = Expr::Binary {
@@ -353,6 +354,7 @@ mod tests {
                 lexeme: "2".to_string(),
                 literal: Some(Object::Str("2".to_string())),
                 line: 200,
+                _id: generate_id(),
             },
         };
         let var_expr_2 = Expr::Variable {
@@ -361,6 +363,7 @@ mod tests {
                 lexeme: "2".to_string(),
                 literal: Some(Object::Str("2".to_string())),
                 line: 500,
+                _id: generate_id(),
             },
         };
 
@@ -378,6 +381,7 @@ mod tests {
                 lexeme: "2".to_string(),
                 literal: Some(Object::Str("2".to_string())),
                 line: 200,
+                _id: generate_id(),
             },
         };
         let var_expr_2 = Expr::Variable {
@@ -386,6 +390,7 @@ mod tests {
                 lexeme: "3".to_string(),
                 literal: Some(Object::Str("3".to_string())),
                 line: 500,
+                _id: generate_id(),
             },
         };
 
@@ -439,6 +444,7 @@ mod tests {
                 lexeme: "-".to_string(),
                 literal: None,
                 line: 1,
+                _id: generate_id(),
             },
             right: Box::new(Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -450,6 +456,7 @@ mod tests {
                 lexeme: "-".to_string(),
                 literal: None,
                 line: 1,
+                _id: generate_id(),
             },
             right: Box::new(Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -469,6 +476,7 @@ mod tests {
                 lexeme: "-".to_string(),
                 literal: None,
                 line: 1,
+                _id: generate_id(),
             },
             right: Box::new(Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -480,6 +488,7 @@ mod tests {
                 lexeme: "-".to_string(),
                 literal: None,
                 line: 1,
+                _id: generate_id(),
             },
             right: Box::new(Expr::Literal {
                 value: Some(Object::Num(24.0)),
@@ -504,6 +513,7 @@ mod tests {
             lexeme: "and".to_string(),
             literal: None,
             line: 1,
+            _id: generate_id(),
         };
 
         let expr1 = Expr::Logical {
@@ -536,12 +546,14 @@ mod tests {
             lexeme: "and".to_string(),
             literal: None,
             line: 1,
+            _id: generate_id(),
         };
         let operator2 = Token {
             token_type: TokenType::Or, // Adjust according to your TokenType definition
             lexeme: "or".to_string(),
             literal: None,
             line: 1,
+            _id: generate_id(),
         };
 
         let expr1 = Expr::Logical {
@@ -569,6 +581,7 @@ mod tests {
                 lexeme: "x".to_string(),
                 literal: Some(Object::Str("x".to_string())),
                 line: 200,
+                _id: generate_id(),
             },
             value: Box::new(Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -580,6 +593,7 @@ mod tests {
                 lexeme: "x".to_string(),
                 literal: Some(Object::Str("x".to_string())),
                 line: 200,
+                _id: generate_id(),
             },
             value: Box::new(Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -600,6 +614,7 @@ mod tests {
                 lexeme: "x".to_string(),
                 literal: Some(Object::Str("x".to_string())),
                 line: 200,
+                _id: generate_id(),
             },
             value: Box::new(Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -611,6 +626,7 @@ mod tests {
                 lexeme: "y".to_string(),
                 literal: Some(Object::Str("y".to_string())),
                 line: 200,
+                _id: generate_id(),
             },
             value: Box::new(Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -632,6 +648,7 @@ mod tests {
                     lexeme: "x".to_string(),
                     literal: Some(Object::Str("x".to_string())),
                     line: 200,
+                    _id: generate_id(),
                 },
             }),
             paren: Token {
@@ -639,6 +656,7 @@ mod tests {
                 lexeme: "(".to_string(),
                 literal: None,
                 line: 200,
+                _id: generate_id(),
             },
             arguments: vec![Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -651,6 +669,7 @@ mod tests {
                     lexeme: "x".to_string(),
                     literal: Some(Object::Str("x".to_string())),
                     line: 200,
+                    _id: generate_id(),
                 },
             }),
             paren: Token {
@@ -658,6 +677,7 @@ mod tests {
                 lexeme: "(".to_string(),
                 literal: None,
                 line: 200,
+                _id: generate_id(),
             },
             arguments: vec![Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -679,6 +699,7 @@ mod tests {
                     lexeme: "x".to_string(),
                     literal: Some(Object::Str("x".to_string())),
                     line: 200,
+                    _id: generate_id(),
                 },
             }),
             paren: Token {
@@ -686,6 +707,7 @@ mod tests {
                 lexeme: "(".to_string(),
                 literal: None,
                 line: 200,
+                _id: generate_id(),
             },
             arguments: vec![Expr::Literal {
                 value: Some(Object::Num(42.0)),
@@ -698,6 +720,7 @@ mod tests {
                     lexeme: "y".to_string(),
                     literal: Some(Object::Str("y".to_string())),
                     line: 200,
+                    _id: generate_id(),
                 },
             }),
             paren: Token {
@@ -705,6 +728,7 @@ mod tests {
                 lexeme: "(".to_string(),
                 literal: None,
                 line: 200,
+                _id: generate_id(),
             },
             arguments: vec![Expr::Literal {
                 value: Some(Object::Num(42.0)),

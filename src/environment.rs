@@ -51,7 +51,7 @@ impl Environment {
 
     // Secondary constructor: With an enclosing environment
     pub fn with_enclosing(enclosing: Rc<RefCell<Environment>>) -> Self {
-        Environment {
+        Self {
             name: format!("{}-child", generate_id()),
             enclosing: Some(enclosing),
             values: HashMap::new(),
@@ -59,7 +59,6 @@ impl Environment {
     }
 
     pub fn assign(&mut self, name: &Token, value: Object) -> Result<Object, RuntimeError> {
-        println!("Assigning: {:?}", name.lexeme);
         match self.values.get_mut(&name.lexeme) {
             Some(v) => {
                 *v = value;
@@ -90,20 +89,15 @@ impl Environment {
     }
 
     fn ancestor(&self, distance: usize) -> Option<Rc<RefCell<Environment>>> {
-        if distance == 0 {
-            return Some(Rc::new(RefCell::new(self.clone())));
-        }
-
-        let mut env = self.enclosing.clone();
         for _ in 0..distance {
-            match env {
+            match self.enclosing.clone() {
                 Some(e) => {
-                    env = e.borrow().enclosing.clone();
+                    return Some(e);
                 }
                 None => break,
-            }
+            };
         }
-        return env;
+        return Some(Rc::new(RefCell::new(self.clone())));
     }
 
     pub fn _values_of(&self) -> &HashMap<String, Object> {
@@ -130,8 +124,6 @@ impl Environment {
         let ancestor = self.ancestor(distance);
         let name = &token.lexeme;
 
-        // println!("ancestor: {:#?}", ancestor);
-
         if let Some(a) = ancestor {
             a.borrow().values.get(name).cloned().ok_or_else(|| {
                 RuntimeError::new(
@@ -150,12 +142,13 @@ impl Environment {
         token: &Token,
         value: Object,
     ) -> Result<Object, RuntimeError> {
-        println!("Assigning at distance: {}", distance);
         match self.ancestor(distance) {
             Some(a) => {
-                a.borrow_mut()
+                a.clone()
+                    .borrow_mut()
                     .values
                     .insert(token.lexeme.clone(), value.clone());
+
                 Ok(value)
             }
             None => Err(RuntimeError::new(
@@ -185,7 +178,13 @@ mod tests {
     fn test_get_value() {
         let mut env = Environment::new();
 
-        let token_number = Token::new(TokenType::Number, "testNumber".to_string(), None, 1);
+        let token_number = Token::new(
+            TokenType::Number,
+            "testNumber".to_string(),
+            None,
+            1,
+            generate_id(),
+        );
 
         env.values
             .insert(token_number.lexeme.clone(), Object::Num(42.0));
@@ -195,7 +194,13 @@ mod tests {
             _ => panic!("Value not found or not a number"),
         };
 
-        let token_string = Token::new(TokenType::String, "testString".to_string(), None, 1);
+        let token_string = Token::new(
+            TokenType::String,
+            "testString".to_string(),
+            None,
+            1,
+            generate_id(),
+        );
 
         env.values.insert(
             token_string.lexeme.clone(),
@@ -207,7 +212,13 @@ mod tests {
             _ => panic!("Value not found or not a number"),
         };
 
-        let token_boolean = Token::new(TokenType::False, "testBoolean".to_string(), None, 1);
+        let token_boolean = Token::new(
+            TokenType::False,
+            "testBoolean".to_string(),
+            None,
+            1,
+            generate_id(),
+        );
 
         env.values
             .insert(token_boolean.lexeme.clone(), Object::Bool(false));
@@ -217,7 +228,13 @@ mod tests {
             _ => panic!("Value not found or not a number"),
         };
 
-        let token_nil = Token::new(TokenType::Nil, "testNil".to_string(), None, 1);
+        let token_nil = Token::new(
+            TokenType::Nil,
+            "testNil".to_string(),
+            None,
+            1,
+            generate_id(),
+        );
 
         env.values.insert(token_nil.lexeme.clone(), Object::Nil);
 

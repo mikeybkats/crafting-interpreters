@@ -1,4 +1,4 @@
-use crate::environment::Environment;
+use crate::environment::{generate_id, Environment};
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
 use crate::error::LoxError;
@@ -73,7 +73,7 @@ impl Interpreter {
 
         for statement in &mut block_stmt.statements {
             match self.execute(statement) {
-                Ok(_) => (),
+                Ok(_) => {}
                 Err(e) => match e {
                     LoxError::LoxReturn(return_value) => {
                         self.environment = previous;
@@ -136,13 +136,9 @@ impl Interpreter {
         let locals = self.locals.borrow();
         let distance = locals.get(&expr);
 
-        // println!("looking up variable: {}", name.lexeme);
-
         match distance {
             Some(distance) => {
-                // println!("distance: {}", distance);
                 let value = self.environment.borrow().get_at(*distance, name);
-                // println!("value: {:?}", value);
                 match value {
                     Ok(value) => Ok(value),
                     Err(e) => Err(LoxError::RuntimeError(e)),
@@ -289,7 +285,13 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_literal_expr(&mut self, value: &Option<Object>) -> Result<Object, LoxError> {
-        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0);
+        let empty_token = Token::new(
+            TokenType::Nil,
+            "".to_string(),
+            Some(Object::Nil),
+            0,
+            generate_id(),
+        );
 
         match value {
             Some(value) => Ok(value.clone()),
@@ -323,7 +325,13 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<Object, LoxError> {
         let right_object = self.evaluate(right)?;
-        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0);
+        let empty_token = Token::new(
+            TokenType::Nil,
+            "".to_string(),
+            Some(Object::Nil),
+            0,
+            generate_id(),
+        );
 
         match (operator.token_type, right_object.clone()) {
             (TokenType::Minus, Object::Num(num)) => {
@@ -344,16 +352,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     /// Runs only on resassignment
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
         let value_obj = self.evaluate(value)?;
-        // match self
-        //     .environment
-        //     .borrow_mut()
-        //     .assign(name, value_obj.clone())
-        // {
-        //     Ok(_) => Ok(value_obj),
-        //     Err(e) => Err(LoxError::RuntimeError(e)),
-        // }
+
         let locals = self.locals.borrow();
-        match locals.get(&value) {
+        let distance = locals.get(&value);
+        match distance {
             Some(distance) => self
                 .environment
                 .borrow_mut()
@@ -369,11 +371,6 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> Result<Object, LoxError> {
         self.look_up_variable(name, expr)
-
-        // self.environment
-        //     .borrow()
-        //     .get_value(name)
-        //     .or_else(|error| Err(LoxError::RuntimeError(error)))
     }
 }
 
@@ -449,7 +446,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> Result<Object, LoxError> {
-        println!("visiting block stmt interpreter");
         self.execute_block_stmt(
             statements,
             Environment::with_enclosing(self.environment.clone()),
