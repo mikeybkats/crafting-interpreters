@@ -9,7 +9,7 @@ pub struct BlockStmt {
 pub struct FunStmt {
     pub name: Token,
     pub params: Vec<Token>,
-    pub body: BlockStmt,
+    pub body: Vec<Stmt>,
 }
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,6 @@ pub enum Stmt {
     Expression {
         expression: Box<Expr>,
     },
-    // If you're wondering why no For statements? They are handled in the parser because they are just desugared into while loops.
     Function(FunStmt),
     If {
         condition: Box<Expr>,
@@ -38,6 +37,7 @@ pub enum Stmt {
         name: Token,
         initializer: Box<Expr>,
     },
+    // If you're wondering why no For statements? They are handled in the parser because they are just desugared into while loops.
     While {
         condition: Box<Expr>,
         body: Box<Stmt>,
@@ -56,7 +56,7 @@ impl Stmt {
             } => visitor.visit_if_stmt(condition, then_branch, else_branch),
             Stmt::While { condition, body } => visitor.visit_while_stmt(condition, body),
             Stmt::Print { expression } => visitor.visit_print_stmt(expression),
-            Stmt::Return { keyword, value } => visitor.visit_return_stmt(value),
+            Stmt::Return { keyword, value } => visitor.visit_return_stmt(keyword, value),
             Stmt::Var { name, initializer } => visitor.visit_var_stmt(name, initializer),
             Stmt::Block(block_stmt) => visitor.visit_block_stmt(block_stmt),
         }
@@ -74,7 +74,7 @@ pub trait StmtVisitor<R> {
     ) -> R;
     fn visit_while_stmt(&mut self, condition: &Expr, body: &mut Stmt) -> R;
     fn visit_print_stmt(&mut self, expression: &Expr) -> R;
-    fn visit_return_stmt(&mut self, value: &Expr) -> R;
+    fn visit_return_stmt(&mut self, keyword: &Token, value: &Expr) -> R;
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> R;
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> R;
 }

@@ -1,5 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
+use crate::environment::generate_id;
 use crate::error::error::ErrorReporter;
 use crate::grammar::object::Object;
 
@@ -59,9 +60,10 @@ impl Scanner {
 
         self.tokens.push(Token::new(
             TokenType::Eof,
-            String::from(""),
+            String::from("EOF"),
             None,
             self.line,
+            generate_id(),
         ));
 
         &self.tokens
@@ -163,8 +165,8 @@ impl Scanner {
     fn add_token_with_value(&mut self, token_type: TokenType, literal: Option<Object>) {
         let lexeme = self.source[self.start..self.current].to_string();
 
-        self.tokens
-            .push(Token::new(token_type, lexeme, literal, self.line));
+        let token = Token::new(token_type, lexeme, literal, self.line, generate_id());
+        self.tokens.push(token);
     }
 
     fn identifier(&mut self) {

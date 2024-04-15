@@ -1,4 +1,4 @@
-use crate::environment::Environment;
+use crate::environment::{generate_id, Environment};
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
 use crate::error::LoxError;
@@ -8,13 +8,15 @@ use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
-use crate::lox::PromptMode;
+use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
+/// # Interpreter
 pub struct Interpreter {
     environment: Rc<RefCell<Environment>>,
     pub globals: Rc<RefCell<Environment>>,
-    mode: PromptMode,
+    /// Locals stores the distance of a variable from the current scope. A given expression is so many scopes away from the current scope
+    locals: Rc<RefCell<HashMap<Expr, usize>>>,
 }
 
 impl Interpreter {
@@ -31,12 +33,8 @@ impl Interpreter {
         Self {
             globals,
             environment,
-            mode: PromptMode::Single,
+            locals: Rc::new(RefCell::new(HashMap::new())),
         }
-    }
-
-    pub fn set_mode(&mut self, mode: PromptMode) {
-        self.mode = mode;
     }
 
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Object>, LoxError> {
@@ -58,6 +56,12 @@ impl Interpreter {
         }
     }
 
+    pub fn resolve(&mut self, expr: &Expr, depth: usize) -> Result<Object, LoxError> {
+        self.locals.borrow_mut().insert(expr.clone(), depth);
+
+        Ok(Object::Nil)
+    }
+
     pub fn execute_block_stmt(
         &mut self,
         block_stmt: &mut BlockStmt,
@@ -69,7 +73,7 @@ impl Interpreter {
 
         for statement in &mut block_stmt.statements {
             match self.execute(statement) {
-                Ok(_) => (),
+                Ok(_) => {}
                 Err(e) => match e {
                     LoxError::LoxReturn(return_value) => {
                         self.environment = previous;
@@ -125,6 +129,28 @@ impl Interpreter {
                 "Operands must be numbers.".to_string(),
                 token,
             ))),
+        }
+    }
+
+    fn look_up_variable(&self, name: &Token, expr: &Expr) -> Result<Object, LoxError> {
+        let locals = self.locals.borrow();
+        let distance = locals.get(&expr);
+
+        match distance {
+            Some(distance) => {
+                let value = self.environment.borrow().get_at(*distance, name);
+                match value {
+                    Ok(value) => Ok(value),
+                    Err(e) => Err(LoxError::RuntimeError(e)),
+                }
+            }
+            None => {
+                let value = self.globals.borrow().get_value(name);
+                match value {
+                    Ok(value) => Ok(value),
+                    Err(e) => Err(LoxError::RuntimeError(e)),
+                }
+            }
         }
     }
 }
@@ -248,7 +274,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         match processed_callee {
             Object::Callable(function) => function.call(self, processed_arguments),
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
-                "Can only call functions and classes.".to_string(),
+                "Can only call functions and classes. -- visit_call_expr()".to_string(),
                 paren,
             ))),
         }
@@ -258,8 +284,14 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         self.evaluate(expression)
     }
 
-    fn visit_object_expr(&mut self, value: &Option<Object>) -> Result<Object, LoxError> {
-        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0);
+    fn visit_literal_expr(&mut self, value: &Option<Object>) -> Result<Object, LoxError> {
+        let empty_token = Token::new(
+            TokenType::Nil,
+            "".to_string(),
+            Some(Object::Nil),
+            0,
+            generate_id(),
+        );
 
         match value {
             Some(value) => Ok(value.clone()),
@@ -293,7 +325,13 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<Object, LoxError> {
         let right_object = self.evaluate(right)?;
-        let empty_token = Token::new(TokenType::Nil, "".to_string(), Some(Object::Nil), 0);
+        let empty_token = Token::new(
+            TokenType::Nil,
+            "".to_string(),
+            Some(Object::Nil),
+            0,
+            generate_id(),
+        );
 
         match (operator.token_type, right_object.clone()) {
             (TokenType::Minus, Object::Num(num)) => {
@@ -310,19 +348,29 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
+    /// ## visit_assign_expr
+    /// Runs only on resassignment
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
-        let value = self.evaluate(value)?;
-        match self.environment.borrow_mut().assign(name, value.clone()) {
-            Ok(_) => Ok(value),
-            Err(e) => Err(LoxError::RuntimeError(e)),
+        let value_obj = self.evaluate(value)?;
+
+        let locals = self.locals.borrow();
+        let distance = locals.get(&value);
+        match distance {
+            Some(distance) => self
+                .environment
+                .borrow_mut()
+                .assign_at(*distance, name, value_obj)
+                .or_else(|error| Err(LoxError::RuntimeError(error))),
+            None => self
+                .globals
+                .borrow_mut()
+                .assign(name, value_obj)
+                .or_else(|error| Err(LoxError::RuntimeError(error))),
         }
     }
 
-    fn visit_variable_expr(&mut self, token: &Token) -> Result<Object, LoxError> {
-        self.environment
-            .borrow()
-            .get_value(token)
-            .or_else(|error| Err(LoxError::RuntimeError(error)))
+    fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> Result<Object, LoxError> {
+        self.look_up_variable(name, expr)
     }
 }
 
@@ -366,7 +414,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
         Ok(Object::Nil)
     }
 
-    fn visit_return_stmt(&mut self, value: &Expr) -> Result<Object, LoxError> {
+    fn visit_return_stmt(&mut self, _token: &Token, value: &Expr) -> Result<Object, LoxError> {
         let value = self.evaluate(value)?;
 
         // throw an error to trigger an escape from deep call stack

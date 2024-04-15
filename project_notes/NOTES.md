@@ -76,3 +76,48 @@ The data structure of the grammar will form a tree.
 a _parse tree_ includes all grammar productions as nodes.
 
 _abstract syntax tree_ only include the grammar nodes that are needed
+
+## Chapter 11 - Resolving and Binding
+
+#### Lox - Lexical scope
+
+_Lexical Scope_ - a variable value is determined by its location in the source code and the determination is made at compile time.
+
+```
+var a = "outer";
+{
+  var a = "inner";
+  print a;
+}
+```
+
+In the example above `print a` will result in `inner`. Easy. Here is the scope rule for Lox:
+
+"A variable usage refers to the preceding declaration with the same name in the innermost scope that encloses the expression where the variable is used."
+
+So in this case, given the rule:
+
+```
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
+
+  showA();
+  var a = "block";
+  showA();
+}
+```
+
+Both `showA()` functions will print "global". This is lexical scope.
+
+#### Other Languages - Dynamic Scope
+
+_dynamic scope_ - the value of a variable is determined at runtime, and the rules for how a variable resolves can be far more complex and based on the context of execution.
+
+Javascript for instance hoists variables declared inside a block to the top of the definition context. This was changed with the introduction of the let keyword.
+
+#### Semantic analysis
+
+Semantic analysis is the process of inspecting the structure of the source code and using known patterns and context to optimize the compilation. Basically, optimize based on known patterns and context.

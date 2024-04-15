@@ -3,7 +3,11 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     environment::{self, Environment},
     error::LoxError,
-    grammar::{callable::LoxCallable, object::Object, stmt::FunStmt},
+    grammar::{
+        callable::LoxCallable,
+        object::Object,
+        stmt::{BlockStmt, FunStmt},
+    },
     interpreter::Interpreter,
 };
 
@@ -46,8 +50,13 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
 
         let dec_clone_two = self.declaration.clone();
 
-        let mut declaration_body = dec_clone_two.borrow_mut().body.clone();
-        return match interpreter.execute_block_stmt(&mut declaration_body, environment) {
+        let declaration_body = dec_clone_two.borrow_mut().body.clone();
+        return match interpreter.execute_block_stmt(
+            &mut BlockStmt {
+                statements: declaration_body,
+            },
+            environment,
+        ) {
             Ok(value) => Ok(value),
             Err(e) => match e {
                 LoxError::RuntimeError(e) => Err(LoxError::RuntimeError(e)),
