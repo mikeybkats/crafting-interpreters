@@ -16,6 +16,7 @@ pub struct Interpreter {
     environment: Rc<RefCell<Environment>>,
     pub globals: Rc<RefCell<Environment>>,
     /// Locals stores the distance of a variable from the current scope. A given expression is so many scopes away from the current scope
+    // TODO: convert locals to a vector. Look up values by index, which needs saved the scopes vector in Resolver
     locals: Rc<RefCell<HashMap<Expr, usize>>>,
 }
 
