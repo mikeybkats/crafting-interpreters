@@ -126,16 +126,16 @@ impl Lox {
 
         if let Ok(stmts) = &mut statements {
             let mut resolver = Resolver::new(self.interpreter.clone());
-            // println!("Statements: {:#?}", stmts);
+
             if let Err(error) = resolver.resolve(stmts) {
-                self.error(error);
+                return self.error(error);
             };
 
             if let Err(error) = self.interpreter.borrow_mut().interpret(stmts) {
-                self.error(error);
+                return self.error(error);
             }
         } else if let Err(error) = statements {
-            self.error(LoxError::ParseError(error));
+            return self.error(LoxError::ParseError(error));
         }
     }
 }
