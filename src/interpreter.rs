@@ -1,11 +1,11 @@
-use crate::class::LoxClass;
 use crate::environment::{generate_id, Environment};
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
 use crate::error::LoxError;
-use crate::function::LoxFunction;
 use crate::grammar::callable::Callable;
+use crate::grammar::class::LoxClass;
 use crate::grammar::expr::{Expr, ExprVisitor};
+use crate::grammar::function::LoxFunction;
 use crate::grammar::native_function::{Clock, LoxNativeFunctions};
 use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor};

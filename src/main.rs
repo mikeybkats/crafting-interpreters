@@ -4,12 +4,9 @@ use getopts::Options;
 
 use crate::lox::Lox;
 
-mod class;
 mod environment;
 mod error;
-mod function;
 mod grammar;
-mod instance;
 mod interpreter;
 mod lox;
 mod parser;

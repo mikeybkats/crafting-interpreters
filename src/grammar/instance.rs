@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::class::LoxClass;
+use super::class::LoxClass;
 
 #[derive(Debug, Clone)]
 pub struct LoxInstance {

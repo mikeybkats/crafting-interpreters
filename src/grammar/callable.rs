@@ -1,6 +1,8 @@
-use crate::{class::LoxClass, error::LoxError, function::LoxFunction, interpreter::Interpreter};
+use crate::{error::LoxError, interpreter::Interpreter};
 
 use super::{
+    class::LoxClass,
+    function::LoxFunction,
     native_function::{Clock, LoxNativeFunctions},
     object::Object,
 };

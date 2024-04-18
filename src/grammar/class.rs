@@ -3,9 +3,10 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     error::LoxError,
     grammar::{callable::LoxCallable, object::Object},
-    instance::LoxInstance,
     interpreter::Interpreter,
 };
+
+use super::instance::LoxInstance;
 
 #[derive(Debug, Clone)]
 pub struct LoxClass {

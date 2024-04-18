@@ -1,8 +1,6 @@
 use std::fmt;
 
-use crate::instance::LoxInstance;
-
-use super::callable::Callable;
+use super::{callable::Callable, instance::LoxInstance};
 
 pub enum Object {
     Str(String),
