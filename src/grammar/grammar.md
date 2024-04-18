@@ -115,16 +115,77 @@ returnStmt     → "return" expression? ";" ;
 ```
 
 ```
-// Grammar ch12 - Class declarations
+// ch12 - Class declarations
 declaration    → classDecl
                | funDecl
                | varDecl
                | statement ;
 
 classDecl      → "class" IDENTIFIER "{" function* "}" ;
+funDecl        → "fun" function ;
+statement      → exprStmt
+               | forStmt
+               | ifStmt
+               | printStmt
+               | returnStmt
+               | whileStmt
+               | block ;
 
 function       → IDENTIFIER "(" parameters? ")" block ;
 
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
+```
+
+```
+// The full lox grammar
+program        → declaration* EOF ;
+
+primary        → "true" | "false" | "nil"
+               | NUMBER | STRING
+               | "(" expression ")"
+               | IDENTIFIER ;
+
+Identifier     → LoxWord;
+
+expression     → assignment ;
+
+assignment     → IDENTIFIER "=" assignment
+               | equality ;
+
+statement      → exprStmt
+               | forStmt
+               | ifStmt
+               | printStmt
+               | whileStmt
+               | block ;
+
+block          → "{" declaration* "}" ;
+exprStmt       → expression ";" ;
+printStmt      → "print" expression ";" ;
+forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+                 expression? ";"
+                 expression? ")" statement ;
+ifStmt         → "if" "(" expression ")" statement
+               ( "else" statement )? ;
+returnStmt     → "return" expression? ";" ;
+whileStmt      → "while" "(" expression ")" statement ;
+
+unary          → ( "!" | "-" ) unary | call ;
+call           → primary ( "(" arguments? ")" )* ;
+
+function       → IDENTIFIER "(" parameters? ")" block ;
+parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+
+arguments      → expression ( "," expression )* ;
+
+
+declaration    → classDecl
+               | funDecl
+               | varDecl
+               | statement ;
+
+classDecl      → "class" IDENTIFIER "{" function* "}" ;
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+funDecl        → "fun" function ;
 ```

@@ -1,12 +1,14 @@
+use crate::class::LoxClass;
 use crate::environment::{generate_id, Environment};
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
 use crate::error::LoxError;
 use crate::function::LoxFunction;
-use crate::grammar::callable::{Callable, Clock};
+use crate::grammar::callable::Callable;
 use crate::grammar::expr::{Expr, ExprVisitor};
+use crate::grammar::native_function::{Clock, LoxNativeFunctions};
 use crate::grammar::object::Object;
-use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor};
+use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
@@ -28,7 +30,9 @@ impl Interpreter {
 
         globals.borrow_mut().define(
             "clock".to_string(),
-            Object::Callable(Callable::Clock(Clock::new())),
+            Object::Callable(Callable::LoxNativeFunction(LoxNativeFunctions::Clock(
+                Clock::new(),
+            ))),
         );
 
         Self {
@@ -380,16 +384,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
         self.evaluate(statement)
     }
 
-    fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
-        let lox_function = LoxFunction::new(declaration, self.environment.clone());
-        self.environment.borrow_mut().define(
-            declaration.name.lexeme.clone(),
-            Object::Callable(Callable::LoxFunction(lox_function)),
-        );
-
-        Ok(Object::Nil)
-    }
-
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,
@@ -451,5 +445,33 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
             statements,
             Environment::with_enclosing(self.environment.clone()),
         )
+    }
+
+    fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
+        let lox_function = LoxFunction::new(declaration, self.environment.clone());
+        self.environment.borrow_mut().define(
+            declaration.name.lexeme.clone(),
+            Object::Callable(Callable::LoxFunction(lox_function)),
+        );
+
+        Ok(Object::Nil)
+    }
+
+    fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
+        self.environment
+            .borrow_mut()
+            .define(class_stmt.name.lexeme.clone(), Object::Nil);
+
+        let class = LoxClass::new(class_stmt.name.lexeme.clone());
+
+        let assignment = self.environment.borrow_mut().assign(
+            &class_stmt.name,
+            Object::Callable(Callable::LoxClass(class)),
+        );
+
+        match assignment {
+            Ok(_) => Ok(Object::Nil),
+            Err(e) => Err(LoxError::RuntimeError(e)),
+        }
     }
 }

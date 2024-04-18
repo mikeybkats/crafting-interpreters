@@ -5,7 +5,7 @@ use crate::{
     grammar::{
         expr::{Expr, ExprVisitor},
         object::Object,
-        stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor},
+        stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor},
         token::Token,
     },
     interpreter::Interpreter,
@@ -219,14 +219,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(stmt)
     }
 
-    fn visit_function_stmt(&mut self, fun_stmt: &mut FunStmt) -> Result<Object, LoxError> {
-        self.declare(&fun_stmt.name);
-        self.define(&fun_stmt.name);
-        self.resolve_function(fun_stmt, FunctionType::Function)?;
-
-        Ok(Object::Nil)
-    }
-
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,
@@ -264,6 +256,14 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_stmt(body)
     }
 
+    fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, LoxError> {
+        self.declare(name);
+        self.resolve_expr(initializer)?;
+        self.define(name);
+
+        Ok(Object::Nil)
+    }
+
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> Result<Object, LoxError> {
         self.begin_scope();
         self.resolve(&mut statements.statements)?;
@@ -272,10 +272,17 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         Ok(Object::Nil)
     }
 
-    fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, LoxError> {
-        self.declare(name);
-        self.resolve_expr(initializer)?;
-        self.define(name);
+    fn visit_function_stmt(&mut self, fun_stmt: &mut FunStmt) -> Result<Object, LoxError> {
+        self.declare(&fun_stmt.name);
+        self.define(&fun_stmt.name);
+        self.resolve_function(fun_stmt, FunctionType::Function)?;
+
+        Ok(Object::Nil)
+    }
+
+    fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
+        self.declare(&class_stmt.name);
+        self.define(&class_stmt.name);
 
         Ok(Object::Nil)
     }

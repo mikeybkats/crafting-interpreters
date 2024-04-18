@@ -204,6 +204,7 @@ impl Hash for Expr {
                         }
                         Object::Str(s) => s.hash(state),
                         Object::Callable(_) => (),
+                        Object::Instance(_) => (),
                     },
                     None => (),
                 }
