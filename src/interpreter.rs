@@ -285,6 +285,24 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
+    fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> Result<Object, LoxError> {
+        let object = self.evaluate(object)?;
+
+        match object {
+            Object::Instance(instance) => match instance.get(name.lexeme.as_str()) {
+                Some(value) => Ok(value),
+                _ => Err(LoxError::RuntimeError(RuntimeError::new(
+                    "Only instances have properties.".to_string(),
+                    name,
+                ))),
+            },
+            _ => Err(LoxError::RuntimeError(RuntimeError::new(
+                "Only instances have properties.".to_string(),
+                name,
+            ))),
+        }
+    }
+
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Object, LoxError> {
         self.evaluate(expression)
     }

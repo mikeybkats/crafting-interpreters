@@ -135,6 +135,7 @@ function       → IDENTIFIER "(" parameters? ")" block ;
 
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
+call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 ```
 
 ```

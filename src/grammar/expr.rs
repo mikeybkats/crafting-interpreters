@@ -26,6 +26,10 @@ pub enum Expr {
         paren: Token,
         arguments: Vec<Expr>,
     },
+    Get {
+        object: Box<Expr>,
+        name: Token,
+    },
     Grouping {
         expression: Box<Expr>,
     },
@@ -60,6 +64,7 @@ impl Expr {
                 paren,
                 arguments,
             } => visitor.visit_call_expr(callee, paren, arguments),
+            Expr::Get { object, name } => visitor.visit_get_expr(object, name),
             Expr::Grouping { expression } => visitor.visit_grouping_expr(expression),
             Expr::Literal { value } => visitor.visit_literal_expr(value),
             Expr::Logical {
@@ -188,6 +193,10 @@ impl Hash for Expr {
                 paren.lexeme.hash(state);
                 arguments.hash(state);
             }
+            Expr::Get { object, name } => {
+                object.hash(state);
+                name.lexeme.hash(state);
+            }
             Expr::Grouping { expression } => {
                 expression.hash(state);
             }
@@ -233,6 +242,7 @@ pub trait ExprVisitor<R> {
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> R;
     fn visit_binary_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_call_expr(&mut self, callee: &Expr, paren: &Token, arguments: &Vec<Expr>) -> R;
+    fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> R;
     fn visit_grouping_expr(&mut self, expression: &Expr) -> R;
     fn visit_literal_expr(&mut self, value: &Option<Object>) -> R;
     fn visit_logical_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;

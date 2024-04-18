@@ -173,6 +173,12 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         Ok(Object::Nil)
     }
 
+    fn visit_get_expr(&mut self, object: &Expr, _name: &Token) -> Result<Object, LoxError> {
+        self.resolve_expr(object)?;
+
+        Ok(Object::Nil)
+    }
+
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Object, LoxError> {
         self.resolve_expr(expression)
     }
