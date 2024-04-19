@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     error::LoxError,
@@ -9,13 +9,20 @@ use crate::{
 use super::instance::LoxInstance;
 
 #[derive(Debug, Clone)]
+/// ## LoxClass
+/// Lox classes store the behaviors of Classes. When methods are called the data is retrieved from the LoxInstance.
 pub struct LoxClass {
     name: String,
+    methods: HashMap<String, Object>,
 }
 
 impl LoxClass {
-    pub fn new(name: String) -> Self {
-        Self { name }
+    pub fn new(name: String, methods: Option<HashMap<String, Object>>) -> Self {
+        let methods = match methods {
+            Some(methods) => methods,
+            None => HashMap::new(),
+        };
+        Self { name, methods }
     }
 
     pub fn name(&self) -> &String {

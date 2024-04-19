@@ -505,7 +505,16 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
             .borrow_mut()
             .define(class_stmt.name.lexeme.clone(), Object::Nil);
 
-        let class = LoxClass::new(class_stmt.name.lexeme.clone());
+        let mut methods = HashMap::new();
+        for method in class_stmt.methods.clone() {
+            let lox_function = LoxFunction::new(&method, self.environment.clone());
+            methods.insert(
+                method.name.lexeme.clone(),
+                Object::Callable(Callable::LoxFunction(lox_function)),
+            );
+        }
+
+        let class = LoxClass::new(class_stmt.name.lexeme.clone(), Some(methods));
 
         let assignment = self.environment.borrow_mut().assign(
             &class_stmt.name,

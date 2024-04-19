@@ -2,9 +2,11 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::error::runtime_error::RuntimeError;
 
-use super::{class::LoxClass, expr::Expr, object::Object, token::Token};
+use super::{class::LoxClass, object::Object, token::Token};
 
 #[derive(Debug, Clone)]
+/// ## LoxInstance
+/// Lox instances store state for lox classes
 pub struct LoxInstance {
     class: Rc<RefCell<LoxClass>>,
     fields: HashMap<String, Object>,

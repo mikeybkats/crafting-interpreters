@@ -15,6 +15,7 @@ use crate::{
 pub enum FunctionType {
     None,
     Function,
+    Method,
 }
 
 // TODO: Add this scope type tot he HashMap. Save index of the scope for use in the interpreter.
@@ -258,6 +259,10 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     fn visit_return_stmt(&mut self, _token: &Token, value: &Expr) -> Result<Object, LoxError> {
         match self.current_function {
             FunctionType::Function => self.resolve_expr(value),
+            FunctionType::Method => {
+                // TODO: Implement
+                return Ok(Object::Nil);
+            }
             FunctionType::None => {
                 return Err(LoxError::RuntimeError(RuntimeError::new(
                     "Cannot return from top-level code.".to_string(),
@@ -299,6 +304,10 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
         self.declare(&class_stmt.name);
         self.define(&class_stmt.name);
+
+        for mut method in class_stmt.methods.clone() {
+            self.resolve_function(&mut method, FunctionType::Method);
+        }
 
         Ok(Object::Nil)
     }
