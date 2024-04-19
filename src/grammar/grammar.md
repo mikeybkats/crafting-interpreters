@@ -1,5 +1,8 @@
+# By chapter lox grammar:
+
+## Initial Grammar
+
 ```
-// Initial Grammar
 
 expression     → literal
                | unary
@@ -18,8 +21,9 @@ operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
                | "+"  | "-"  | "*" | "/" ;
 ```
 
+## Grammar Ch6 - Parsing Expressions
+
 ```
-// Grammar Ch6 - Parsing Expressions
 
 expression     → equality ;
 
@@ -38,9 +42,9 @@ primary        → NUMBER | STRING | "true" | "false" | "nil"
                | "(" expression ")" ;
 ```
 
-```
-// Grammar Ch8 - Statements and State
+## Grammar Ch8 - Statements and State
 
+```
 program        → declaration* EOF ;
 
 declaration    → varDecl
@@ -66,9 +70,9 @@ assignment     → IDENTIFIER "=" assignment
                | equality ;
 ```
 
-```
-// Ch9 - Control Flow
+## Ch9 - Control Flow
 
+```
 statement      → exprStmt
                | forStmt
                | ifStmt
@@ -86,9 +90,9 @@ ifStmt         → "if" "(" expression ")" statement
 whileStmt      → "while" "(" expression ")" statement ;
 ```
 
-```
-// Ch10 - Functions
+## Ch10 - Functions
 
+```
 unary          → ( "!" | "-" ) unary | call ;
 call           → primary ( "(" arguments? ")" )* ;
 
@@ -114,8 +118,9 @@ statement      → exprStmt
 returnStmt     → "return" expression? ";" ;
 ```
 
+## ch12 - Class declarations
+
 ```
-// ch12 - Class declarations
 declaration    → classDecl
                | funDecl
                | varDecl
@@ -136,10 +141,14 @@ function       → IDENTIFIER "(" parameters? ")" block ;
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
 call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
+
+assignment     → ( call "." )? IDENTIFIER "=" assignment
+               | logic_or ;
 ```
 
+## The full lox grammar
+
 ```
-// The full lox grammar
 program        → declaration* EOF ;
 
 primary        → "true" | "false" | "nil"
@@ -151,8 +160,8 @@ Identifier     → LoxWord;
 
 expression     → assignment ;
 
-assignment     → IDENTIFIER "=" assignment
-               | equality ;
+assignment     → ( call "." )? IDENTIFIER "=" assignment
+               | logic_or ;
 
 statement      → exprStmt
                | forStmt

@@ -197,6 +197,16 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(right)
     }
 
+    fn visit_set_expr(
+        &mut self,
+        object: &Expr,
+        _name: &Token,
+        value: &Expr,
+    ) -> Result<Object, LoxError> {
+        self.resolve_expr(object)?;
+        self.resolve_expr(value)
+    }
+
     fn visit_unary_expr(&mut self, _operator: &Token, right: &Expr) -> Result<Object, LoxError> {
         self.resolve_expr(right)
     }

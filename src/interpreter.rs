@@ -7,7 +7,7 @@ use crate::grammar::class::LoxClass;
 use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::function::LoxFunction;
 use crate::grammar::native_function::{Clock, LoxNativeFunctions};
-use crate::grammar::object::Object;
+use crate::grammar::object::{self, Object};
 use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
 use std::collections::HashMap;
@@ -289,8 +289,8 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         let object = self.evaluate(object)?;
 
         match object {
-            Object::Instance(instance) => match instance.get(name.lexeme.as_str()) {
-                Some(value) => Ok(value),
+            Object::Instance(instance) => match instance.get(&name) {
+                Ok(value) => Ok(value),
                 _ => Err(LoxError::RuntimeError(RuntimeError::new(
                     "Only instances have properties.".to_string(),
                     name,
@@ -368,6 +368,31 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
                 "No value".to_string(),
                 &empty_token,
             ))),
+        }
+    }
+
+    fn visit_set_expr(
+        &mut self,
+        object: &Expr,
+        name: &Token,
+        value: &Expr,
+    ) -> Result<Object, LoxError> {
+        let object = self.evaluate(object)?;
+
+        match object {
+            Object::Instance(mut instance) => {
+                let value_obj = self.evaluate(value)?;
+                match instance.set(name, value_obj) {
+                    Some(return_val) => Ok(return_val),
+                    None => Ok(Object::Nil),
+                }
+            }
+            _ => {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "Only instances have fields.".to_string(),
+                    name,
+                )))
+            }
         }
     }
 

@@ -24,6 +24,7 @@ impl Callable {
             Callable::LoxFunction(f) => f.call(interpreter, arguments),
             Callable::LoxClass(c) => c.call(interpreter, arguments),
             Callable::LoxNativeFunction(c) => match c {
+                // list of all native functions here
                 LoxNativeFunctions::Clock(Clock) => Clock::new().call(interpreter, vec![]),
             },
         }

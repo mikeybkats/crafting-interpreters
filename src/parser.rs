@@ -441,6 +441,13 @@ impl<'a> Parser<'a> {
                         value: Box::new(value),
                     });
                 }
+                Expr::Get { object, name } => {
+                    return Ok(Expr::Set {
+                        object,
+                        name,
+                        value: Box::new(value),
+                    })
+                }
                 _ => {
                     return Err(ParseError::new(
                         &"Invalid assignment target.".to_string(),

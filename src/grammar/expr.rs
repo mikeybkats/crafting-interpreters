@@ -45,6 +45,11 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+    Set {
+        object: Box<Expr>,
+        name: Token,
+        value: Box<Expr>,
+    },
     Variable {
         name: Token,
     },
@@ -73,6 +78,11 @@ impl Expr {
                 right,
             } => visitor.visit_logical_expr(left, operator, right),
             Expr::Unary { operator, right } => visitor.visit_unary_expr(operator, right),
+            Expr::Set {
+                object,
+                name,
+                value,
+            } => visitor.visit_set_expr(object, name, value),
             Expr::Variable { name } => visitor.visit_variable_expr(&self, name),
         }
     }
@@ -161,6 +171,28 @@ impl PartialEq for Expr {
                 },
             ) => operator1.lexeme == operator2.lexeme && right1 == right2,
             (Expr::Variable { name: name1 }, Expr::Variable { name: name2 }) => name1 == name2,
+            (
+                Expr::Get {
+                    object: object1,
+                    name: name1,
+                },
+                Expr::Get {
+                    object: object2,
+                    name: name2,
+                },
+            ) => object1 == object2 && name1 == name2,
+            (
+                Expr::Set {
+                    object: object1,
+                    name: name1,
+                    value: value1,
+                },
+                Expr::Set {
+                    object: object2,
+                    name: name2,
+                    value: value2,
+                },
+            ) => object1 == object2 && name1 == name2 && value1 == value2,
             _ => false,
         }
     }
@@ -231,6 +263,15 @@ impl Hash for Expr {
                 operator.lexeme.hash(state);
                 right.hash(state);
             }
+            Expr::Set {
+                object,
+                name,
+                value,
+            } => {
+                object.hash(state);
+                name.lexeme.hash(state);
+                value.hash(state);
+            }
             Expr::Variable { name } => {
                 name.hash(state);
             }
@@ -247,6 +288,7 @@ pub trait ExprVisitor<R> {
     fn visit_literal_expr(&mut self, value: &Option<Object>) -> R;
     fn visit_logical_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> R;
+    fn visit_set_expr(&mut self, object: &Expr, name: &Token, value: &Expr) -> R;
     fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> R;
 }
 
