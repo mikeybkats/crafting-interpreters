@@ -208,6 +208,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(value)
     }
 
+    fn visit_this_expr(&mut self, _keyword: &Token) -> Result<Object, LoxError> {
+        unimplemented!()
+    }
+
     fn visit_unary_expr(&mut self, _operator: &Token, right: &Expr) -> Result<Object, LoxError> {
         self.resolve_expr(right)
     }
@@ -306,7 +310,10 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         self.define(&class_stmt.name);
 
         for mut method in class_stmt.methods.clone() {
-            self.resolve_function(&mut method, FunctionType::Method);
+            match self.resolve_function(&mut method, FunctionType::Method) {
+                Ok(_) => {}
+                Err(e) => return Err(e),
+            }
         }
 
         Ok(Object::Nil)

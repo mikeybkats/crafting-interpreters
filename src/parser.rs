@@ -772,6 +772,10 @@ impl<'a> Parser<'a> {
             }
 
             return Ok(Expr::Literal { value: prev_object });
+        } else if self.match_symbol(&[TokenType::This]) {
+            return Ok(Expr::This {
+                keyword: self.previous().unwrap().clone(),
+            });
         } else if self.match_symbol(&[TokenType::Identifier]) {
             return Ok(Expr::Variable {
                 name: self.previous().unwrap().clone(),

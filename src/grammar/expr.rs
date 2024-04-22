@@ -50,6 +50,9 @@ pub enum Expr {
         name: Token,
         value: Box<Expr>,
     },
+    This {
+        keyword: Token,
+    },
     Variable {
         name: Token,
     },
@@ -78,6 +81,7 @@ impl Expr {
                 right,
             } => visitor.visit_logical_expr(left, operator, right),
             Expr::Unary { operator, right } => visitor.visit_unary_expr(operator, right),
+            Expr::This { keyword } => visitor.visit_this_expr(keyword),
             Expr::Set {
                 object,
                 name,
@@ -86,6 +90,20 @@ impl Expr {
             Expr::Variable { name } => visitor.visit_variable_expr(&self, name),
         }
     }
+}
+
+pub trait ExprVisitor<R> {
+    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> R;
+    fn visit_binary_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
+    fn visit_call_expr(&mut self, callee: &Expr, paren: &Token, arguments: &Vec<Expr>) -> R;
+    fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> R;
+    fn visit_grouping_expr(&mut self, expression: &Expr) -> R;
+    fn visit_literal_expr(&mut self, value: &Option<Object>) -> R;
+    fn visit_logical_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
+    fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> R;
+    fn visit_set_expr(&mut self, object: &Expr, name: &Token, value: &Expr) -> R;
+    fn visit_this_expr(&mut self, keyword: &Token) -> R;
+    fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> R;
 }
 
 impl PartialEq for Expr {
@@ -193,6 +211,9 @@ impl PartialEq for Expr {
                     value: value2,
                 },
             ) => object1 == object2 && name1 == name2 && value1 == value2,
+            (Expr::This { keyword: keyword1 }, Expr::This { keyword: keyword2 }) => {
+                keyword1 == keyword2
+            }
             _ => false,
         }
     }
@@ -259,6 +280,9 @@ impl Hash for Expr {
                 operator.lexeme.hash(state);
                 right.hash(state);
             }
+            Expr::This { keyword } => {
+                keyword.lexeme.hash(state);
+            }
             Expr::Unary { operator, right } => {
                 operator.lexeme.hash(state);
                 right.hash(state);
@@ -277,19 +301,6 @@ impl Hash for Expr {
             }
         }
     }
-}
-
-pub trait ExprVisitor<R> {
-    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> R;
-    fn visit_binary_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
-    fn visit_call_expr(&mut self, callee: &Expr, paren: &Token, arguments: &Vec<Expr>) -> R;
-    fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> R;
-    fn visit_grouping_expr(&mut self, expression: &Expr) -> R;
-    fn visit_literal_expr(&mut self, value: &Option<Object>) -> R;
-    fn visit_logical_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
-    fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> R;
-    fn visit_set_expr(&mut self, object: &Expr, name: &Token, value: &Expr) -> R;
-    fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> R;
 }
 
 #[cfg(test)]

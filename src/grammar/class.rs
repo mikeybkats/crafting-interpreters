@@ -28,6 +28,10 @@ impl LoxClass {
     pub fn name(&self) -> &String {
         &self.name
     }
+
+    pub fn find_method(&self, name: &str) -> Option<Object> {
+        self.methods.get(name).cloned()
+    }
 }
 
 impl LoxCallable<Result<Object, LoxError>> for LoxClass {

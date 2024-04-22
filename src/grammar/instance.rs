@@ -23,10 +23,16 @@ impl LoxInstance {
     pub fn get(&self, name: &Token) -> Result<Object, RuntimeError> {
         match self.fields.get(name.lexeme.as_str()) {
             Some(value) => Ok(value.clone()),
-            None => Err(RuntimeError::new(
-                format!("Undefined property '{}'.", name.lexeme),
-                name,
-            )),
+            None => {
+                if let Some(method) = self.class.borrow().find_method(&name.lexeme) {
+                    Ok(method)
+                } else {
+                    Err(RuntimeError::new(
+                        format!("Undefined property '{}'.", name.lexeme),
+                        name,
+                    ))
+                }
+            }
         }
     }
 

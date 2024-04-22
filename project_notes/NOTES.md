@@ -93,7 +93,7 @@ var a = "outer";
 
 In the example above `print a` will result in `inner`. Easy. Here is the scope rule for Lox:
 
-"A variable usage refers to the preceding declaration with the same name in the innermost scope that encloses the expression where the variable is used."
+"A variable usage refers to the prGeceding declaration with the same name in the innermost scope that encloses the expression where the variable is used."
 
 So in this case, given the rule:
 
@@ -121,3 +121,22 @@ Javascript for instance hoists variables declared inside a block to the top of t
 #### Semantic analysis
 
 Semantic analysis is the process of inspecting the structure of the source code and using known patterns and context to optimize the compilation. Basically, optimize based on known patterns and context.
+
+## Chapter 12 - Classes
+
+#### _closure_ - "a closure is a function or reference to a function together with a referencing environment—a structure storing the environment in which the closure was created. A closure allows a function to access variables from the scope in which it was declared, even after that scope has ended." CGPT
+
+```javascript
+class Cake {
+  taste() {
+    var adjective = "delicious";
+    print "The " + this.flavor + " cake is " + adjective + "!";
+  }
+}
+
+var cake = Cake();
+cake.flavor = "German chocolate";
+cake.taste(); // Prints "The German chocolate cake is delicious!".
+```
+
+In the example above the closure of the taste method is the surrounding Cake environment. "taste" accesses the instance of Cake and exists for the lifetime of the cake variable.

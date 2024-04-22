@@ -7,7 +7,7 @@ use crate::grammar::class::LoxClass;
 use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::function::LoxFunction;
 use crate::grammar::native_function::{Clock, LoxNativeFunctions};
-use crate::grammar::object::{self, Object};
+use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
 use std::collections::HashMap;
@@ -394,6 +394,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
                 )))
             }
         }
+    }
+
+    fn visit_this_expr(&mut self, keyword: &Token) -> Result<Object, LoxError> {
+        unimplemented!()
     }
 
     /// ## visit_assign_expr

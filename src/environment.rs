@@ -34,6 +34,8 @@ pub fn generate_id() -> String {
 }
 
 #[derive(Debug, Clone)]
+/// # Environment
+/// The environment stores program variables and function declarations.  Its values are accessed by the interpreter.
 pub struct Environment {
     pub values: HashMap<String, Object>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
