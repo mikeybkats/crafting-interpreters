@@ -208,8 +208,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(value)
     }
 
-    fn visit_this_expr(&mut self, _keyword: &Token) -> Result<Object, LoxError> {
-        unimplemented!()
+    fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
+        self.resolve_local(expr, keyword)?;
+
+        Ok(Object::Nil)
     }
 
     fn visit_unary_expr(&mut self, _operator: &Token, right: &Expr) -> Result<Object, LoxError> {
@@ -308,6 +310,17 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
         self.declare(&class_stmt.name);
         self.define(&class_stmt.name);
+
+        self.begin_scope();
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert("this".to_string(), true);
+        } else {
+            return Err(LoxError::RuntimeError(RuntimeError::new(
+                "Cannot resolve class scope.".to_string(),
+                &class_stmt.name,
+            )));
+        }
+        self.end_scope();
 
         for mut method in class_stmt.methods.clone() {
             match self.resolve_function(&mut method, FunctionType::Method) {

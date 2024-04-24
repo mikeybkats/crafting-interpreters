@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::error::runtime_error::RuntimeError;
 
-use super::{class::LoxClass, object::Object, token::Token};
+use super::{callable::Callable, class::LoxClass, object::Object, token::Token};
 
 #[derive(Debug, Clone)]
 /// ## LoxInstance
@@ -25,7 +25,24 @@ impl LoxInstance {
             Some(value) => Ok(value.clone()),
             None => {
                 if let Some(method) = self.class.borrow().find_method(&name.lexeme) {
-                    Ok(method)
+                    match method {
+                        Object::Callable(callable) => {
+                            let mut callable = callable.clone();
+
+                            match callable.bind(Object::Instance(self.clone())) {
+                                Callable::LoxFunction(func) => {
+                                    return Ok(Object::Callable(Callable::LoxFunction(func)))
+                                }
+                                _ => {
+                                    return Err(RuntimeError::new(
+                                        "Cannot bind non-callable object to instance.".to_string(),
+                                        name,
+                                    ))
+                                }
+                            }
+                        }
+                        _ => return Ok(method),
+                    }
                 } else {
                     Err(RuntimeError::new(
                         format!("Undefined property '{}'.", name.lexeme),
@@ -34,6 +51,14 @@ impl LoxInstance {
                 }
             }
         }
+    }
+
+    fn bind_method(&self, name: &Token) -> Result<Object, RuntimeError> {
+        unimplemented!()
+    }
+
+    fn find_and_bind_method(&self, name: &Token) -> Result<Object, RuntimeError> {
+        unimplemented!()
     }
 
     pub fn set(&mut self, name: &Token, value: Object) -> Option<Object> {

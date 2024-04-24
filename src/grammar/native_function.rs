@@ -10,6 +10,13 @@ pub enum LoxNativeFunctions {
 struct LoxNativeFunction {
     function: LoxNativeFunctions,
 }
+
+impl LoxNativeFunctions {
+    pub fn bind(&self, _instance: Object) -> LoxNativeFunctions {
+        unimplemented!()
+    }
+}
+
 impl LoxCallable<Result<Object, LoxError>> for LoxNativeFunction {
     fn arity(&self) -> u8 {
         match self.function {

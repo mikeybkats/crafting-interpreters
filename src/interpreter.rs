@@ -396,7 +396,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
-    fn visit_this_expr(&mut self, keyword: &Token) -> Result<Object, LoxError> {
+    fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
         unimplemented!()
     }
 

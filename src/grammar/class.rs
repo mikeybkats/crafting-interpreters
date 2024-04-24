@@ -32,6 +32,10 @@ impl LoxClass {
     pub fn find_method(&self, name: &str) -> Option<Object> {
         self.methods.get(name).cloned()
     }
+
+    pub fn bind(&mut self, instance: Object) -> LoxClass {
+        unimplemented!();
+    }
 }
 
 impl LoxCallable<Result<Object, LoxError>> for LoxClass {

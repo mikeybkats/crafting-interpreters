@@ -81,7 +81,7 @@ impl Expr {
                 right,
             } => visitor.visit_logical_expr(left, operator, right),
             Expr::Unary { operator, right } => visitor.visit_unary_expr(operator, right),
-            Expr::This { keyword } => visitor.visit_this_expr(keyword),
+            Expr::This { keyword } => visitor.visit_this_expr(&self, keyword),
             Expr::Set {
                 object,
                 name,
@@ -102,7 +102,7 @@ pub trait ExprVisitor<R> {
     fn visit_logical_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> R;
     fn visit_set_expr(&mut self, object: &Expr, name: &Token, value: &Expr) -> R;
-    fn visit_this_expr(&mut self, keyword: &Token) -> R;
+    fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> R;
     fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> R;
 }
 
