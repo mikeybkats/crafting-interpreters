@@ -1,4 +1,4 @@
-use std::{cell::RefCell, env, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     environment::{self, Environment},
@@ -10,6 +10,8 @@ use crate::{
     },
     interpreter::Interpreter,
 };
+
+use super::instance::LoxInstance;
 
 #[derive(Debug, Clone)]
 pub struct LoxFunction {
@@ -25,18 +27,26 @@ impl LoxFunction {
         }
     }
 
-    pub fn _to_string(&self) -> String {
-        format!("<fn {}>", self.declaration.borrow().name.lexeme)
-    }
-
-    pub fn bind(&mut self, instance: Object) -> LoxFunction {
+    pub fn bind(&mut self, instance: LoxInstance) -> LoxFunction {
         let mut environment = Environment::with_enclosing(self.closure.clone());
-        environment.define("this".to_string(), instance);
+        environment.define("this".to_string(), Object::Instance(instance));
 
         return LoxFunction {
             declaration: self.declaration.clone(),
             closure: Rc::new(RefCell::new(environment)),
         };
+    }
+
+    pub fn _to_string(&self) -> String {
+        format!("<fn {}>", self.declaration.borrow().name.lexeme)
+    }
+
+    pub fn _get_declaration(&self) -> Rc<RefCell<FunStmt>> {
+        self.declaration.clone().to_owned()
+    }
+
+    pub fn _bound_to(&self) -> Rc<RefCell<Environment>> {
+        self.closure.clone().to_owned()
     }
 }
 

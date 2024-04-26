@@ -58,8 +58,8 @@ impl fmt::Display for Object {
             Object::Num(number) => write!(f, "{}", number),
             Object::Instance(instance) => write!(f, "{}", instance.to_string()),
             Object::Callable(callable) => match callable {
-                Callable::LoxFunction(_func) => {
-                    write!(f, "Object: <LoxFunction>")
+                Callable::LoxFunction(func) => {
+                    write!(f, "Object: {}", func._to_string())
                 }
                 Callable::LoxClass(c) => {
                     write!(f, "{}", c.name())
@@ -79,7 +79,17 @@ impl fmt::Debug for Object {
             Object::Str(s) => write!(f, "Str({:?})", s),
             Object::Num(n) => write!(f, "Num({})", n),
             Object::Bool(b) => write!(f, "Bool({})", b),
-            Object::Callable(_) => write!(f, "Callable(<LoxCallable>)"),
+            Object::Callable(callable) => match callable {
+                Callable::LoxFunction(func) => {
+                    return write!(f, "Object: {}", func._to_string(),);
+                }
+                Callable::LoxClass(c) => {
+                    write!(f, "{}", c.name())
+                }
+                Callable::LoxNativeFunction(func) => match func {
+                    _ => write!(f, "Object: <LoxNativeFunction>"),
+                },
+            },
             Object::Instance(i) => write!(f, "Instance({:?})", i),
             Object::Nil => write!(f, "Nil"),
         }

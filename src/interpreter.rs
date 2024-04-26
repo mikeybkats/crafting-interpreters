@@ -141,6 +141,10 @@ impl Interpreter {
         let locals = self.locals.borrow();
         let distance = locals.get(&expr);
 
+        // println!("Environment: {:#?}", self.environment.borrow());
+        // println!("Globals: {:#?}", self.globals.borrow());
+        // println!("Locals: {:#?}", locals);
+        // println!("Distance: {:#?}", distance);
         match distance {
             Some(distance) => {
                 let value = self.environment.borrow().get_at(*distance, name);
@@ -279,7 +283,8 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         match processed_callee {
             Object::Callable(function) => function.call(self, processed_arguments),
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
-                "Can only call functions and classes. -- visit_call_expr()".to_string(),
+                "Can only call functions and classes. -- Interpreter: visit_call_expr()"
+                    .to_string(),
                 paren,
             ))),
         }
@@ -291,13 +296,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         match object {
             Object::Instance(instance) => match instance.get(&name) {
                 Ok(value) => Ok(value),
-                _ => Err(LoxError::RuntimeError(RuntimeError::new(
-                    "Only instances have properties.".to_string(),
-                    name,
-                ))),
+                Err(e) => Err(LoxError::RuntimeError(e)),
             },
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
-                "Only instances have properties.".to_string(),
+                "Only instances have properties. -- Interpreter: visit_get_expr()".to_string(),
                 name,
             ))),
         }
@@ -397,7 +399,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
-        unimplemented!()
+        return self.look_up_variable(keyword, expr);
     }
 
     /// ## visit_assign_expr

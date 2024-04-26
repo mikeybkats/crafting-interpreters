@@ -2,7 +2,9 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::error::runtime_error::RuntimeError;
 
-use super::{callable::Callable, class::LoxClass, object::Object, token::Token};
+use super::{
+    callable::Callable, class::LoxClass, function::LoxFunction, object::Object, token::Token,
+};
 
 #[derive(Debug, Clone)]
 /// ## LoxInstance
@@ -21,44 +23,38 @@ impl LoxInstance {
     }
 
     pub fn get(&self, name: &Token) -> Result<Object, RuntimeError> {
-        match self.fields.get(name.lexeme.as_str()) {
-            Some(value) => Ok(value.clone()),
-            None => {
-                if let Some(method) = self.class.borrow().find_method(&name.lexeme) {
-                    match method {
-                        Object::Callable(callable) => {
-                            let mut callable = callable.clone();
+        println!("LoxInstance Get name: {:#?}", name);
+        // println!("LoxInstance Self: {:#?}", self.clone());
+        // if it is a field
+        if let Some(value) = self.fields.get(name.lexeme.as_str()) {
+            return Ok(value.clone());
+        }
 
-                            match callable.bind(Object::Instance(self.clone())) {
-                                Callable::LoxFunction(func) => {
-                                    return Ok(Object::Callable(Callable::LoxFunction(func)))
-                                }
-                                _ => {
-                                    return Err(RuntimeError::new(
-                                        "Cannot bind non-callable object to instance.".to_string(),
-                                        name,
-                                    ))
-                                }
-                            }
-                        }
-                        _ => return Ok(method),
-                    }
-                } else {
-                    Err(RuntimeError::new(
-                        format!("Undefined property '{}'.", name.lexeme),
-                        name,
-                    ))
-                }
+        // if it is a method
+        match self.find_method(name) {
+            Some(method) => {
+                // println!("returning method: {:#?}", method.clone());
+                Ok(Object::Callable(Callable::LoxFunction(method)))
             }
+            // if it is not a field or method
+            _ => Err(RuntimeError::new(
+                format!(
+                    "Undefined property '{}'. -- LoxInstance: get()",
+                    name.lexeme
+                ),
+                name,
+            )),
         }
     }
 
-    fn bind_method(&self, name: &Token) -> Result<Object, RuntimeError> {
-        unimplemented!()
-    }
+    fn find_method(&self, name: &Token) -> Option<LoxFunction> {
+        let class_methods = self.class.borrow();
 
-    fn find_and_bind_method(&self, name: &Token) -> Result<Object, RuntimeError> {
-        unimplemented!()
+        if let Some(mut method) = class_methods.find_method(&name.lexeme) {
+            return Some(method.bind(self.clone()));
+        }
+
+        None
     }
 
     pub fn set(&mut self, name: &Token, value: Object) -> Option<Object> {

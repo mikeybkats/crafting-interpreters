@@ -6,7 +6,7 @@ use crate::{
     interpreter::Interpreter,
 };
 
-use super::instance::LoxInstance;
+use super::{callable::Callable, function::LoxFunction, instance::LoxInstance};
 
 #[derive(Debug, Clone)]
 /// ## LoxClass
@@ -29,12 +29,17 @@ impl LoxClass {
         &self.name
     }
 
-    pub fn find_method(&self, name: &str) -> Option<Object> {
-        self.methods.get(name).cloned()
-    }
-
-    pub fn bind(&mut self, instance: Object) -> LoxClass {
-        unimplemented!();
+    pub fn find_method(&self, name: &str) -> Option<LoxFunction> {
+        match self.methods.get(name).cloned() {
+            Some(method) => match method {
+                Object::Callable(f) => match f {
+                    Callable::LoxFunction(func) => Some(func),
+                    _ => None,
+                },
+                _ => None,
+            },
+            None => None,
+        }
     }
 }
 
