@@ -493,7 +493,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
-        let lox_function = LoxFunction::new(declaration, self.environment.clone());
+        let lox_function = LoxFunction::new(declaration, self.environment.clone(), false);
         self.environment.borrow_mut().define(
             declaration.name.lexeme.clone(),
             Object::Callable(Callable::LoxFunction(lox_function)),
@@ -508,8 +508,13 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
             .define(class_stmt.name.lexeme.clone(), Object::Nil);
 
         let mut methods = HashMap::new();
+
         for method in class_stmt.methods.clone() {
-            let lox_function = LoxFunction::new(&method, self.environment.clone());
+            let lox_function = LoxFunction::new(
+                &method,
+                self.environment.clone(),
+                method.name.lexeme == "init",
+            );
             methods.insert(
                 method.name.lexeme.clone(),
                 Object::Callable(Callable::LoxFunction(lox_function)),

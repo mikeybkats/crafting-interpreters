@@ -45,16 +45,23 @@ impl LoxClass {
 
 impl LoxCallable<Result<Object, LoxError>> for LoxClass {
     fn arity(&self) -> u8 {
-        0
+        match self.find_method("init") {
+            Some(method) => method.arity(),
+            None => 0,
+        }
     }
 
     fn call(
         &self,
-        _interpreter: &mut Interpreter,
-        _arguments: Vec<Object>,
+        interpreter: &mut Interpreter,
+        arguments: Vec<Object>,
     ) -> Result<Object, LoxError> {
-        Ok(Object::Instance(LoxInstance::new(Rc::new(RefCell::new(
-            self.clone(),
-        )))))
+        let instance =
+            Object::Instance(LoxInstance::new(Rc::new(RefCell::new(self.clone())))).clone();
+
+        if let Some(initializer) = self.find_method("init") {
+            initializer.call(interpreter, arguments)?;
+        }
+        Ok(instance)
     }
 }
