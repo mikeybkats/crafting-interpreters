@@ -12,13 +12,19 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+enum ClassType {
+    None,
+    Class,
+}
+
+#[derive(Debug, Clone)]
 pub enum FunctionType {
     None,
     Function,
     Method,
 }
 
-// TODO: Add this scope type tot he HashMap. Save index of the scope for use in the interpreter.
+// TODO: Improvement -- Add scope type to the HashMap. Save index of the scope for use in the interpreter.
 // struct Scope {
 //     defined: bool,
 //     index: usize,
@@ -33,6 +39,8 @@ pub struct Resolver {
     interpreter: Rc<RefCell<Interpreter>>,
     scopes: Vec<HashMap<String, bool>>,
     current_function: FunctionType,
+    // current_class "value tells us if we are currently inside a class declaration while traversing the syntax tree"
+    current_class: ClassType,
 }
 
 impl Resolver {
@@ -41,6 +49,7 @@ impl Resolver {
             interpreter,
             scopes: Vec::new(),
             current_function: FunctionType::None,
+            current_class: ClassType::None,
         }
     }
 
@@ -207,9 +216,16 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
     }
 
     fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
-        self.resolve_local(expr, keyword)?;
-
-        Ok(Object::Nil)
+        match self.current_class {
+            ClassType::None => Err(LoxError::RuntimeError(RuntimeError::new(
+                "Cannot use 'this' outside of a class. -- Resolver:visit_this_expr()".to_string(),
+                keyword,
+            ))),
+            ClassType::Class => {
+                self.resolve_local(expr, keyword)?;
+                Ok(Object::Nil)
+            }
+        }
     }
 
     fn visit_unary_expr(&mut self, _operator: &Token, right: &Expr) -> Result<Object, LoxError> {
@@ -306,6 +322,9 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     }
 
     fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
+        let enclosing_class = self.current_class.clone();
+        self.current_class = ClassType::Class;
+
         self.declare(&class_stmt.name);
         self.define(&class_stmt.name);
 
@@ -327,6 +346,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         }
 
         self.end_scope();
+        self.current_class = enclosing_class;
 
         Ok(Object::Nil)
     }
