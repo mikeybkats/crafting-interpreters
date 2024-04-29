@@ -8,4 +8,8 @@ class Cake {
 var cake = Cake();
 cake.flavor = "German chocolate";
 cake.taste(); 
+
+cake.flavor = "coconut cream";
+cake.taste(); 
+
 // Prints "The German chocolate cake is delicious!".

@@ -29,6 +29,7 @@ impl LoxFunction {
 
     pub fn bind(&mut self, instance: LoxInstance) -> LoxFunction {
         let mut environment = Environment::with_enclosing(self.closure.clone());
+
         environment.define("this".to_string(), Object::Instance(instance));
 
         return LoxFunction {

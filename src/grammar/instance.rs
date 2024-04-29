@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::error::runtime_error::RuntimeError;
+use crate::{environment::generate_id, error::runtime_error::RuntimeError};
 
 use super::{
     callable::Callable, class::LoxClass, function::LoxFunction, object::Object, token::Token,
@@ -11,31 +11,28 @@ use super::{
 /// Lox instances store state for lox classes
 pub struct LoxInstance {
     class: Rc<RefCell<LoxClass>>,
-    fields: HashMap<String, Object>,
+    pub fields: Rc<RefCell<HashMap<String, Object>>>,
+    _id: String,
 }
 
 impl LoxInstance {
     pub fn new(class: Rc<RefCell<LoxClass>>) -> Self {
         Self {
             class,
-            fields: HashMap::new(),
+            fields: Rc::new(RefCell::new(HashMap::new())),
+            _id: generate_id(),
         }
     }
 
     pub fn get(&self, name: &Token) -> Result<Object, RuntimeError> {
-        println!("LoxInstance Get name: {:#?}", name);
-        // println!("LoxInstance Self: {:#?}", self.clone());
         // if it is a field
-        if let Some(value) = self.fields.get(name.lexeme.as_str()) {
+        if let Some(value) = self.fields.clone().borrow().get(name.lexeme.as_str()) {
             return Ok(value.clone());
         }
 
         // if it is a method
         match self.find_method(name) {
-            Some(method) => {
-                // println!("returning method: {:#?}", method.clone());
-                Ok(Object::Callable(Callable::LoxFunction(method)))
-            }
+            Some(method) => Ok(Object::Callable(Callable::LoxFunction(method))),
             // if it is not a field or method
             _ => Err(RuntimeError::new(
                 format!(
@@ -58,7 +55,12 @@ impl LoxInstance {
     }
 
     pub fn set(&mut self, name: &Token, value: Object) -> Option<Object> {
-        self.fields.insert(name.lexeme.clone(), value)
+        let value = self
+            .fields
+            .clone()
+            .borrow_mut()
+            .insert(name.lexeme.clone(), value);
+        value
     }
 
     pub fn to_string(&self) -> String {

@@ -446,7 +446,7 @@ impl<'a> Parser<'a> {
                         object,
                         name,
                         value: Box::new(value),
-                    })
+                    });
                 }
                 _ => {
                     return Err(ParseError::new(
