@@ -1,0 +1,13 @@
+class Foo {
+  init(name, size) {
+    this.name = name;
+    this.size = size;
+  }
+
+  print_class(){
+    print this.name + " is " + this.size + " years old.";
+  }
+}
+
+var foo = Foo("foo-ella", 10);
+print foo.print_class();

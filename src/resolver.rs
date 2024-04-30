@@ -21,6 +21,7 @@ enum ClassType {
 pub enum FunctionType {
     None,
     Function,
+    Initializer,
     Method,
 }
 
@@ -120,6 +121,9 @@ impl Resolver {
     /// "We start at the innermost scope and work outwards, looking in each map for a matching name. If we find the variable, we resolve it, passing in the number of scopes between the current innermost scope and the scope where the variable was found."
     fn resolve_local(&mut self, value: &Expr, name: &Token) -> Result<Object, LoxError> {
         let scopes = &self.scopes;
+
+        // println!("Resolving Local: {:#?}", name.lexeme);
+        // println!("Scopes: {:#?}", scopes);
 
         for (i, scope) in scopes.into_iter().rev().enumerate() {
             if scope.contains_key(&name.lexeme) {
@@ -279,13 +283,21 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     fn visit_return_stmt(&mut self, _token: &Token, value: &Expr) -> Result<Object, LoxError> {
         match self.current_function {
             FunctionType::Function => self.resolve_expr(value),
+            FunctionType::Initializer => {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "Cannot return a value from an initializer. -- Resolver::visit_return_stmt()"
+                        .to_string(),
+                    _token,
+                )))
+            }
             FunctionType::Method => {
-                // TODO: Implement
-                return Ok(Object::Nil);
+                println!("Resolving Method: {:#?}", value);
+                self.resolve_expr(value)
             }
             FunctionType::None => {
                 return Err(LoxError::RuntimeError(RuntimeError::new(
-                    "Cannot return from top-level code.".to_string(),
+                    "Cannot return from top-level code. -- Resolver::visit_return_stmt()"
+                        .to_string(),
                     _token,
                 )))
             }
@@ -339,7 +351,12 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         }
 
         for mut method in class_stmt.methods.clone() {
-            match self.resolve_function(&mut method, FunctionType::Method) {
+            let function_type = if method.name.lexeme == "init" {
+                FunctionType::Initializer
+            } else {
+                FunctionType::Method
+            };
+            match self.resolve_function(&mut method, function_type) {
                 Ok(_) => {}
                 Err(e) => return Err(e),
             }

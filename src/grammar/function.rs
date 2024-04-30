@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    environment::{self, generate_id, Environment},
+    environment::{self, Environment},
     error::LoxError,
     grammar::{
         callable::LoxCallable,
@@ -11,7 +11,7 @@ use crate::{
     interpreter::Interpreter,
 };
 
-use super::{instance::LoxInstance, token::Token};
+use super::{instance::LoxInstance, stmt::Stmt, token::create_this_token};
 
 #[derive(Debug, Clone)]
 pub struct LoxFunction {
@@ -26,6 +26,10 @@ impl LoxFunction {
         closure: Rc<RefCell<Environment>>,
         is_initializer: bool,
     ) -> Self {
+        println!(
+            "new function: {:?} -- is_initializer: {}",
+            declaration.name.lexeme, is_initializer
+        );
         Self {
             declaration: Rc::new(RefCell::new(declaration.clone())),
             closure,
@@ -60,6 +64,49 @@ impl LoxFunction {
     pub fn _bound_to(&self) -> Rc<RefCell<Environment>> {
         self.closure.clone().to_owned()
     }
+
+    fn return_val_if_initializer(
+        &self,
+        return_value: Result<Object, LoxError>,
+    ) -> Result<Object, LoxError> {
+        println!("is_initiliazer");
+        if self.is_initializer() {
+            return match self
+                .closure
+                .clone()
+                .borrow()
+                .get_at(0, &create_this_token(None))
+            {
+                Ok(this) => Ok(this.clone()),
+                Err(e) => Err(LoxError::RuntimeError(e)),
+            };
+        } else {
+            return return_value;
+        }
+    }
+
+    fn handle_block_stmt(
+        &self,
+        interpreter: &mut Interpreter,
+        declaration_body: Vec<Stmt>,
+        environment: Environment,
+    ) -> Result<Object, LoxError> {
+        return match interpreter.execute_block_stmt(
+            &mut BlockStmt {
+                statements: declaration_body,
+            },
+            environment,
+        ) {
+            Ok(value) => self.return_val_if_initializer(Ok(value)),
+            Err(e) => match e {
+                LoxError::RuntimeError(e) => Err(LoxError::RuntimeError(e)),
+                LoxError::LoxReturn(return_value) => {
+                    self.return_val_if_initializer(Err(LoxError::LoxReturn(return_value)))
+                }
+                LoxError::ParseError(e) => Err(LoxError::ParseError(e)),
+            },
+        };
+    }
 }
 
 impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
@@ -84,36 +131,6 @@ impl LoxCallable<Result<Object, LoxError>> for LoxFunction {
 
         let declaration_body = dec_clone_two.borrow_mut().body.clone();
 
-        return match interpreter.execute_block_stmt(
-            &mut BlockStmt {
-                statements: declaration_body,
-            },
-            environment,
-        ) {
-            Ok(value) => {
-                if self.is_initializer() {
-                    return match self.closure.clone().borrow().get_at(
-                        0,
-                        &Token::new(
-                            super::token::TokenType::This,
-                            "this".to_string(),
-                            None,
-                            0,
-                            generate_id(),
-                        ),
-                    ) {
-                        Ok(this) => Ok(this.clone()),
-                        Err(e) => Err(LoxError::RuntimeError(e)),
-                    };
-                } else {
-                    Ok(value)
-                }
-            }
-            Err(e) => match e {
-                LoxError::RuntimeError(e) => Err(LoxError::RuntimeError(e)),
-                LoxError::LoxReturn(return_value) => Err(LoxError::LoxReturn(return_value)),
-                LoxError::ParseError(e) => Err(LoxError::ParseError(e)),
-            },
-        };
+        self.handle_block_stmt(interpreter, declaration_body, environment)
     }
 }

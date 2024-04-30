@@ -127,6 +127,8 @@ impl Environment {
         let ancestor = self.ancestor(distance);
         let name = &token.lexeme;
 
+        // println!("get_at: {:#?}", self);
+
         if let Some(a) = ancestor {
             a.borrow().values.get(name).cloned().ok_or_else(|| {
                 RuntimeError::new(

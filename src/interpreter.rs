@@ -141,6 +141,8 @@ impl Interpreter {
         let locals = self.locals.borrow();
         let distance = locals.get(&expr);
 
+        // println!("Locals: {:#?}", locals);
+
         match distance {
             Some(distance) => {
                 let value = self.environment.borrow().get_at(*distance, name);
