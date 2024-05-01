@@ -122,9 +122,6 @@ impl Resolver {
     fn resolve_local(&mut self, value: &Expr, name: &Token) -> Result<Object, LoxError> {
         let scopes = &self.scopes;
 
-        // println!("Resolving Local: {:#?}", name.lexeme);
-        // println!("Scopes: {:#?}", scopes);
-
         for (i, scope) in scopes.into_iter().rev().enumerate() {
             if scope.contains_key(&name.lexeme) {
                 return self.interpreter.clone().borrow_mut().resolve(value, i);
@@ -290,10 +287,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
                     _token,
                 )))
             }
-            FunctionType::Method => {
-                println!("Resolving Method: {:#?}", value);
-                self.resolve_expr(value)
-            }
+            FunctionType::Method => self.resolve_expr(value),
             FunctionType::None => {
                 return Err(LoxError::RuntimeError(RuntimeError::new(
                     "Cannot return from top-level code. -- Resolver::visit_return_stmt()"

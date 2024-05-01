@@ -9,5 +9,5 @@ class Foo {
   }
 }
 
-var foo = Foo("foo-ella", 10);
-print foo.print_class();
+var foo = Foo("Barbara", 10);
+foo.print_class();

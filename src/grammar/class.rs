@@ -56,12 +56,12 @@ impl LoxCallable<Result<Object, LoxError>> for LoxClass {
         interpreter: &mut Interpreter,
         arguments: Vec<Object>,
     ) -> Result<Object, LoxError> {
-        let instance =
-            Object::Instance(LoxInstance::new(Rc::new(RefCell::new(self.clone())))).clone();
+        let instance = LoxInstance::new(Rc::new(RefCell::new(self.clone())));
 
-        if let Some(initializer) = self.find_method("init") {
-            initializer.call(interpreter, arguments)?;
+        if let Some(mut initializer) = self.find_method("init") {
+            initializer.bind(instance).call(interpreter, arguments)
+        } else {
+            Ok(Object::Instance(instance).clone())
         }
-        Ok(instance)
     }
 }

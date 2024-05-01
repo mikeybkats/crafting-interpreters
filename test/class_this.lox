@@ -10,6 +10,8 @@ class Cake {
 }
 
 var cake = Cake();
+cake.taste(); 
+
 cake.flavor = "German chocolate";
 cake.taste(); 
 

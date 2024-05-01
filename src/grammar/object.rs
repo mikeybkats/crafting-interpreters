@@ -34,7 +34,7 @@ impl Object {
             Object::Num(number) => println!("{number}"),
             Object::Callable(_) => println!("<LoxCallable>"),
             Object::Instance(_) => println!("<LoxInstance>"),
-            Object::Nil => println!(""),
+            Object::Nil => println!("<LoxNil>"),
         }
     }
 
@@ -45,7 +45,7 @@ impl Object {
             Object::Num(number) => format!("{number}"),
             Object::Callable(_) => format!("<LoxCallable>"),
             Object::Instance(_) => format!("<LoxInstance>"),
-            Object::Nil => String::from("nil"),
+            Object::Nil => String::from("<LoxNil>"),
         }
     }
 }
@@ -68,7 +68,7 @@ impl fmt::Display for Object {
                     _ => write!(f, "Object: <LoxNativeFunction>"),
                 },
             },
-            Object::Nil => write!(f, "nil"),
+            Object::Nil => write!(f, "<LoxNil>"),
         }
     }
 }
@@ -91,7 +91,7 @@ impl fmt::Debug for Object {
                 },
             },
             Object::Instance(i) => write!(f, "Instance({:?})", i),
-            Object::Nil => write!(f, "Nil"),
+            Object::Nil => write!(f, "<LoxNil>"),
         }
     }
 }

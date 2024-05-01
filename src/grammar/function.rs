@@ -26,10 +26,6 @@ impl LoxFunction {
         closure: Rc<RefCell<Environment>>,
         is_initializer: bool,
     ) -> Self {
-        println!(
-            "new function: {:?} -- is_initializer: {}",
-            declaration.name.lexeme, is_initializer
-        );
         Self {
             declaration: Rc::new(RefCell::new(declaration.clone())),
             closure,
@@ -69,7 +65,6 @@ impl LoxFunction {
         &self,
         return_value: Result<Object, LoxError>,
     ) -> Result<Object, LoxError> {
-        println!("is_initiliazer");
         if self.is_initializer() {
             return match self
                 .closure

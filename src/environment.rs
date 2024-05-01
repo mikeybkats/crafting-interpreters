@@ -107,7 +107,6 @@ impl Environment {
     }
 
     pub fn get_value(&self, token: &Token) -> Result<Object, RuntimeError> {
-        // println!("Env get_value: {:#?}", self.values);
         match self.values.get(&token.lexeme) {
             Some(value) => Ok(value.clone()),
             _ => match self.enclosing.as_deref() {
@@ -126,8 +125,6 @@ impl Environment {
     pub fn get_at(&self, distance: usize, token: &Token) -> Result<Object, RuntimeError> {
         let ancestor = self.ancestor(distance);
         let name = &token.lexeme;
-
-        // println!("get_at: {:#?}", self);
 
         if let Some(a) = ancestor {
             a.borrow().values.get(name).cloned().ok_or_else(|| {

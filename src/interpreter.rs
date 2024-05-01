@@ -141,8 +141,6 @@ impl Interpreter {
         let locals = self.locals.borrow();
         let distance = locals.get(&expr);
 
-        // println!("Locals: {:#?}", locals);
-
         match distance {
             Some(distance) => {
                 let value = self.environment.borrow().get_at(*distance, name);
@@ -451,6 +449,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Object, LoxError> {
+        println!("visit_print_stmt");
         let value = self.evaluate(statement)?;
         println!("{}", value);
         Ok(Object::Nil)
