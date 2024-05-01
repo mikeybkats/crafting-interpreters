@@ -2,11 +2,13 @@ use crate::environment::{generate_id, Environment};
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
 use crate::error::LoxError;
-use crate::function::LoxFunction;
-use crate::grammar::callable::{Callable, Clock};
+use crate::grammar::callable::Callable;
+use crate::grammar::class::LoxClass;
 use crate::grammar::expr::{Expr, ExprVisitor};
+use crate::grammar::function::LoxFunction;
+use crate::grammar::native_function::{Clock, LoxNativeFunctions};
 use crate::grammar::object::Object;
-use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor};
+use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor};
 use crate::grammar::token::{Token, TokenType};
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
@@ -28,7 +30,9 @@ impl Interpreter {
 
         globals.borrow_mut().define(
             "clock".to_string(),
-            Object::Callable(Callable::Clock(Clock::new())),
+            Object::Callable(Callable::LoxNativeFunction(LoxNativeFunctions::Clock(
+                Clock::new(),
+            ))),
         );
 
         Self {
@@ -275,8 +279,24 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         match processed_callee {
             Object::Callable(function) => function.call(self, processed_arguments),
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
-                "Can only call functions and classes. -- visit_call_expr()".to_string(),
+                "Can only call functions and classes. -- Interpreter: visit_call_expr()"
+                    .to_string(),
                 paren,
+            ))),
+        }
+    }
+
+    fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> Result<Object, LoxError> {
+        let object = self.evaluate(object)?;
+
+        match object {
+            Object::Instance(instance) => match instance.get(&name) {
+                Ok(value) => Ok(value),
+                Err(e) => Err(LoxError::RuntimeError(e)),
+            },
+            _ => Err(LoxError::RuntimeError(RuntimeError::new(
+                "Only instances have properties. -- Interpreter: visit_get_expr()".to_string(),
+                name,
             ))),
         }
     }
@@ -349,6 +369,35 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
+    fn visit_set_expr(
+        &mut self,
+        object: &Expr,
+        name: &Token,
+        value: &Expr,
+    ) -> Result<Object, LoxError> {
+        let object = self.evaluate(object)?;
+
+        match object {
+            Object::Instance(mut instance) => {
+                let value_obj = self.evaluate(value)?;
+                match instance.set(name, value_obj) {
+                    Some(return_val) => Ok(return_val),
+                    None => Ok(Object::Nil),
+                }
+            }
+            _ => {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "Only instances have fields.".to_string(),
+                    name,
+                )))
+            }
+        }
+    }
+
+    fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
+        return self.look_up_variable(keyword, expr);
+    }
+
     /// ## visit_assign_expr
     /// Runs only on resassignment
     fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
@@ -380,16 +429,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
         self.evaluate(statement)
     }
 
-    fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
-        let lox_function = LoxFunction::new(declaration, self.environment.clone());
-        self.environment.borrow_mut().define(
-            declaration.name.lexeme.clone(),
-            Object::Callable(Callable::LoxFunction(lox_function)),
-        );
-
-        Ok(Object::Nil)
-    }
-
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,
@@ -410,6 +449,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Object, LoxError> {
+        println!("visit_print_stmt");
         let value = self.evaluate(statement)?;
         println!("{}", value);
         Ok(Object::Nil)
@@ -451,5 +491,47 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
             statements,
             Environment::with_enclosing(self.environment.clone()),
         )
+    }
+
+    fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
+        let lox_function = LoxFunction::new(declaration, self.environment.clone(), false);
+        self.environment.borrow_mut().define(
+            declaration.name.lexeme.clone(),
+            Object::Callable(Callable::LoxFunction(lox_function)),
+        );
+
+        Ok(Object::Nil)
+    }
+
+    fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
+        self.environment
+            .borrow_mut()
+            .define(class_stmt.name.lexeme.clone(), Object::Nil);
+
+        let mut methods = HashMap::new();
+
+        for method in class_stmt.methods.clone() {
+            let lox_function = LoxFunction::new(
+                &method,
+                self.environment.clone(),
+                method.name.lexeme == "init",
+            );
+            methods.insert(
+                method.name.lexeme.clone(),
+                Object::Callable(Callable::LoxFunction(lox_function)),
+            );
+        }
+
+        let class = LoxClass::new(class_stmt.name.lexeme.clone(), Some(methods));
+
+        let assignment = self.environment.borrow_mut().assign(
+            &class_stmt.name,
+            Object::Callable(Callable::LoxClass(class)),
+        );
+
+        match assignment {
+            Ok(_) => Ok(Object::Nil),
+            Err(e) => Err(LoxError::RuntimeError(e)),
+        }
     }
 }

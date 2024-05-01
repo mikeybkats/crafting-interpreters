@@ -107,6 +107,19 @@ impl Hash for Token {
     }
 }
 
+pub fn create_this_token(id: Option<String>) -> Token {
+    Token {
+        token_type: TokenType::This,
+        lexeme: String::from("this"),
+        literal: Option::None,
+        line: 1,
+        _id: match id {
+            Some(id) => id,
+            _ => generate_id(),
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

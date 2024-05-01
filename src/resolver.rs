@@ -5,19 +5,27 @@ use crate::{
     grammar::{
         expr::{Expr, ExprVisitor},
         object::Object,
-        stmt::{BlockStmt, FunStmt, Stmt, StmtVisitor},
+        stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor},
         token::Token,
     },
     interpreter::Interpreter,
 };
 
 #[derive(Debug, Clone)]
+enum ClassType {
+    None,
+    Class,
+}
+
+#[derive(Debug, Clone)]
 pub enum FunctionType {
     None,
     Function,
+    Initializer,
+    Method,
 }
 
-// TODO: Add this scope type tot he HashMap. Save index of the scope for use in the interpreter.
+// TODO: Improvement -- Add scope type to the HashMap. Save index of the scope for use in the interpreter.
 // struct Scope {
 //     defined: bool,
 //     index: usize,
@@ -32,6 +40,8 @@ pub struct Resolver {
     interpreter: Rc<RefCell<Interpreter>>,
     scopes: Vec<HashMap<String, bool>>,
     current_function: FunctionType,
+    // current_class "value tells us if we are currently inside a class declaration while traversing the syntax tree"
+    current_class: ClassType,
 }
 
 impl Resolver {
@@ -40,6 +50,7 @@ impl Resolver {
             interpreter,
             scopes: Vec::new(),
             current_function: FunctionType::None,
+            current_class: ClassType::None,
         }
     }
 
@@ -101,7 +112,7 @@ impl Resolver {
 
     /// # Resolve Local
     ///
-    /// ### Stores the variable and its depth in a side table.  
+    /// ### Stores the variable and its depth in a "scopes" side table.  
     ///
     /// Each time a variable is visited (anytime a variable is accessed):
     ///
@@ -110,11 +121,9 @@ impl Resolver {
     /// "We start at the innermost scope and work outwards, looking in each map for a matching name. If we find the variable, we resolve it, passing in the number of scopes between the current innermost scope and the scope where the variable was found."
     fn resolve_local(&mut self, value: &Expr, name: &Token) -> Result<Object, LoxError> {
         let scopes = &self.scopes;
-        // println!("Scopes: {:?}", scopes);
 
         for (i, scope) in scopes.into_iter().rev().enumerate() {
             if scope.contains_key(&name.lexeme) {
-                // println!("Resolving Local Variable: {:#?} -- depth: {}", name, i);
                 return self.interpreter.clone().borrow_mut().resolve(value, i);
             }
         }
@@ -173,6 +182,12 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         Ok(Object::Nil)
     }
 
+    fn visit_get_expr(&mut self, object: &Expr, _name: &Token) -> Result<Object, LoxError> {
+        self.resolve_expr(object)?;
+
+        Ok(Object::Nil)
+    }
+
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Object, LoxError> {
         self.resolve_expr(expression)
     }
@@ -189,6 +204,29 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
     ) -> Result<Object, LoxError> {
         self.resolve_expr(left)?;
         self.resolve_expr(right)
+    }
+
+    fn visit_set_expr(
+        &mut self,
+        object: &Expr,
+        _name: &Token,
+        value: &Expr,
+    ) -> Result<Object, LoxError> {
+        self.resolve_expr(object)?;
+        self.resolve_expr(value)
+    }
+
+    fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
+        match self.current_class {
+            ClassType::None => Err(LoxError::RuntimeError(RuntimeError::new(
+                "Cannot use 'this' outside of a class. -- Resolver:visit_this_expr()".to_string(),
+                keyword,
+            ))),
+            ClassType::Class => {
+                self.resolve_local(expr, keyword)?;
+                Ok(Object::Nil)
+            }
+        }
     }
 
     fn visit_unary_expr(&mut self, _operator: &Token, right: &Expr) -> Result<Object, LoxError> {
@@ -219,14 +257,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(stmt)
     }
 
-    fn visit_function_stmt(&mut self, fun_stmt: &mut FunStmt) -> Result<Object, LoxError> {
-        self.declare(&fun_stmt.name);
-        self.define(&fun_stmt.name);
-        self.resolve_function(fun_stmt, FunctionType::Function)?;
-
-        Ok(Object::Nil)
-    }
-
     fn visit_if_stmt(
         &mut self,
         condition: &Expr,
@@ -250,9 +280,18 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
     fn visit_return_stmt(&mut self, _token: &Token, value: &Expr) -> Result<Object, LoxError> {
         match self.current_function {
             FunctionType::Function => self.resolve_expr(value),
+            FunctionType::Initializer => {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "Cannot return a value from an initializer. -- Resolver::visit_return_stmt()"
+                        .to_string(),
+                    _token,
+                )))
+            }
+            FunctionType::Method => self.resolve_expr(value),
             FunctionType::None => {
                 return Err(LoxError::RuntimeError(RuntimeError::new(
-                    "Cannot return from top-level code.".to_string(),
+                    "Cannot return from top-level code. -- Resolver::visit_return_stmt()"
+                        .to_string(),
                     _token,
                 )))
             }
@@ -264,6 +303,14 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_stmt(body)
     }
 
+    fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, LoxError> {
+        self.declare(name);
+        self.resolve_expr(initializer)?;
+        self.define(name);
+
+        Ok(Object::Nil)
+    }
+
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> Result<Object, LoxError> {
         self.begin_scope();
         self.resolve(&mut statements.statements)?;
@@ -272,10 +319,45 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         Ok(Object::Nil)
     }
 
-    fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> Result<Object, LoxError> {
-        self.declare(name);
-        self.resolve_expr(initializer)?;
-        self.define(name);
+    fn visit_function_stmt(&mut self, fun_stmt: &mut FunStmt) -> Result<Object, LoxError> {
+        self.declare(&fun_stmt.name);
+        self.define(&fun_stmt.name);
+        self.resolve_function(fun_stmt, FunctionType::Function)?;
+
+        Ok(Object::Nil)
+    }
+
+    fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
+        let enclosing_class = self.current_class.clone();
+        self.current_class = ClassType::Class;
+
+        self.declare(&class_stmt.name);
+        self.define(&class_stmt.name);
+
+        self.begin_scope();
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert("this".to_string(), true);
+        } else {
+            return Err(LoxError::RuntimeError(RuntimeError::new(
+                "Cannot resolve class scope.".to_string(),
+                &class_stmt.name,
+            )));
+        }
+
+        for mut method in class_stmt.methods.clone() {
+            let function_type = if method.name.lexeme == "init" {
+                FunctionType::Initializer
+            } else {
+                FunctionType::Method
+            };
+            match self.resolve_function(&mut method, function_type) {
+                Ok(_) => {}
+                Err(e) => return Err(e),
+            }
+        }
+
+        self.end_scope();
+        self.current_class = enclosing_class;
 
         Ok(Object::Nil)
     }

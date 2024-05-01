@@ -1,7 +1,9 @@
+use std::vec;
+
 use crate::environment::generate_id;
 use crate::error::parse_error::ParseError;
 use crate::grammar::object::Object;
-use crate::grammar::stmt::{BlockStmt, FunStmt, Stmt};
+use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt};
 use crate::grammar::token::{Token, TokenType};
 
 use crate::grammar::expr::Expr;
@@ -85,6 +87,9 @@ impl<'a> Parser<'a> {
     /// Called repeatedly when parsing statments in either block or script mode
     /// This is the where the application should synchronize when the parser panics.
     fn declaration(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_symbol(&[TokenType::Class]) {
+            return self.class_declaration();
+        }
         if self.match_symbol(&[TokenType::Fun]) {
             return self.function("function");
         }
@@ -105,6 +110,36 @@ impl<'a> Parser<'a> {
                 }
             }
         }
+    }
+
+    fn class_declaration(&mut self) -> Result<Stmt, ParseError> {
+        let name_check = self.consume(TokenType::Identifier, "Expect class name.")?;
+        let name = name_check.clone();
+
+        self.consume(TokenType::LeftBrace, "Expect '{' before class body.")?;
+
+        let mut methods: Vec<FunStmt> = vec![];
+
+        while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
+            match self.function("method") {
+                Ok(method) => match method {
+                    Stmt::Function(fun_stmt) => {
+                        methods.push(fun_stmt);
+                    }
+                    _ => {
+                        return Err(ParseError::new(
+                            &"Expected method declaration.".to_string(),
+                            self.peek().unwrap(),
+                        ));
+                    }
+                },
+                Err(e) => return Err(e),
+            }
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after class body.")?;
+
+        return Ok(Stmt::Class(ClassStmt { name, methods }));
     }
 
     /// # statement
@@ -406,6 +441,13 @@ impl<'a> Parser<'a> {
                         value: Box::new(value),
                     });
                 }
+                Expr::Get { object, name } => {
+                    return Ok(Expr::Set {
+                        object,
+                        name,
+                        value: Box::new(value),
+                    });
+                }
                 _ => {
                     return Err(ParseError::new(
                         &"Invalid assignment target.".to_string(),
@@ -650,6 +692,13 @@ impl<'a> Parser<'a> {
         loop {
             if self.match_symbol(&[TokenType::LeftParen]) {
                 expr = self.finish_call(expr)?;
+            } else if self.match_symbol(&[TokenType::Dot]) {
+                let name =
+                    self.consume(TokenType::Identifier, "Expect property name after '.'.")?;
+                expr = Expr::Get {
+                    object: Box::new(expr),
+                    name: name.clone(),
+                };
             } else {
                 break;
             }
@@ -723,6 +772,10 @@ impl<'a> Parser<'a> {
             }
 
             return Ok(Expr::Literal { value: prev_object });
+        } else if self.match_symbol(&[TokenType::This]) {
+            return Ok(Expr::This {
+                keyword: self.previous().unwrap().clone(),
+            });
         } else if self.match_symbol(&[TokenType::Identifier]) {
             return Ok(Expr::Variable {
                 name: self.previous().unwrap().clone(),

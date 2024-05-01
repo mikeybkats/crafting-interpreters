@@ -1,12 +1,13 @@
 use std::fmt;
 
-use super::callable::Callable;
+use super::{callable::Callable, instance::LoxInstance};
 
 pub enum Object {
     Str(String),
     Num(f64),
     Bool(bool),
     Callable(Callable),
+    Instance(LoxInstance),
     // Return(Box<Object>), // TODO: Implement Return and remove the return error type. The LoxReturn error type is not idiomatic Rust
     Nil,
 }
@@ -32,7 +33,8 @@ impl Object {
             Object::Bool(boolean) => println!("{boolean}"),
             Object::Num(number) => println!("{number}"),
             Object::Callable(_) => println!("<LoxCallable>"),
-            Object::Nil => println!(""),
+            Object::Instance(_) => println!("<LoxInstance>"),
+            Object::Nil => println!("<LoxNil>"),
         }
     }
 
@@ -42,7 +44,8 @@ impl Object {
             Object::Bool(boolean) => format!("{boolean}"),
             Object::Num(number) => format!("{number}"),
             Object::Callable(_) => format!("<LoxCallable>"),
-            Object::Nil => String::from("nil"),
+            Object::Instance(_) => format!("<LoxInstance>"),
+            Object::Nil => String::from("<LoxNil>"),
         }
     }
 }
@@ -53,8 +56,19 @@ impl fmt::Display for Object {
             Object::Str(string) => write!(f, "{}", string),
             Object::Bool(boolean) => write!(f, "{}", boolean),
             Object::Num(number) => write!(f, "{}", number),
-            Object::Callable(_) => write!(f, "Object: <LoxCallable>",),
-            Object::Nil => write!(f, "nil"),
+            Object::Instance(instance) => write!(f, "{}", instance.to_string()),
+            Object::Callable(callable) => match callable {
+                Callable::LoxFunction(func) => {
+                    write!(f, "Object: {}", func._to_string())
+                }
+                Callable::LoxClass(c) => {
+                    write!(f, "{}", c.name())
+                }
+                Callable::LoxNativeFunction(func) => match func {
+                    _ => write!(f, "Object: <LoxNativeFunction>"),
+                },
+            },
+            Object::Nil => write!(f, "<LoxNil>"),
         }
     }
 }
@@ -65,8 +79,19 @@ impl fmt::Debug for Object {
             Object::Str(s) => write!(f, "Str({:?})", s),
             Object::Num(n) => write!(f, "Num({})", n),
             Object::Bool(b) => write!(f, "Bool({})", b),
-            Object::Callable(_) => write!(f, "Callable(<LoxCallable>)"),
-            Object::Nil => write!(f, "Nil"),
+            Object::Callable(callable) => match callable {
+                Callable::LoxFunction(func) => {
+                    return write!(f, "Object: {}", func._to_string(),);
+                }
+                Callable::LoxClass(c) => {
+                    write!(f, "{}", c.name())
+                }
+                Callable::LoxNativeFunction(func) => match func {
+                    _ => write!(f, "Object: <LoxNativeFunction>"),
+                },
+            },
+            Object::Instance(i) => write!(f, "Instance({:?})", i),
+            Object::Nil => write!(f, "<LoxNil>"),
         }
     }
 }
@@ -78,6 +103,7 @@ impl Clone for Object {
             Object::Num(n) => Object::Num(*n),
             Object::Bool(b) => Object::Bool(*b),
             Object::Callable(callable) => Object::Callable(callable.clone()), // Choose to return Nil for Callable
+            Object::Instance(i) => Object::Instance(i.clone()),
             Object::Nil => Object::Nil,
         }
     }

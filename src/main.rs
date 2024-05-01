@@ -6,7 +6,6 @@ use crate::lox::Lox;
 
 mod environment;
 mod error;
-mod function;
 mod grammar;
 mod interpreter;
 mod lox;
