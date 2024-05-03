@@ -25,6 +25,7 @@ pub enum Stmt {
     Class(ClassStmt),
     Block(BlockStmt),
     Function(FunStmt),
+    Getter(FunStmt),
     Expression {
         expression: Box<Expr>,
     },
@@ -66,6 +67,7 @@ impl Stmt {
             Stmt::Var { name, initializer } => visitor.visit_var_stmt(name, initializer),
             Stmt::Block(block_stmt) => visitor.visit_block_stmt(block_stmt),
             Stmt::Function(fun_stmt) => visitor.visit_function_stmt(fun_stmt),
+            Stmt::Getter(getter_stmt) => visitor.visit_getter_stmt(getter_stmt),
             Stmt::Class(class_stmt) => visitor.visit_class_stmt(class_stmt),
         }
     }
@@ -85,5 +87,6 @@ pub trait StmtVisitor<R> {
     fn visit_var_stmt(&mut self, name: &Token, initializer: &Expr) -> R;
     fn visit_block_stmt(&mut self, statements: &mut BlockStmt) -> R;
     fn visit_function_stmt(&mut self, fun_stmt: &mut FunStmt) -> R;
+    fn visit_getter_stmt(&mut self, getter_stmt: &mut FunStmt) -> R;
     fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> R;
 }

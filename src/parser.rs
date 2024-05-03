@@ -357,6 +357,24 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn getter(&mut self, name: Token, kind: &str) -> Result<Stmt, ParseError> {
+        println!("Parser::getter() -- Name: {}, kind: {}", name.lexeme, kind);
+
+        self.consume(
+            TokenType::LeftBrace,
+            &format!("Expect '{{' before {} body.", kind),
+        )?;
+
+        return match self.block() {
+            Ok(block) => Ok(Stmt::Getter(FunStmt {
+                name,
+                params: vec![],
+                body: block.statements,
+            })),
+            Err(e) => Err(e),
+        };
+    }
+
     /// # function
     /// parse a function declaration
     fn function(&mut self, kind: &str) -> Result<Stmt, ParseError> {
@@ -364,10 +382,17 @@ impl<'a> Parser<'a> {
             .consume(TokenType::Identifier, &format!("Expect {} name.", kind))?
             .clone();
 
-        self.consume(
-            TokenType::LeftParen,
-            &format!("Expect '(' after {} name.", kind),
-        )?;
+        // if there is not left paren, assume it must be a getter or setter
+        // if let Some(token) = self.peek() {
+        //     if let TokenType::LeftBrace = token.token_type {
+        //         return self.getter(name, kind);
+        //     }
+        // }
+
+        // self.consume(
+        //     TokenType::LeftParen,
+        //     &format!("Parser::Function() -- Expect '(' after {} name.", kind),
+        // )?;
 
         let mut parameters: Vec<Token> = vec![];
 
