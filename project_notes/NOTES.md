@@ -165,7 +165,11 @@ _in the class_ - Volume is parsed as a block statement. But block statements don
 
 _in the call_ - How does it get marked though so that the interpreter knows to treat this.volume (instead of this.volume()) as a function call? The parser has to mark this.volume as a function call. How does it do that? Normally it would get treated as an identifier.
 
-Does this warrant new grammar? Or, does it become something handled by edge cases? It seems that the best thing to do is to definately add new grammar, because it's a totally different composed structure – so it needs a new part of speech.
+Does this warrant new grammar? Or, does it become something handled by within functions? It seems that the best thing to do is to definately add new grammar, because it's a totally different composed structure – so it needs a new part of speech. However, a getter is just syntactic sugar for a function. What is the precedent? For loops don't have their own grammar added to the stmt enum therefore the rule should really be:
 
-1. make a handler for the class getter function stmt. create a new grammar for the getter
-2. make a handler for the accessor. when a getter is accessed it should be treated like a function call with: visit_call_expr.
+`if the new feature encapsulates the base capabilities it's only syntactic sugar and does not warrant new grammar`
+
+In other words, getters are just like for loops in the sense that they only add a better and simpler way to do what functions already do.
+
+1. make a handler for the class getter function stmt. create a key in the function struct for kind. Function kind can be getter or function.
+2. make a handler for the accessor. When a function is accessed as a value (not a call) check to see if it's a getter. If it is, then treat it like a call expression and call the getter function. This pushes the brunt of the work out of the parser and into the compiler.
