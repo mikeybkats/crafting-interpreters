@@ -11,13 +11,18 @@ use crate::{
     interpreter::Interpreter,
 };
 
-use super::{instance::LoxInstance, stmt::Stmt, token::create_this_token};
+use super::{
+    instance::LoxInstance,
+    stmt::{FunType, Stmt},
+    token::create_this_token,
+};
 
 #[derive(Debug, Clone)]
 pub struct LoxFunction {
     declaration: Rc<RefCell<FunStmt>>,
     closure: Rc<RefCell<environment::Environment>>,
     is_initializer: bool,
+    pub is_getter: bool,
 }
 
 impl LoxFunction {
@@ -30,6 +35,10 @@ impl LoxFunction {
             declaration: Rc::new(RefCell::new(declaration.clone())),
             closure,
             is_initializer,
+            is_getter: match declaration.kind {
+                FunType::Getter => true,
+                _ => false,
+            },
         }
     }
 
@@ -42,6 +51,7 @@ impl LoxFunction {
             declaration: self.declaration.clone(),
             closure: Rc::new(RefCell::new(environment)),
             is_initializer: self.is_initializer,
+            is_getter: self.is_getter,
         };
     }
 
@@ -50,7 +60,11 @@ impl LoxFunction {
     }
 
     pub fn _to_string(&self) -> String {
-        format!("<fn {}>", self.declaration.borrow().name.lexeme)
+        format!(
+            "<LoxFunction {}> -- {:#?}",
+            self.declaration.borrow().name.lexeme,
+            self.declaration.borrow().body
+        )
     }
 
     pub fn _get_declaration(&self) -> Rc<RefCell<FunStmt>> {

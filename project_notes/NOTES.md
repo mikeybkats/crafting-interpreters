@@ -140,3 +140,32 @@ cake.taste(); // Prints "The German chocolate cake is delicious!".
 ```
 
 In the example above the closure of the taste method is the surrounding Cake environment. "taste" accesses the instance of Cake and exists for the lifetime of the cake variable.
+
+#### _stretch goal: setters and getters_:
+
+There are a couple of ways getters could work in the interpreter. Getters are syntactic sugar for calling a function that's on the class. In a statement like this a couple of things are going on in the Parser at compile time and Interpreter at runtime:
+
+```
+class Container {
+  init(x,y,z){
+    this.width = x;
+    this.height = y;
+    this.depth = z;
+  }
+
+  volume {
+    return this.width * this.height * this.depth;
+  }
+}
+
+print this.volume // prints this.width * this.height * this.depth
+```
+
+_in the class_ - Volume is parsed as a block statement. But block statements don't inherently have any way of being accessed so it needs to have a relationship to the word volume. Is volume a variable? A function? It is technically a function.
+
+_in the call_ - How does it get marked though so that the interpreter knows to treat this.volume (instead of this.volume()) as a function call? The parser has to mark this.volume as a function call. How does it do that? Normally it would get treated as an identifier.
+
+Does this warrant new grammar? Or, does it become something handled by edge cases? It seems that the best thing to do is to definately add new grammar, because it's a totally different composed structure – so it needs a new part of speech.
+
+1. make a handler for the class getter function stmt. create a new grammar for the getter
+2. make a handler for the accessor. when a getter is accessed it should be treated like a function call with: visit_call_expr.

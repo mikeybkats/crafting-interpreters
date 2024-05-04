@@ -2,7 +2,7 @@ use crate::environment::{generate_id, Environment};
 use crate::error::lox_return::LoxReturn;
 use crate::error::runtime_error::RuntimeError;
 use crate::error::LoxError;
-use crate::grammar::callable::Callable;
+use crate::grammar::callable::{Callable, LoxCallable};
 use crate::grammar::class::LoxClass;
 use crate::grammar::expr::{Expr, ExprVisitor};
 use crate::grammar::function::LoxFunction;
@@ -286,12 +286,26 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
-    fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> Result<Object, LoxError> {
-        let object = self.evaluate(object)?;
+    fn visit_get_expr(&mut self, raw_object: &Expr, name: &Token) -> Result<Object, LoxError> {
+        let object = self.evaluate(raw_object)?;
 
         match object {
             Object::Instance(instance) => match instance.get(&name) {
-                Ok(value) => Ok(value),
+                Ok(value) => {
+                    match value {
+                        Object::Callable(callable) => match callable {
+                            Callable::LoxFunction(fun) => {
+                                if fun.is_getter {
+                                    return fun.call(self, vec![]);
+                                }
+                                Ok(Object::Callable(Callable::LoxFunction(fun)))
+                            }
+                            _ => Ok(Object::Callable(callable)),
+                        },
+                        _ => Ok(value),
+                    }
+                    // Ok(value)
+                }
                 Err(e) => Err(LoxError::RuntimeError(e)),
             },
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
@@ -449,7 +463,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_print_stmt(&mut self, statement: &Expr) -> Result<Object, LoxError> {
-        println!("visit_print_stmt");
         let value = self.evaluate(statement)?;
         println!("{}", value);
         Ok(Object::Nil)

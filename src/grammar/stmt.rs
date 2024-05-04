@@ -6,8 +6,15 @@ pub struct BlockStmt {
 }
 
 #[derive(Debug, Clone)]
+pub enum FunType {
+    Function,
+    Getter,
+}
+
+#[derive(Debug, Clone)]
 pub struct FunStmt {
     pub name: Token,
+    pub kind: FunType,
     pub params: Vec<Token>,
     pub body: Vec<Stmt>,
 }

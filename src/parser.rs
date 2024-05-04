@@ -3,7 +3,7 @@ use std::vec;
 use crate::environment::generate_id;
 use crate::error::parse_error::ParseError;
 use crate::grammar::object::Object;
-use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt};
+use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, FunType, Stmt};
 use crate::grammar::token::{Token, TokenType};
 
 use crate::grammar::expr::Expr;
@@ -357,6 +357,23 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn getter(&mut self, name: Token, kind: &str) -> Result<Stmt, ParseError> {
+        self.consume(
+            TokenType::LeftBrace,
+            &format!("Expect '{{' before {} body.", kind),
+        )?;
+
+        Ok(Stmt::Function(FunStmt {
+            name,
+            params: vec![],
+            kind: FunType::Getter,
+            body: self
+                .block()
+                .unwrap_or_else(|_error| BlockStmt { statements: vec![] })
+                .statements,
+        }))
+    }
+
     /// # function
     /// parse a function declaration
     fn function(&mut self, kind: &str) -> Result<Stmt, ParseError> {
@@ -364,9 +381,16 @@ impl<'a> Parser<'a> {
             .consume(TokenType::Identifier, &format!("Expect {} name.", kind))?
             .clone();
 
+        // if there is not left paren, it must be a getter
+        if let Some(token) = self.peek() {
+            if let TokenType::LeftBrace = token.token_type {
+                return self.getter(name, kind);
+            }
+        }
+
         self.consume(
             TokenType::LeftParen,
-            &format!("Expect '(' after {} name.", kind),
+            &format!("Parser::Function() -- Expect '(' after {} name.", kind),
         )?;
 
         let mut parameters: Vec<Token> = vec![];
@@ -403,6 +427,7 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Function(FunStmt {
             name,
             params: parameters,
+            kind: FunType::Function,
             body: self
                 .block()
                 .unwrap_or_else(|_error| BlockStmt { statements: vec![] })
