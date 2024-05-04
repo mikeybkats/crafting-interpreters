@@ -327,14 +327,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         Ok(Object::Nil)
     }
 
-    fn visit_getter_stmt(&mut self, getter_stmt: &mut FunStmt) -> Result<Object, LoxError> {
-        self.declare(&getter_stmt.name);
-        self.define(&getter_stmt.name);
-        self.resolve_function(getter_stmt, FunctionType::Function)?;
-
-        Ok(Object::Nil)
-    }
-
     fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
         let enclosing_class = self.current_class.clone();
         self.current_class = ClassType::Class;

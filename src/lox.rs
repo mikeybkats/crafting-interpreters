@@ -131,7 +131,6 @@ impl Lox {
                 return self.error(error);
             };
 
-            // println!("{:#?}", stmts);
             if let Err(error) = self.interpreter.borrow_mut().interpret(stmts) {
                 return self.error(error);
             }

@@ -44,7 +44,6 @@ impl Interpreter {
 
     pub fn interpret(&mut self, statements: &mut Vec<Stmt>) -> Result<Vec<Object>, LoxError> {
         let mut results = Vec::new();
-        // println!("Interpreting -- statements: {:#?}", statements);
         for statement in statements {
             match self.execute(statement) {
                 Ok(value) => results.push(value),
@@ -287,15 +286,20 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
-    fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> Result<Object, LoxError> {
-        let object = self.evaluate(object)?;
+    fn visit_get_expr(&mut self, raw_object: &Expr, name: &Token) -> Result<Object, LoxError> {
+        let object = self.evaluate(raw_object)?;
 
         match object {
             Object::Instance(instance) => match instance.get(&name) {
                 Ok(value) => {
                     match value {
                         Object::Callable(callable) => match callable {
-                            Callable::LoxGetter(getter) => getter.call(self, Vec::new()),
+                            Callable::LoxFunction(fun) => {
+                                if fun.is_getter {
+                                    return fun.call(self, vec![]);
+                                }
+                                Ok(Object::Callable(Callable::LoxFunction(fun)))
+                            }
                             _ => Ok(Object::Callable(callable)),
                         },
                         _ => Ok(value),
@@ -503,17 +507,6 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
-        let lox_function = LoxFunction::new(declaration, self.environment.clone(), false);
-        self.environment.borrow_mut().define(
-            declaration.name.lexeme.clone(),
-            Object::Callable(Callable::LoxFunction(lox_function)),
-        );
-
-        Ok(Object::Nil)
-    }
-
-    fn visit_getter_stmt(&mut self, declaration: &mut FunStmt) -> Result<Object, LoxError> {
-        // define the getter function in the environment
         let lox_function = LoxFunction::new(declaration, self.environment.clone(), false);
         self.environment.borrow_mut().define(
             declaration.name.lexeme.clone(),

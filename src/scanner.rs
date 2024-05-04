@@ -292,6 +292,10 @@ impl Scanner {
 
         if self.peek() == '.' && next_is_numeric {
             self.advance();
+
+            while self.peek().is_numeric() {
+                self.advance();
+            }
         }
 
         let number: f64 = self.source[self.start..self.current].parse().unwrap();
