@@ -1,0 +1,13 @@
+fun fib(n) {
+    if (n < 2) return n;
+
+    return fib(n - 1) + fib(n -2);
+}
+
+var before = clock();
+print fib(20); // 1.5s
+// print fib(25); // 17.183s
+// print fib(30); // 188.745s
+// print fib(40); // ??? too slow to count
+var after = clock();
+print after - before;

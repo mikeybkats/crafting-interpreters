@@ -3,6 +3,11 @@ use super::token::Token;
 use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Clone)]
+pub struct Variable {
+    pub name: Token,
+}
+
+#[derive(Debug, Clone)]
 /// # Expression
 /// Enumerates the different types of expressions.
 ///
@@ -53,9 +58,7 @@ pub enum Expr {
     This {
         keyword: Token,
     },
-    Variable {
-        name: Token,
-    },
+    Variable(Variable),
 }
 
 impl Expr {
@@ -87,7 +90,7 @@ impl Expr {
                 name,
                 value,
             } => visitor.visit_set_expr(object, name, value),
-            Expr::Variable { name } => visitor.visit_variable_expr(&self, name),
+            Expr::Variable(Variable { name }) => visitor.visit_variable_expr(&self, name),
         }
     }
 }
@@ -188,7 +191,10 @@ impl PartialEq for Expr {
                     right: right2,
                 },
             ) => operator1.lexeme == operator2.lexeme && right1 == right2,
-            (Expr::Variable { name: name1 }, Expr::Variable { name: name2 }) => name1 == name2,
+            (
+                Expr::Variable(Variable { name: name1 }),
+                Expr::Variable(Variable { name: name2 }),
+            ) => name1 == name2,
             (
                 Expr::Get {
                     object: object1,
@@ -296,7 +302,7 @@ impl Hash for Expr {
                 name.lexeme.hash(state);
                 value.hash(state);
             }
-            Expr::Variable { name } => {
+            Expr::Variable(Variable { name }) => {
                 name.hash(state);
             }
         }
@@ -412,7 +418,7 @@ mod tests {
 
     #[test]
     fn test_variable_expression_equality() {
-        let var_expr_1 = Expr::Variable {
+        let var_expr_1 = Expr::Variable(Variable {
             name: Token {
                 token_type: TokenType::String,
                 lexeme: "2".to_string(),
@@ -420,8 +426,8 @@ mod tests {
                 line: 200,
                 _id: generate_id(),
             },
-        };
-        let var_expr_2 = Expr::Variable {
+        });
+        let var_expr_2 = Expr::Variable(Variable {
             name: Token {
                 token_type: TokenType::String,
                 lexeme: "2".to_string(),
@@ -429,7 +435,7 @@ mod tests {
                 line: 500,
                 _id: generate_id(),
             },
-        };
+        });
 
         assert_eq!(
             var_expr_1, var_expr_2,
@@ -439,7 +445,7 @@ mod tests {
 
     #[test]
     fn test_variable_expression_inequality() {
-        let var_expr_1 = Expr::Variable {
+        let var_expr_1 = Expr::Variable(Variable {
             name: Token {
                 token_type: TokenType::String,
                 lexeme: "2".to_string(),
@@ -447,8 +453,8 @@ mod tests {
                 line: 200,
                 _id: generate_id(),
             },
-        };
-        let var_expr_2 = Expr::Variable {
+        });
+        let var_expr_2 = Expr::Variable(Variable {
             name: Token {
                 token_type: TokenType::String,
                 lexeme: "3".to_string(),
@@ -456,7 +462,7 @@ mod tests {
                 line: 500,
                 _id: generate_id(),
             },
-        };
+        });
 
         assert_ne!(
             var_expr_1, var_expr_2,
@@ -706,7 +712,7 @@ mod tests {
     #[test]
     fn test_call_expression_equality() {
         let expr1 = Expr::Call {
-            callee: Box::new(Expr::Variable {
+            callee: Box::new(Expr::Variable(Variable {
                 name: Token {
                     token_type: TokenType::String,
                     lexeme: "x".to_string(),
@@ -714,7 +720,7 @@ mod tests {
                     line: 200,
                     _id: generate_id(),
                 },
-            }),
+            })),
             paren: Token {
                 token_type: TokenType::LeftParen,
                 lexeme: "(".to_string(),
@@ -727,7 +733,7 @@ mod tests {
             }],
         };
         let expr2 = Expr::Call {
-            callee: Box::new(Expr::Variable {
+            callee: Box::new(Expr::Variable(Variable {
                 name: Token {
                     token_type: TokenType::String,
                     lexeme: "x".to_string(),
@@ -735,7 +741,7 @@ mod tests {
                     line: 200,
                     _id: generate_id(),
                 },
-            }),
+            })),
             paren: Token {
                 token_type: TokenType::LeftParen,
                 lexeme: "(".to_string(),
@@ -757,7 +763,7 @@ mod tests {
     #[test]
     fn test_call_expression_inequality() {
         let expr1 = Expr::Call {
-            callee: Box::new(Expr::Variable {
+            callee: Box::new(Expr::Variable(Variable {
                 name: Token {
                     token_type: TokenType::String,
                     lexeme: "x".to_string(),
@@ -765,7 +771,7 @@ mod tests {
                     line: 200,
                     _id: generate_id(),
                 },
-            }),
+            })),
             paren: Token {
                 token_type: TokenType::LeftParen,
                 lexeme: "(".to_string(),
@@ -778,7 +784,7 @@ mod tests {
             }],
         };
         let expr2 = Expr::Call {
-            callee: Box::new(Expr::Variable {
+            callee: Box::new(Expr::Variable(Variable {
                 name: Token {
                     token_type: TokenType::String,
                     lexeme: "y".to_string(),
@@ -786,7 +792,7 @@ mod tests {
                     line: 200,
                     _id: generate_id(),
                 },
-            }),
+            })),
             paren: Token {
                 token_type: TokenType::LeftParen,
                 lexeme: "(".to_string(),

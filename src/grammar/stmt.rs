@@ -1,4 +1,7 @@
-use super::{expr::Expr, token::Token};
+use super::{
+    expr::{Expr, Variable},
+    token::Token,
+};
 
 #[derive(Debug, Clone)]
 pub struct BlockStmt {
@@ -22,6 +25,9 @@ pub struct FunStmt {
 #[derive(Debug, Clone)]
 pub struct ClassStmt {
     pub name: Token,
+    /// ## superclass
+    /// "The grammar restricts the superclass clause to a single identifier, but at runtime, that identifier is evaluated as a variable access. Wrapping the name in an Expr.Variable early on in the parser gives us an object that the resolver can hang the resolution information off of"
+    pub superclass: Option<Variable>,
     pub methods: Vec<FunStmt>,
 }
 
@@ -29,12 +35,12 @@ pub struct ClassStmt {
 /// # Stmt
 /// Statements form a second hierarchy of syntax tree nodes independent of expressions. We add the first couple of them in “Statements and State”.
 pub enum Stmt {
-    Class(ClassStmt),
     Block(BlockStmt),
-    Function(FunStmt),
+    Class(ClassStmt),
     Expression {
         expression: Box<Expr>,
     },
+    Function(FunStmt),
     If {
         condition: Box<Expr>,
         then_branch: Box<Stmt>,

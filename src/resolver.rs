@@ -334,6 +334,16 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         self.declare(&class_stmt.name);
         self.define(&class_stmt.name);
 
+        if let Some(superclass) = &class_stmt.superclass {
+            if class_stmt.name.lexeme == superclass.name.lexeme {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "A class cannot inherit from itself.".to_string(),
+                    &superclass.name,
+                )));
+            }
+            self.resolve_expr(&Expr::Variable(superclass.clone()))?;
+        }
+
         self.begin_scope();
         if let Some(scope) = self.scopes.last_mut() {
             scope.insert("this".to_string(), true);
