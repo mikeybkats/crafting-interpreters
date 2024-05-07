@@ -158,6 +158,42 @@ impl Interpreter {
             }
         }
     }
+
+    fn handle_class_creation(
+        &self,
+        superclass: Option<Rc<RefCell<LoxClass>>>,
+        class_stmt: &ClassStmt,
+    ) -> Result<Object, LoxError> {
+        self.environment
+            .borrow_mut()
+            .define(class_stmt.name.lexeme.clone(), Object::Nil);
+
+        let mut methods = HashMap::new();
+
+        for method in class_stmt.methods.clone() {
+            let lox_function = LoxFunction::new(
+                &method,
+                self.environment.clone(),
+                method.name.lexeme == "init",
+            );
+            methods.insert(
+                method.name.lexeme.clone(),
+                Object::Callable(Callable::LoxFunction(lox_function)),
+            );
+        }
+
+        let class = LoxClass::new(class_stmt.name.lexeme.clone(), superclass, Some(methods));
+
+        let assignment = self.environment.borrow_mut().assign(
+            &class_stmt.name,
+            Object::Callable(Callable::LoxClass(class)),
+        );
+
+        match assignment {
+            Ok(_) => Ok(Object::Nil),
+            Err(e) => Err(LoxError::RuntimeError(e)),
+        }
+    }
 }
 
 impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
@@ -517,34 +553,24 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_class_stmt(&mut self, class_stmt: &ClassStmt) -> Result<Object, LoxError> {
-        self.environment
-            .borrow_mut()
-            .define(class_stmt.name.lexeme.clone(), Object::Nil);
-
-        let mut methods = HashMap::new();
-
-        for method in class_stmt.methods.clone() {
-            let lox_function = LoxFunction::new(
-                &method,
-                self.environment.clone(),
-                method.name.lexeme == "init",
-            );
-            methods.insert(
-                method.name.lexeme.clone(),
-                Object::Callable(Callable::LoxFunction(lox_function)),
-            );
+        if let Some(superclass_var) = &class_stmt.superclass {
+            let superclass = Expr::Variable(superclass_var.clone());
+            match self.evaluate(&superclass) {
+                Ok(Object::Callable(Callable::LoxClass(superclass))) => {
+                    return self.handle_class_creation(
+                        Some(Rc::new(RefCell::new(superclass))),
+                        class_stmt,
+                    );
+                }
+                _ => {
+                    return Err(LoxError::RuntimeError(RuntimeError::new(
+                        "Superclass must be a class.".to_string(),
+                        &superclass_var.name,
+                    )))
+                }
+            };
         }
 
-        let class = LoxClass::new(class_stmt.name.lexeme.clone(), Some(methods));
-
-        let assignment = self.environment.borrow_mut().assign(
-            &class_stmt.name,
-            Object::Callable(Callable::LoxClass(class)),
-        );
-
-        match assignment {
-            Ok(_) => Ok(Object::Nil),
-            Err(e) => Err(LoxError::RuntimeError(e)),
-        }
+        self.handle_class_creation(None, class_stmt)
     }
 }

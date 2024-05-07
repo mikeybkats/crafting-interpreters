@@ -345,6 +345,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         }
 
         self.begin_scope();
+
         if let Some(scope) = self.scopes.last_mut() {
             scope.insert("this".to_string(), true);
         } else {
