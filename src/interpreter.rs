@@ -168,6 +168,16 @@ impl Interpreter {
             .borrow_mut()
             .define(class_stmt.name.lexeme.clone(), Object::Nil);
 
+        if let Some(superclass) = superclass {
+            self.environment = Rc::new(RefCell::new(Environment::with_enclosing(
+                self.environment.clone(),
+            )));
+            self.environment.borrow_mut().define(
+                "super".to_string(),
+                Object::Callable(Callable::LoxClass(superclass.borrow().clone())),
+            );
+        }
+
         let mut methods = HashMap::new();
 
         for method in class_stmt.methods.clone() {
@@ -183,6 +193,13 @@ impl Interpreter {
         }
 
         let class = LoxClass::new(class_stmt.name.lexeme.clone(), superclass, Some(methods));
+
+        if let Some(superclass) = superclass {
+            let env = self.environment.borrow().enclosing;
+            if let Some(enclosing) = env {
+                self.environment = enclosing.clone();
+            }
+        }
 
         let assignment = self.environment.borrow_mut().assign(
             &class_stmt.name,
@@ -442,6 +459,38 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
                 )))
             }
         }
+    }
+
+    fn visit_super_expr(
+        &mut self,
+        expr: &Expr,
+        keyword: &Token,
+        method: &Token,
+    ) -> Result<Object, LoxError> {
+        let locals = self.locals.borrow();
+
+        if let Some(distance) = locals.get(expr) {
+            let superclass_res = self.environment.borrow().get_at(*distance, keyword);
+            let object_res = self.environment.borrow().get_at(*distance - 1, keyword);
+
+            // These nested if let statements are making me dizzy 😵
+            if let Ok(Object::Callable(Callable::LoxClass(superclass))) = superclass_res {
+                if let Some(mut method) = superclass.find_method(method.lexeme.as_str()) {
+                    if let Ok(object_gen) = object_res {
+                        // object: LoxInstance
+                        // "Offsetting the distance by one looks up “this” in that inner environment. I admit this isn’t the most elegant code, but it works."
+                        if let Object::Instance(object) = object_gen {
+                            // "This is almost exactly like the code for looking up a method of a get expression, except that we call findMethod() on the superclass instead of on the class of the current object."
+                            return Ok(Object::Callable(Callable::LoxFunction(
+                                method.bind(object),
+                            )));
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(Object::Nil)
     }
 
     fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {

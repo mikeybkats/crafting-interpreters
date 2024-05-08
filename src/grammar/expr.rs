@@ -55,6 +55,10 @@ pub enum Expr {
         name: Token,
         value: Box<Expr>,
     },
+    Super {
+        keyword: Token,
+        method: Token,
+    },
     This {
         keyword: Token,
     },
@@ -90,6 +94,7 @@ impl Expr {
                 name,
                 value,
             } => visitor.visit_set_expr(object, name, value),
+            Expr::Super { keyword, method } => visitor.visit_super_expr(&self, keyword, method),
             Expr::Variable(Variable { name }) => visitor.visit_variable_expr(&self, name),
         }
     }
@@ -106,6 +111,7 @@ pub trait ExprVisitor<R> {
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> R;
     fn visit_set_expr(&mut self, object: &Expr, name: &Token, value: &Expr) -> R;
     fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> R;
+    fn visit_super_expr(&mut self, expr: &Expr, keyword: &Token, method: &Token) -> R;
     fn visit_variable_expr(&mut self, expr: &Expr, name: &Token) -> R;
 }
 

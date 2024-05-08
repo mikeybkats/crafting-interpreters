@@ -216,6 +216,16 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(value)
     }
 
+    fn visit_super_expr(
+        &mut self,
+        value: &Expr,
+        keyword: &Token,
+        method: &Token,
+    ) -> Result<Object, LoxError> {
+        self.resolve_local(value, keyword)?;
+        Ok(Object::Nil)
+    }
+
     fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
         match self.current_class {
             ClassType::None => Err(LoxError::RuntimeError(RuntimeError::new(
@@ -342,6 +352,11 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
                 )));
             }
             self.resolve_expr(&Expr::Variable(superclass.clone()))?;
+
+            self.begin_scope();
+            if let Some(scope) = self.scopes.last_mut() {
+                scope.insert("super".to_string(), true);
+            }
         }
 
         self.begin_scope();
@@ -368,6 +383,11 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         }
 
         self.end_scope();
+
+        if let Some(_superclass) = &class_stmt.superclass {
+            self.end_scope();
+        }
+
         self.current_class = enclosing_class;
 
         Ok(Object::Nil)
