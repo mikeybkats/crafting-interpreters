@@ -15,6 +15,7 @@ use crate::{
 enum ClassType {
     None,
     Class,
+    Subclass,
 }
 
 #[derive(Debug, Clone)]
@@ -222,6 +223,16 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         keyword: &Token,
         _method: &Token,
     ) -> Result<Object, LoxError> {
+        match self.current_class {
+            ClassType::Subclass => {}
+            _ => {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "Cannot use 'super' outside of a class. -- Resolver:visit_super_expr()"
+                        .to_string(),
+                    keyword,
+                )))
+            }
+        }
         self.resolve_local(value, keyword)?;
         Ok(Object::Nil)
     }
@@ -232,7 +243,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
                 "Cannot use 'this' outside of a class. -- Resolver:visit_this_expr()".to_string(),
                 keyword,
             ))),
-            ClassType::Class => {
+            _ => {
                 self.resolve_local(expr, keyword)?;
                 Ok(Object::Nil)
             }
@@ -351,6 +362,9 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
                     &superclass.name,
                 )));
             }
+
+            self.current_class = ClassType::Subclass;
+
             self.resolve_expr(&Expr::Variable(superclass.clone()))?;
 
             self.begin_scope();
