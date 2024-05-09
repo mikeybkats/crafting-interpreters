@@ -160,21 +160,21 @@ impl Interpreter {
     }
 
     fn handle_class_creation(
-        &self,
-        superclass: Option<Rc<RefCell<LoxClass>>>,
+        &mut self,
+        superclass: Option<LoxClass>,
         class_stmt: &ClassStmt,
     ) -> Result<Object, LoxError> {
         self.environment
             .borrow_mut()
             .define(class_stmt.name.lexeme.clone(), Object::Nil);
 
-        if let Some(superclass) = superclass {
+        if let Some(superclass) = superclass.clone() {
             self.environment = Rc::new(RefCell::new(Environment::with_enclosing(
                 self.environment.clone(),
             )));
             self.environment.borrow_mut().define(
                 "super".to_string(),
-                Object::Callable(Callable::LoxClass(superclass.borrow().clone())),
+                Object::Callable(Callable::LoxClass(superclass)),
             );
         }
 
@@ -192,11 +192,15 @@ impl Interpreter {
             );
         }
 
-        let class = LoxClass::new(class_stmt.name.lexeme.clone(), superclass, Some(methods));
+        let class = LoxClass::new(
+            class_stmt.name.lexeme.clone(),
+            superclass.clone(),
+            Some(methods),
+        );
 
-        if let Some(superclass) = superclass {
-            let env = self.environment.borrow().enclosing;
-            if let Some(enclosing) = env {
+        if let Some(_superclass) = superclass.clone() {
+            let enclosing = self.environment.borrow().clone().enclosing;
+            if let Some(enclosing) = enclosing {
                 self.environment = enclosing.clone();
             }
         }
@@ -470,23 +474,37 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         let locals = self.locals.borrow();
 
         if let Some(distance) = locals.get(expr) {
-            let superclass_res = self.environment.borrow().get_at(*distance, keyword);
-            let object_res = self.environment.borrow().get_at(*distance - 1, keyword);
+            let superclass = self
+                .environment
+                .borrow()
+                .get_at(*distance, keyword)
+                .map_err(|err| LoxError::RuntimeError(err))?;
+            let object = self
+                .environment
+                .borrow()
+                .get_at(*distance - 1, keyword)
+                .map_err(|err| LoxError::RuntimeError(err))?;
 
-            // These nested if let statements are making me dizzy 😵
-            if let Ok(Object::Callable(Callable::LoxClass(superclass))) = superclass_res {
-                if let Some(mut method) = superclass.find_method(method.lexeme.as_str()) {
-                    if let Ok(object_gen) = object_res {
-                        // object: LoxInstance
-                        // "Offsetting the distance by one looks up “this” in that inner environment. I admit this isn’t the most elegant code, but it works."
-                        if let Object::Instance(object) = object_gen {
-                            // "This is almost exactly like the code for looking up a method of a get expression, except that we call findMethod() on the superclass instead of on the class of the current object."
-                            return Ok(Object::Callable(Callable::LoxFunction(
-                                method.bind(object),
-                            )));
-                        }
-                    }
+            let callable_superclass = match superclass {
+                Object::Callable(Callable::LoxClass(superclass)) => superclass,
+                _ => {
+                    return Err(LoxError::RuntimeError(RuntimeError::new(
+                        "Superclass must be a class.".to_string(),
+                        keyword,
+                    )))
                 }
+            };
+
+            if let Some(mut method) = callable_superclass.find_method(method.lexeme.as_str()) {
+                if let Object::Instance(object) = object {
+                    // "This is almost exactly like the code for looking up a method of a get expression, except that we call findMethod() on the superclass instead of on the class of the current object."
+                    return Ok(Object::Callable(Callable::LoxFunction(method.bind(object))));
+                }
+            } else {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    format!("Undefined property '{}'.", method.lexeme),
+                    method,
+                )));
             }
         }
 
@@ -606,10 +624,7 @@ impl StmtVisitor<Result<Object, LoxError>> for Interpreter {
             let superclass = Expr::Variable(superclass_var.clone());
             match self.evaluate(&superclass) {
                 Ok(Object::Callable(Callable::LoxClass(superclass))) => {
-                    return self.handle_class_creation(
-                        Some(Rc::new(RefCell::new(superclass))),
-                        class_stmt,
-                    );
+                    return self.handle_class_creation(Some(superclass), class_stmt);
                 }
                 _ => {
                     return Err(LoxError::RuntimeError(RuntimeError::new(

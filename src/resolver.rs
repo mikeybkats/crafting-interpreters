@@ -220,7 +220,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         &mut self,
         value: &Expr,
         keyword: &Token,
-        method: &Token,
+        _method: &Token,
     ) -> Result<Object, LoxError> {
         self.resolve_local(value, keyword)?;
         Ok(Object::Nil)

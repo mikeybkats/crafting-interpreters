@@ -14,19 +14,24 @@ use super::{callable::Callable, function::LoxFunction, instance::LoxInstance};
 pub struct LoxClass {
     name: String,
     methods: HashMap<String, Object>,
-    superclass: Option<Rc<RefCell<LoxClass>>>,
+    superclass: Option<Box<LoxClass>>,
 }
 
 impl LoxClass {
     pub fn new(
         name: String,
-        superclass: Option<Rc<RefCell<LoxClass>>>,
+        superclass: Option<LoxClass>,
         methods: Option<HashMap<String, Object>>,
     ) -> Self {
         let methods = match methods {
             Some(methods) => methods,
             None => HashMap::new(),
         };
+        let superclass: Option<Box<LoxClass>> = match superclass {
+            Some(superclass) => Some(Box::new(superclass)),
+            None => None,
+        };
+
         Self {
             name,
             methods,
@@ -48,8 +53,8 @@ impl LoxClass {
                 _ => None,
             },
             None => {
-                if let Some(superclass) = &self.superclass {
-                    superclass.borrow().find_method(name)
+                if let Some(superclass) = self.superclass.clone() {
+                    superclass.find_method(name)
                 } else {
                     None
                 }

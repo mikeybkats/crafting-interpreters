@@ -308,6 +308,10 @@ impl Hash for Expr {
                 name.lexeme.hash(state);
                 value.hash(state);
             }
+            Expr::Super { keyword, method } => {
+                keyword.hash(state);
+                method.hash(state);
+            }
             Expr::Variable(Variable { name }) => {
                 name.hash(state);
             }

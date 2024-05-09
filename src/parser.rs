@@ -812,6 +812,14 @@ impl<'a> Parser<'a> {
             }
 
             return Ok(Expr::Literal { value: prev_object });
+        } else if self.match_symbol(&[TokenType::Super]) {
+            let keyword = self.previous().unwrap().clone();
+            self.consume(TokenType::Dot, "Expect '.' after 'super'.")?;
+            let method = self.consume(TokenType::Identifier, "Expect a superclass method name")?;
+            return Ok(Expr::Super {
+                keyword,
+                method: method.clone(),
+            });
         } else if self.match_symbol(&[TokenType::This]) {
             return Ok(Expr::This {
                 keyword: self.previous().unwrap().clone(),
