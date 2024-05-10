@@ -223,6 +223,16 @@ impl PartialEq for Expr {
                     value: value2,
                 },
             ) => object1 == object2 && name1 == name2 && value1 == value2,
+            (
+                Expr::Super {
+                    keyword: keyword1,
+                    method: method1,
+                },
+                Expr::Super {
+                    keyword: keyword2,
+                    method: method2,
+                },
+            ) => keyword1 == keyword2 && method1 == method2,
             (Expr::This { keyword: keyword1 }, Expr::This { keyword: keyword2 }) => {
                 keyword1 == keyword2
             }

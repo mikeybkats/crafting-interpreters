@@ -11,6 +11,14 @@ use super::{callable::Callable, function::LoxFunction, instance::LoxInstance};
 #[derive(Debug, Clone)]
 /// ## LoxClass
 /// Lox classes store the behaviors of Classes. When methods are called the data is retrieved from the LoxInstance.
+///
+/// - name
+///   - The name of the class
+/// - methods
+///   - A hashmap of methods that the class has
+/// - superclass
+///   - The superclass of the class
+///   - With super expressions, the superclass is a fixed property of the class declaration itself. Every time you evaluate some super expression, the superclass is always the same.
 pub struct LoxClass {
     name: String,
     methods: HashMap<String, Object>,

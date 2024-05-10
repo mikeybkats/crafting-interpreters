@@ -9,7 +9,7 @@ use crate::grammar::function::LoxFunction;
 use crate::grammar::native_function::{Clock, LoxNativeFunctions};
 use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, Stmt, StmtVisitor};
-use crate::grammar::token::{Token, TokenType};
+use crate::grammar::token::{create_super_token, create_this_token, Token, TokenType};
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
@@ -172,6 +172,7 @@ impl Interpreter {
             self.environment = Rc::new(RefCell::new(Environment::with_enclosing(
                 self.environment.clone(),
             )));
+
             self.environment.borrow_mut().define(
                 "super".to_string(),
                 Object::Callable(Callable::LoxClass(superclass)),
@@ -201,7 +202,7 @@ impl Interpreter {
         if let Some(_superclass) = superclass.clone() {
             let enclosing = self.environment.borrow().clone().enclosing;
             if let Some(enclosing) = enclosing {
-                self.environment = enclosing.clone();
+                self.environment = enclosing;
             }
         }
 
@@ -335,6 +336,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
         match processed_callee {
             Object::Callable(function) => function.call(self, processed_arguments),
+            Object::Instance(_instance) => Ok(Object::Nil),
             _ => Err(LoxError::RuntimeError(RuntimeError::new(
                 "Can only call functions and classes. -- Interpreter: visit_call_expr()"
                     .to_string(),
@@ -477,12 +479,13 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
             let superclass = self
                 .environment
                 .borrow()
-                .get_at(*distance, keyword)
+                .get_at(*distance, &create_super_token(None, Some(keyword.line)))
                 .map_err(|err| LoxError::RuntimeError(err))?;
+
             let object = self
                 .environment
                 .borrow()
-                .get_at(*distance - 1, keyword)
+                .get_at(*distance - 1, &create_this_token(None, Some(method.line)))
                 .map_err(|err| LoxError::RuntimeError(err))?;
 
             let callable_superclass = match superclass {

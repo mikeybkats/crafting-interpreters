@@ -107,12 +107,31 @@ impl Hash for Token {
     }
 }
 
-pub fn create_this_token(id: Option<String>) -> Token {
+pub fn create_this_token(id: Option<String>, line: Option<usize>) -> Token {
     Token {
         token_type: TokenType::This,
         lexeme: String::from("this"),
         literal: Option::None,
-        line: 1,
+        line: match line {
+            Some(n) => n,
+            _ => 1,
+        },
+        _id: match id {
+            Some(id) => id,
+            _ => generate_id(),
+        },
+    }
+}
+
+pub fn create_super_token(id: Option<String>, line: Option<usize>) -> Token {
+    Token {
+        token_type: TokenType::Super,
+        lexeme: String::from("super"),
+        literal: Option::None,
+        line: match line {
+            Some(n) => n,
+            _ => 1,
+        },
         _id: match id {
             Some(id) => id,
             _ => generate_id(),
