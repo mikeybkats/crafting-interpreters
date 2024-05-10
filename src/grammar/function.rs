@@ -84,7 +84,7 @@ impl LoxFunction {
                 .closure
                 .clone()
                 .borrow()
-                .get_at(0, &create_this_token(None))
+                .get_at(0, &create_this_token(None, None))
             {
                 Ok(this) => Ok(this.clone()),
                 Err(e) => Err(LoxError::RuntimeError(e)),

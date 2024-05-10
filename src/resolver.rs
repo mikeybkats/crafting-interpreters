@@ -15,6 +15,7 @@ use crate::{
 enum ClassType {
     None,
     Class,
+    Subclass,
 }
 
 #[derive(Debug, Clone)]
@@ -216,13 +217,33 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         self.resolve_expr(value)
     }
 
+    fn visit_super_expr(
+        &mut self,
+        value: &Expr,
+        keyword: &Token,
+        _method: &Token,
+    ) -> Result<Object, LoxError> {
+        match self.current_class {
+            ClassType::Subclass => {}
+            _ => {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "Cannot use 'super' outside of a class. -- Resolver:visit_super_expr()"
+                        .to_string(),
+                    keyword,
+                )))
+            }
+        }
+        self.resolve_local(value, keyword)?;
+        Ok(Object::Nil)
+    }
+
     fn visit_this_expr(&mut self, expr: &Expr, keyword: &Token) -> Result<Object, LoxError> {
         match self.current_class {
             ClassType::None => Err(LoxError::RuntimeError(RuntimeError::new(
                 "Cannot use 'this' outside of a class. -- Resolver:visit_this_expr()".to_string(),
                 keyword,
             ))),
-            ClassType::Class => {
+            _ => {
                 self.resolve_local(expr, keyword)?;
                 Ok(Object::Nil)
             }
@@ -334,7 +355,26 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         self.declare(&class_stmt.name);
         self.define(&class_stmt.name);
 
+        if let Some(superclass) = &class_stmt.superclass {
+            if class_stmt.name.lexeme == superclass.name.lexeme {
+                return Err(LoxError::RuntimeError(RuntimeError::new(
+                    "A class cannot inherit from itself.".to_string(),
+                    &superclass.name,
+                )));
+            }
+
+            self.current_class = ClassType::Subclass;
+
+            self.resolve_expr(&Expr::Variable(superclass.clone()))?;
+
+            self.begin_scope();
+            if let Some(scope) = self.scopes.last_mut() {
+                scope.insert("super".to_string(), true);
+            }
+        }
+
         self.begin_scope();
+
         if let Some(scope) = self.scopes.last_mut() {
             scope.insert("this".to_string(), true);
         } else {
@@ -357,6 +397,11 @@ impl StmtVisitor<Result<Object, LoxError>> for Resolver {
         }
 
         self.end_scope();
+
+        if let Some(_superclass) = &class_stmt.superclass {
+            self.end_scope();
+        }
+
         self.current_class = enclosing_class;
 
         Ok(Object::Nil)

@@ -36,6 +36,12 @@ pub fn generate_id() -> String {
 #[derive(Debug, Clone)]
 /// # Environment
 /// The environment stores program variables and function declarations.  Its values are accessed by the interpreter.
+///
+/// Environments are created whenever:
+/// - a function is called
+/// - a block is entered
+/// - a subclass is instantiated
+/// - a class with a superclass is created
 pub struct Environment {
     pub values: HashMap<String, Object>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
@@ -91,15 +97,15 @@ impl Environment {
     }
 
     fn ancestor(&self, distance: usize) -> Option<Rc<RefCell<Environment>>> {
+        let mut environment = Rc::new(RefCell::new(self.clone()));
         for _ in 0..distance {
-            match self.enclosing.clone() {
-                Some(e) => {
-                    return Some(e);
-                }
-                None => break,
-            };
+            environment = match environment.clone().borrow().enclosing.as_ref() {
+                Some(e) => e.clone(),
+                None => return None,
+            }
         }
-        return Some(Rc::new(RefCell::new(self.clone())));
+
+        return Some(environment);
     }
 
     pub fn _values_of(&self) -> &HashMap<String, Object> {

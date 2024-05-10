@@ -6,7 +6,7 @@ use crate::grammar::object::Object;
 use crate::grammar::stmt::{BlockStmt, ClassStmt, FunStmt, FunType, Stmt};
 use crate::grammar::token::{Token, TokenType};
 
-use crate::grammar::expr::Expr;
+use crate::grammar::expr::{Expr, Variable};
 
 /// # Parser
 ///
@@ -116,6 +116,15 @@ impl<'a> Parser<'a> {
         let name_check = self.consume(TokenType::Identifier, "Expect class name.")?;
         let name = name_check.clone();
 
+        let mut superclass: Option<Variable> = None;
+
+        if self.match_symbol(&[TokenType::Less]) {
+            self.consume(TokenType::Identifier, "Expect superclass name.")?;
+            superclass = Some(Variable {
+                name: self.previous().unwrap().clone(),
+            });
+        }
+
         self.consume(TokenType::LeftBrace, "Expect '{' before class body.")?;
 
         let mut methods: Vec<FunStmt> = vec![];
@@ -139,7 +148,11 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::RightBrace, "Expect '}' after class body.")?;
 
-        return Ok(Stmt::Class(ClassStmt { name, methods }));
+        return Ok(Stmt::Class(ClassStmt {
+            name,
+            superclass,
+            methods,
+        }));
     }
 
     /// # statement
@@ -460,12 +473,14 @@ impl<'a> Parser<'a> {
             let value = self.assignment()?;
 
             match expr {
-                Expr::Variable { name } => {
-                    return Ok(Expr::Assign {
-                        name,
-                        value: Box::new(value),
-                    });
-                }
+                Expr::Variable(variable) => match variable {
+                    Variable { name } => {
+                        return Ok(Expr::Assign {
+                            name,
+                            value: Box::new(value),
+                        });
+                    }
+                },
                 Expr::Get { object, name } => {
                     return Ok(Expr::Set {
                         object,
@@ -797,14 +812,22 @@ impl<'a> Parser<'a> {
             }
 
             return Ok(Expr::Literal { value: prev_object });
+        } else if self.match_symbol(&[TokenType::Super]) {
+            let keyword = self.previous().unwrap().clone();
+            self.consume(TokenType::Dot, "Expect '.' after 'super'.")?;
+            let method = self.consume(TokenType::Identifier, "Expect a superclass method name")?;
+            return Ok(Expr::Super {
+                keyword,
+                method: method.clone(),
+            });
         } else if self.match_symbol(&[TokenType::This]) {
             return Ok(Expr::This {
                 keyword: self.previous().unwrap().clone(),
             });
         } else if self.match_symbol(&[TokenType::Identifier]) {
-            return Ok(Expr::Variable {
+            return Ok(Expr::Variable(Variable {
                 name: self.previous().unwrap().clone(),
-            });
+            }));
         } else if self.match_symbol(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
 
@@ -975,8 +998,8 @@ mod tests {
                 assert_eq!(paren.token_type, TokenType::RightParen);
                 assert_eq!(arguments.len(), 0);
                 match *callee {
-                    Expr::Variable { name } => {
-                        assert_eq!(name.lexeme, "foo");
+                    Expr::Variable(variable) => {
+                        assert_eq!(variable.name.lexeme, "foo");
                     }
                     _ => {
                         panic!("Expected variable expression");
@@ -1045,8 +1068,8 @@ mod tests {
                 assert_eq!(paren.token_type, TokenType::RightParen);
                 assert_eq!(arguments.len(), 0);
                 match *callee {
-                    Expr::Variable { name } => {
-                        assert_eq!(name.lexeme, "foo");
+                    Expr::Variable(variable) => {
+                        assert_eq!(variable.name.lexeme, "foo");
                     }
                     _ => {
                         panic!("Expected variable expression");

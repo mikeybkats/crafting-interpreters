@@ -146,6 +146,15 @@ assignment     → ( call "." )? IDENTIFIER "=" assignment
                | logic_or ;
 ```
 
+## ch13 - inheritance
+
+```
+// After the class name, you can have a < followed by the superclass’s name.
+
+classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
+                 "{" function* "}" ;
+```
+
 ## The full lox grammar
 
 ```
@@ -195,7 +204,8 @@ declaration    → classDecl
                | varDecl
                | statement ;
 
-classDecl      → "class" IDENTIFIER "{" function* "}" ;
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 funDecl        → "fun" function ;
+classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
+                 "{" function* "}" ;
 ```
