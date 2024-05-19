@@ -4,12 +4,23 @@
 
 #include "memory.h"
 
+/*
+ * ## initChunk
+ *
+ * Initializes a chunk in memory, which is the main building block for clox
+ * data.
+ */
 void initChunk(Chunk* chunk) {
   chunk->count = 0;
   chunk->capacity = 0;
   chunk->code = NULL;
 }
 
+/*
+ * ## writeChunk
+ *
+ * Writes a chunk to memory.
+ */
 void writeChunk(Chunk* chunk, uint8_t byte) {
   // check to see if the array has adequate capacity
   if (chunk->capacity < chunk->count + 1) {
@@ -24,6 +35,11 @@ void writeChunk(Chunk* chunk, uint8_t byte) {
   chunk->count++;
 }
 
+/*
+ * ## freeChunk
+ *
+ * Free a chunk from memory
+ */
 void freeChunk(Chunk* chunk) {
   FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
   initChunk(chunk);
