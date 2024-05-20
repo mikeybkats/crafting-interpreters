@@ -4,7 +4,7 @@ void setUp(void) { /* General initialization */ }
 void tearDown(void) { /* General cleanup */ }
 
 void test_function2(void) {
-  int val = 4;
+  int val = 5;
   TEST_ASSERT_EQUAL_INT_MESSAGE(5, val, "Not five? Not alive!");
 }
 

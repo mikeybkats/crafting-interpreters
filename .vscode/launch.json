@@ -17,11 +17,12 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/c_lox/build/outputExecutable", // Path to your compiled executable
-      "args": [], // Arguments to pass to the executable (if any)
+      "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/c_lox",
       "environment": [],
       "externalConsole": false,
+      "internalConsoleOptions": "openOnSessionStart",
       "MIMode": "lldb", // Use lldb as the debugger for Clang
       "setupCommands": [
         {
@@ -43,15 +44,16 @@
       "cwd": "${workspaceFolder}/c_lox",
       "environment": [],
       "externalConsole": false,
-      "MIMode": "lldb", // Change to "gdb" if on Linux or not using LLDB
-      "preLaunchTask": "Build Tests",
+      "internalConsoleOptions": "openOnSessionStart",
+      "MIMode": "lldb",
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",
           "text": "-enable-pretty-printing",
           "ignoreFailures": true
         }
-      ]
+      ],
+      "preLaunchTask": "Build Tests"
       // "miDebuggerPath": "/usr/bin/lldb"  // Update this path if necessary
     }
   ]
