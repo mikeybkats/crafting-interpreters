@@ -1,0 +1,23 @@
+CC=clang
+CFLAGS=-I. -std=c11 -Wall
+UNITY_SRC=./tests/unity/src
+TEST_SRC=./tests
+
+all: tests/test_runner
+
+tests/test_runner: $(UNITY_SRC)/unity.o $(TEST_SRC)/test_main.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(UNITY_SRC)/unity.o: $(UNITY_SRC)/unity.c $(UNITY_SRC)/unity.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST_SRC)/test_main.o: $(TEST_SRC)/test_main.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST_SRC)/%.o: $(TEST_SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(UNITY_SRC)/*.o $(TEST_SRC)/*.o tests/test_runner
+
+.PHONY: all clean

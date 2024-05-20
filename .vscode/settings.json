@@ -22,7 +22,8 @@
     "typeinfo": "c",
     "chunk.h": "c",
     "common.h": "c",
-    "debug.h": "c"
+    "debug.h": "c",
+    "unity.h": "c"
   },
   "editor.formatOnSave": true
 }
