@@ -5,10 +5,32 @@
 
 #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * 2)
 
+/*
+ * ## Macro: GROW_ARRAY
+ *
+ * @brief Grows the size of an array from the oldCount to the new count.
+ *
+ * @param type the type of the value of values in the array
+ * @param pointer a pointer to the block in memory of the array
+ * @param oldCount old length of block
+ * @param newCount new length of block
+ */
 #define GROW_ARRAY(type, pointer, oldCount, newCount)   \
   (type*)reallocate(pointer, sizeof(type) * (oldCount), \
                     sizeof(type) * (newCount))
 
+/*
+ * ## Macro: FREE_ARRAY
+
+ * @brief Frees the array from memory.
+ *
+ * @param type the data type (value of values) inside the array that is to be
+ * freed.
+ *
+ * @param pointer a pointer to the array itself
+ *
+ * @param oldCount the capacity of the array to be freed from memory
+ */
 #define FREE_ARRAY(type, pointer, oldCount) \
   (type*)reallocate(pointer, sizeof(type) * (oldCount), 0)
 

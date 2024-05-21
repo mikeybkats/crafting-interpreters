@@ -14,6 +14,7 @@ void initChunk(Chunk* chunk) {
   chunk->count = 0;
   chunk->capacity = 0;
   chunk->code = NULL;
+  initValueArray(&chunk->constants);
 }
 
 /*
@@ -42,5 +43,20 @@ void writeChunk(Chunk* chunk, uint8_t byte) {
  */
 void freeChunk(Chunk* chunk) {
   FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
+  freeValueArray(
+      &chunk->constants);  // free the constants when the chunk is freed
   initChunk(chunk);
+}
+
+/*
+ * ## addConstant
+ *
+ * @brief Adds a new constant to the chunk.
+ *
+ * @param chunk the Chunk to add the value to
+ * @param value the Value to add to the chunk
+ */
+int addConstant(Chunk* chunk, Value value) {
+  writeValueArray(&chunk->constants, value);
+  return chunk->constants.count - 1;
 }
