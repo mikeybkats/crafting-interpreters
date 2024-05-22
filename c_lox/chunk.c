@@ -55,6 +55,8 @@ void freeChunk(Chunk* chunk) {
  *
  * @param chunk the Chunk to add the value to
  * @param value the Value to add to the chunk
+ *
+ * @returns the index of the constants array
  */
 int addConstant(Chunk* chunk, Value value) {
   writeValueArray(&chunk->constants, value);

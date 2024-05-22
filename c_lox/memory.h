@@ -3,6 +3,14 @@
 
 #include "common.h"
 
+/*
+ * ## Macro: GROW_CAPACITY
+ *
+ * @brief given an integer (size in bits) it returns twice the value. If the
+ * value is less than 8 (a single byte) it will return the given value.
+ *
+ * @param capacity the size int to grow
+ */
 #define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * 2)
 
 /*
