@@ -3,7 +3,7 @@ CXXFLAGS=-std=c11 -Wall
 TARGET=build/outputExecutable
 SRC=$(wildcard *.c)
 # OBJ=$(SRC:.c=.o)
-OBJDIR=build/obj
+OBJDIR=build
 OBJ=$(patsubst %.c,$(OBJDIR)/%.o,$(SRC))
 
 # Ensure the output directory exists

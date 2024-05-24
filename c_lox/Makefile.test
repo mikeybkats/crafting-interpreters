@@ -1,23 +1,57 @@
-CC=clang
-CFLAGS=-I. -std=c11 -Wall
-UNITY_SRC=./tests/unity/src
-TEST_SRC=./tests
+# Compiler
+CC = clang
 
-all: tests/test_runner
+# Compiler flags
+CFLAGS = -Isrc -std=c11 -Wall
 
-tests/test_runner: $(UNITY_SRC)/unity.o $(TEST_SRC)/test_main.o
+# Directories
+SRC_DIR = src
+TESTS_DIR = tests
+UNITY_DIR = $(TESTS_DIR)/unity/src
+BUILD_DIR = build
+TESTS_BUILD_DIR = $(BUILD_DIR)/tests
+
+# Source files - a list of all .c files in the src directory. Filter out main.c so that there are not two main functions when running tests
+SRC_FILES = $(filter-out $(SRC_DIR)/main.c,$(wildcard $(SRC_DIR)/*.c))
+
+# Test files - a list of all .c files in the tests directory
+TEST_FILES = $(wildcard $(TESTS_DIR)/test_*.c)
+
+# Object files - a list of all .o files in the build directory
+SRC_OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
+
+# Test object files - a list of all .o files in the tests/build directory
+TEST_OBJ_FILES = $(patsubst $(TESTS_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_FILES))
+
+# Executable targets
+TEST_RUNNER = $(TESTS_BUILD_DIR)/testRunner
+
+# Phony targets
+.PHONY: all clean
+
+# Default target
+all: directories $(TEST_RUNNER)
+
+directories:
+	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(TESTS_BUILD_DIR)
+
+# Compile test runner
+$(TEST_RUNNER): $(UNITY_DIR)/unity.o $(SRC_OBJ_FILES) $(TEST_OBJ_FILES)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(UNITY_SRC)/unity.o: $(UNITY_SRC)/unity.c $(UNITY_SRC)/unity.h
+# Compile source files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TEST_SRC)/test_main.o: $(TEST_SRC)/test_main.c
+# Compile test files
+$(TESTS_BUILD_DIR)/%.o: $(TESTS_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TEST_SRC)/%.o: $(TEST_SRC)/%.c
+# Compile Unity framework
+$(UNITY_DIR)/unity.o: $(UNITY_DIR)/unity.c $(UNITY_DIR)/unity.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Clean
 clean:
-	rm -f $(UNITY_SRC)/*.o $(TEST_SRC)/*.o tests/test_runner
-
-.PHONY: all clean
+	rm -rf $(BUILD_DIR)
