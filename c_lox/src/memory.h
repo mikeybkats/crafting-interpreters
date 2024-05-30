@@ -7,7 +7,7 @@
  * ## Macro: GROW_CAPACITY
  *
  * @brief given an integer (size in bits) it returns twice the value. If the
- * value is less than 8 (a single byte) it will return the given value.
+ * value is less than 8 (a single byte) it will return 8.
  *
  * @param capacity the size int to grow
  */

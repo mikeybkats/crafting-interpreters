@@ -1,20 +1,20 @@
-#include "../src/chunk.h"
 #include "test_chunk.h"
+#include "test_value.h"
 #include "unity/src/unity.h"
 
 void setUp(void) { /* General initialization */ }
 void tearDown(void) { /* General cleanup */ }
 
-void test_function2(void) {
-  printf("Test function 2\n");
-  int val = 5;
-  TEST_ASSERT_EQUAL_INT_MESSAGE(5, val, "Not five? Not alive!");
-}
-
 int main(void) {
-  // implement tests
   UNITY_BEGIN();
-  RUN_TEST(test_function2);
+
+  // test chunk.c
   RUN_TEST(test_initChunk);
+
+  // test value.c
+  RUN_TEST(test_initValueArray);
+  RUN_TEST(test_writeValueArray);
+  RUN_TEST(test_freeValueArray);
+
   return UNITY_END();
 }

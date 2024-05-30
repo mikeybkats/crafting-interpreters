@@ -20,10 +20,11 @@ void initValueArray(ValueArray* array) {
  * @param value the Value to append to the array
  */
 void writeValueArray(ValueArray* array, Value value) {
-  if (array->capacity > array->count + 1) {
+  if (array->capacity < array->count + 1) {
     int oldCapacity = array->capacity;
     array->capacity = GROW_CAPACITY(oldCapacity);
-    array->values = GROW_ARRAY(Value, array, oldCapacity, array->capacity);
+    array->values =
+        GROW_ARRAY(Value, array->values, oldCapacity, array->capacity);
   }
 
   array->values[array->count] = value;  // append value to values
@@ -41,3 +42,5 @@ void freeValueArray(ValueArray* array) {
   FREE_ARRAY(Value, array->values, array->capacity);
   initValueArray(array);
 }
+
+void printValue(Value value) { printf("%g", value); }
