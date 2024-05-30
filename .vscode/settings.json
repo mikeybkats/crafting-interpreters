@@ -23,7 +23,17 @@
     "chunk.h": "c",
     "common.h": "c",
     "debug.h": "c",
-    "unity.h": "c"
+    "unity.h": "c",
+    "__tuple": "c",
+    "type_traits": "c",
+    "limits": "c",
+    "ratio": "c",
+    "tuple": "c",
+    "variant": "c",
+    "chrono": "c",
+    "compare": "c",
+    "cstddef": "c",
+    "test_chunk.h": "c"
   },
   "editor.formatOnSave": true
 }

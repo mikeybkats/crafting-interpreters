@@ -1,3 +1,43 @@
+## Common Lang Features:
+
+`*` - Dereference operator - dereferences a pointer;
+
+```
+int var = 10;
+int *ptr = &var;
+int valueAtPtr = *ptr; // valueAtPtr is now 10, which is the value of var
+```
+
+`&` - Address of operator - gets the value of the address.
+
+```
+int var = 10;
+int *ptr = &var; // ptr now holds the address of var
+```
+
+## Makefiles
+
+consider the pattern in a make file
+
+```
+src/%.o: src/%.c
+	clang -I. -std=c11 -Wall -c $< -o $@
+```
+
+`src/%.o: src/%.c` is a rule
+
+- `src/%.o` is the target pattern
+- `src/%.c` is the prerequisite pattern - this represents the files to be selected
+- `$<` is a special variable in Makefiles that represents the first prerequisite of the rule
+- `$@` is a special variable that represents the target of the rule `src/%.o`.
+- `$^` represents all the prerequisites of the target, excluding duplicates
+
+so the final output in the terminal will be:
+
+`clang -I -std=c11 -Wall -c src/%.c -o src/%.o`
+
+## stdlib.h
+
 The C standard library (`stdlib.h`) provides several memory-related functions for dynamic memory allocation, memory management, and conversion. Here are the most commonly used memory functions offered by `stdlib.h`, along with their brief descriptions:
 
 1. **Memory Allocation and Deallocation**:

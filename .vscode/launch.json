@@ -16,7 +16,7 @@
       "name": "C Debug (Clang)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/c_lox/build/outputExecutable", // Path to your compiled executable
+      "program": "${workspaceFolder}/c_lox/build/src/outputExecutable", // Path to your compiled executable
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/c_lox",
@@ -38,7 +38,7 @@
       "name": "C Test (Clang)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/c_lox/tests/test_runner",
+      "program": "${workspaceFolder}/c_lox/build/tests/testRunner",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/c_lox",
