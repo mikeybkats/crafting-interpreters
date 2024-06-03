@@ -21,7 +21,11 @@ void initChunk(Chunk* chunk) {
 /*
  * ## writeChunk
  *
- * Writes a chunk to memory.
+ * @description Writes a chunk to memory.
+ *
+ * @param chunk the initialized Chunk to write to.
+ * @param byte the code to write to the chunk. Can be an OpCode or a constant.
+ * @param line the line number of the code
  */
 void writeChunk(Chunk* chunk, uint8_t byte, int line) {
   // check to see if the array has adequate capacity

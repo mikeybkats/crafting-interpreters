@@ -11,15 +11,44 @@
  */
 void disassembleChunk(Chunk* chunk, char* name) {
   printf("== %s ==\n", name);
+  printf("offset line opcode             constant\n");
+  printf("------ ---- ------------------ --------\n");
 
   for (int offset = 0; offset < chunk->count;) {
     offset = disassembleInstruction(chunk, offset);
   }
 }
 
+void printChunk(Chunk* chunk) {
+  printf("\n\n== chunk ==\n");
+
+  printf("count: %d\n", chunk->count);
+  printf("capacity: %d\n", chunk->capacity);
+
+  printf("code:  [");
+  for (int i = 0; i < chunk->count; i++) {
+    printf("%d", chunk->code[i]);
+
+    if (i < chunk->count - 1) {
+      printf(", ");
+    }
+  }
+  printf("]\n");
+
+  printf("lines: [");
+  for (int i = 0; i < chunk->count; i++) {
+    printf("%d", chunk->lines[i]);
+    if (i < chunk->count - 1) {
+      printf(", ");
+    }
+  }
+  printf("]\n");
+}
+
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
   uint8_t constant = chunk->code[offset + 1];
-  printf("%-16s %4d '", name, constant);
+  printf(" %-16s", name);
+  printf("%4d: '", constant);
   printValue(chunk->constants.values[constant]);
   printf("'\n");
 
@@ -27,7 +56,7 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
 }
 
 static int simpleInstruction(const char* name, int offset) {
-  printf("%s\n", name);
+  printf(" %s\n", name);
   return offset + 1;
 }
 
@@ -41,7 +70,7 @@ static int simpleInstruction(const char* name, int offset) {
  * given piece of code.
  */
 int disassembleInstruction(Chunk* chunk, int offset) {
-  printf("%04D", offset);
+  printf("%04D  ", offset);
 
   if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
     printf("   | ");
