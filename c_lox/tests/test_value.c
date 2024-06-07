@@ -2,7 +2,7 @@
 #include "unity/src/unity.h"
 
 void test_initValueArray(void) {
-  printf("Test initValueArray\n");
+  printf("Test initValueArray --- ");
 
   ValueArray array;
   initValueArray(&array);
@@ -13,7 +13,7 @@ void test_initValueArray(void) {
 }
 
 void test_writeValueArray(void) {
-  printf("Test writeValueArray\n");
+  printf("Test writeValueArray --- ");
 
   ValueArray array;
   initValueArray(&array);
@@ -30,7 +30,7 @@ void test_writeValueArray(void) {
 }
 
 void test_freeValueArray(void) {
-  printf("Test writeValueArray\n");
+  printf("Test writeValueArray --- ");
 
   ValueArray array;
   initValueArray(&array);

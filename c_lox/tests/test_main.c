@@ -1,4 +1,5 @@
 #include "test_chunk.h"
+#include "test_rle.h"
 #include "test_value.h"
 #include "unity/src/unity.h"
 
@@ -15,6 +16,9 @@ int main(void) {
   RUN_TEST(test_initValueArray);
   RUN_TEST(test_writeValueArray);
   RUN_TEST(test_freeValueArray);
+
+  // test rle.c
+  RUN_TEST(test_rleEncode);
 
   return UNITY_END();
 }

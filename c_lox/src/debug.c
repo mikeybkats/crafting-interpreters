@@ -46,10 +46,11 @@ void printChunk(Chunk* chunk) {
 }
 
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
-  uint8_t constant = chunk->code[offset + 1];
-  printf(" %-16s", name);
-  printf("%4d: '", constant);
-  printValue(chunk->constants.values[constant]);
+  uint8_t constantIndex = chunk->code[offset + 1];
+  printf(" %-16s", name);           // print the opcode name of the instruction
+  printf("%4d: '", constantIndex);  // print the index of the constant
+  printValue(
+      chunk->constants.values[constantIndex]);  // print the constant value
   printf("'\n");
 
   return offset + 2;
@@ -70,12 +71,12 @@ static int simpleInstruction(const char* name, int offset) {
  * given piece of code.
  */
 int disassembleInstruction(Chunk* chunk, int offset) {
-  printf("%04D  ", offset);
+  printf("%04D  ", offset);  // print the offset
 
   if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
     printf("   | ");
   } else {
-    printf("%4D ", chunk->lines[offset]);
+    printf("%4D ", chunk->lines[offset]);  // print the line number
   }
 
   // read a single byte from the bytecode at the given offset

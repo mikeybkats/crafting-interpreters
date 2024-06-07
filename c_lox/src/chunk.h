@@ -28,12 +28,16 @@ typedef struct {
   int capacity;
   uint8_t* code;
   int* lines;
+  char* rleLines;
   ValueArray constants;
 } Chunk;
 
 void initChunk(Chunk* chunk);
+
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
+void writeRleChunk(Chunk* chunk, uint8_t byte, int line);
+// void getLine(Chunk* chunk, int offset);
 int addConstant(Chunk* chunk, Value value);
 
 #endif
