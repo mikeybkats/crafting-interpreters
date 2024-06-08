@@ -7,6 +7,5 @@ typedef struct {
 } RleData;
 
 RleData* rleInit(int capacity);
-RleData* rleEncodeLine(int* data, int length);
-char* rleEncodeLines(Chunk* data, int line);
-int* rleDecode(RleData* data);
+RleData* rleEncodeLines(int* data, int length);
+int* rleDecodeLines(RleData* data);

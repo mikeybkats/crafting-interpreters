@@ -18,7 +18,8 @@ int main(void) {
   RUN_TEST(test_freeValueArray);
 
   // test rle.c
-  RUN_TEST(test_rleEncode);
+  RUN_TEST(test_rleEncodeLines);
+  RUN_TEST(test_rleDecodeLines);
 
   return UNITY_END();
 }

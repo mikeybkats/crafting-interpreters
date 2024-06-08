@@ -13,47 +13,32 @@ RleData* rleInit(int capacity) {
   return data;
 }
 
-// char* formatLengthCode(int count) {
-//   char lengthPrefix[6] = "x";
-
-//   // TODO: how is this fixed size buffer determined?
-//   char* lengthCode = malloc(14 * sizeof(char));
-//   sprintf(lengthCode, "%s %d", lengthPrefix, count);
-
-//   return lengthCode;
-// }
-
-// char* formatEncodedEntry(char* lengthCode, int entry) {
-//   char* encodedEntry = malloc(14 * sizeof(char));
-//   sprintf(encodedEntry, "%d %s", entry, lengthCode);
-
-//   return encodedEntry;
-// }
-
 void rleGrowIfNeeded(RleData* rleData, int additionalLength) {
   while (rleData->length + additionalLength >= rleData->capacity) {
     rleData->capacity = GROW_CAPACITY(rleData->capacity);
-    // rleData->encodedData =
-    //     (char*)realloc(rleData->encodedData, rleData->capacity *
-    //     sizeof(char));
+    rleData->encodedData =
+        (char*)realloc(rleData->encodedData, rleData->capacity * sizeof(char));
   }
 }
 
-void writeEncodedData(RleData* encodedLines, char* encodedData) {
-  int strLength = strlen(encodedData);
-  encodedLines->encodedData[encodedLines->length] =
-      malloc((strLength + 1) * sizeof(char));
+void writeEncodedData(RleData* rleData, const char* encodedData) {
+  // get the length
+  int entryLength = strlen(encodedData);
 
-  strcpy(encodedLines->encodedData[encodedLines->length], encodedData);
+  // grow the array if needed
+  rleGrowIfNeeded(rleData, entryLength);
+
+  // copy the data into the memory location
+  memcpy(rleData->encodedData + rleData->length, encodedData, entryLength);
+
+  // update the length in the rleData
+  rleData->length += entryLength;
+
+  // ensure string null termination
+  rleData->encodedData[rleData->length] = '\0';
 }
 
-char* rleEncodeLines(Chunk* data, int line) {
-  // Initialize an empty result string.
-  char* result = malloc(data->capacity * sizeof(char));
-  return result;
-}
-
-RleData* rleEncodeLine(int* data, int length) {
+RleData* rleEncodeLines(int* data, int length) {
   // Initialize an empty result string.
   RleData* encodedLines = rleInit(14);
 
@@ -73,24 +58,55 @@ RleData* rleEncodeLine(int* data, int length) {
     }
     i--;
 
-    // Append the count and the character to the result string.
-    // char* lengthCode = formatLengthCode(occurencesCount);
-    // char* encodedData = formatEncodedEntry(lengthCode, entry);
     char lengthCode[20];  // Use a fixed-size buffer
     snprintf(lengthCode, sizeof(lengthCode), "%d", occurencesCount);
     char encodedData[50];  // Use a fixed-size buffer
     snprintf(encodedData, sizeof(encodedData), "%d x %s", entry, lengthCode);
+
     writeEncodedData(encodedLines, encodedData);
-    // encodedLines->length++;
+    if (i < length - 1) {
+      writeEncodedData(encodedLines, ", ");
+    }
   }
 
   return encodedLines;
 }
 
-int* rleDecode(RleData* data) {
+int* rleDecodeLines(RleData* data) {
   int* decodedData = malloc(sizeof(int));
+
+  char* lineNumber = malloc(sizeof(char));
+  char* multiplier = malloc(sizeof(char));
+
+  for (int x = 0; x < data->length; x++) {
+    int i = 0;
+
+    // get the line number
+    while (data->encodedData[i] != 'x') {
+      if (data->encodedData[i] != ' ') {
+        lineNumber[i] = data->encodedData[i];
+      }
+      i++;
+    }
+
+    // get the multiplier (number of lines)
+    while (data->encodedData[i] != ',') {
+      multiplier[i] = data->encodedData[i];
+      i++;
+    }
+
+    int lineNumberInt = atoi(lineNumber);
+    int multiplierInt = atoi(multiplier);
+
+    printf("lineNumberInt: %d, multiplierInt: %d\n", lineNumberInt,
+           multiplierInt);
+
+    for (int j = x; j < multiplierInt; x++) {
+      decodedData[j] = lineNumberInt;
+    }
+  }
 
   return decodedData;
 }
 
-int getLine(int index) { return 0; }
+// int getLine(int index) { return 0; }
