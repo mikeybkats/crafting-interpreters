@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+const int REALLOCATION_BUFFER = 2;
+
 RleData* rleInit(int capacity) {
   RleData* data = (RleData*)malloc(sizeof(RleData));
   data->encodedData = (char*)malloc(capacity * sizeof(char*));
@@ -64,36 +66,54 @@ RleData* rleEncodeLines(int* data, int length) {
     snprintf(encodedData, sizeof(encodedData), "%d x %s", entry, lengthCode);
 
     writeEncodedData(encodedLines, encodedData);
-    if (i < length - 1) {
-      writeEncodedData(encodedLines, ", ");
+    // if (i < length - 1) {
+    writeEncodedData(encodedLines, ", ");
+    // }
+    if (i == length - 1) {
+      writeEncodedData(encodedLines, "\0");
     }
+    // } else {
+    //   encodedLines->encodedData[encodedLines->length] = '\0';
+    // }
   }
 
   return encodedLines;
 }
 
 int* rleDecodeLines(RleData* data) {
-  int* decodedData = malloc(sizeof(int));
+  int* decodedData = malloc(sizeof(int) * data->capacity);
+  int decodedCount = 0;
 
-  char* lineNumber = malloc(sizeof(char));
-  char* multiplier = malloc(sizeof(char));
+  char lineNumber[20];
+  char multiplier[20];
 
-  for (int x = 0; x < data->length; x++) {
-    int i = 0;
+  int x = 0;  // x is the cursor for selection
+  while (x < data->length - 1) {
+    int i = 0;  // i is the target for writing data
 
     // get the line number
-    while (data->encodedData[i] != 'x') {
-      if (data->encodedData[i] != ' ') {
-        lineNumber[i] = data->encodedData[i];
+    while (data->encodedData[x] != 'x') {
+      // loop through the line number with i
+      if (data->encodedData[x] != ' ') {
+        lineNumber[i] = data->encodedData[x];
+        i++;
       }
-      i++;
+      x++;
     }
 
+    lineNumber[i] = '\0';
+
+    i = 0;  // reset target for writing data
+    x = x + 2;
     // get the multiplier (number of lines)
-    while (data->encodedData[i] != ',') {
-      multiplier[i] = data->encodedData[i];
-      i++;
+    while (data->encodedData[x] != ',') {
+      if (data->encodedData[x] != ' ') {
+        multiplier[i] = data->encodedData[x];
+        i++;
+      }
+      x++;
     }
+    multiplier[i] = '\0';
 
     int lineNumberInt = atoi(lineNumber);
     int multiplierInt = atoi(multiplier);
@@ -101,9 +121,21 @@ int* rleDecodeLines(RleData* data) {
     printf("lineNumberInt: %d, multiplierInt: %d\n", lineNumberInt,
            multiplierInt);
 
-    for (int j = x; j < multiplierInt; x++) {
-      decodedData[j] = lineNumberInt;
+    // Ensure there's enough space in decodedData
+    // if the total number of entries is greater than the capacity
+    // if (multiplierInt + decodedCount >= data->capacity * REALLOCATION_BUFFER)
+    // { grow the capacity of the target
+    //   data->capacity = GROW_CAPACITY(data->capacity);
+    //   decodedData = realloc(decodedData, sizeof(int) * data->capacity);
+    // }
+
+    for (int j = 0; j < multiplierInt; j++) {
+      printf("pushing: %d, decodedCount: %d\n", lineNumberInt, decodedCount);
+      decodedData[decodedCount] = lineNumberInt;
+      decodedCount++;
     }
+
+    x++;
   }
 
   return decodedData;

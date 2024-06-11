@@ -7,12 +7,8 @@ void test_rleEncodeLines(void) {
 
   RleData* encodedArr = rleEncodeLines(data, 8);
 
-  // printf("\n == Result ==\n");
-  // for (int i = 0; i < 8; i++) {
-  //   if (encodedArr->encodedData[i] != NULL) {
-  //     printf("%s \n", encodedArr->encodedData[i]);
-  //   }
-  // }
+  printf("\n\n == Encoded Result ==\n");
+  printf("%s \n\n", encodedArr->encodedData);
 
   TEST_ASSERT_EQUAL_STRING_MESSAGE(
       "123 x 3, 0 x 1, 50 x 2, 110 x 2", encodedArr->encodedData,
@@ -27,13 +23,12 @@ void test_rleDecodeLines(void) {
 
   int* decodedData = rleDecodeLines(encodedArr);
 
-  printf("\n == Result ==\n");
-  for (int i = 0; i < 8; i++) {
-    if (decodedData[i] != NULL) {
-      printf("%d \n", decodedData[i]);
-    }
-  }
+  // printf("\n == Result ==\n");
+  // for (int i = 0; i < 8; i++) {
+  //   if (decodedData[i] != NULL) {
+  //     printf("%d \n", decodedData[i]);
+  //   }
+  // }
 
-  TEST_ASSERT_EQUAL_UINT32_ARRAY(
-      data, decodedData, "Should be '{123, 123, 123, 0, 50, 50, 110, 110}'");
+  TEST_ASSERT_EQUAL_UINT_ARRAY(data, decodedData, 8);
 }
