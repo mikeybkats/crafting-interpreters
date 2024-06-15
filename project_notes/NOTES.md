@@ -173,3 +173,16 @@ In other words, getters are just like for loops in the sense that they only add 
 
 1. make a handler for the class getter function stmt. create a key in the function struct for kind. Function kind can be getter or function.
 2. make a handler for the accessor. When a function is accessed as a value (not a call) check to see if it's a getter. If it is, then treat it like a call expression and call the getter function. This pushes the brunt of the work out of the parser and into the compiler.
+
+## Chapter 14 - bytecode
+
+A refresher on big O notation. n represents the size of the input.
+
+| complexity | meaning      | notes                                                                                                                                                                     |
+| ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| O(1)       | Constant     | Order of one, or constant time. No matter how large the input the time will be the same.                                                                                  |
+| O(n)       | Linear       | Order of n, or linear time. The runtime grows proportional to the input.                                                                                                  |
+| O(log n)   | Logarithmic  | Order of log n, or logarithmic time. The problem is divided by a constant with each step                                                                                  |
+| O(n log n) | Linearithmic | Order n log n, or linearithmic time. With each step n is divided by a constant and then divided by log n. If n is 5, the runtime is 5 (log 5), or roughly 5 ( 2.3 x 2.3 ) |
+| O(n^2)     | Quadratic    | Order to the power of 2, or quadratic time. Runtime that doubles with each additional input element.                                                                      |
+| O(n!)      | Factorial    | Order n factorial, or factorial time. Runtime grows factorially with n. So if n is 5, the runtime is 5 x 4 x 3 x 2 x 1 = 120                                              |
