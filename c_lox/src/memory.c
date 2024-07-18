@@ -5,12 +5,16 @@
 /*
  *
  * ## reallocate
- * ### used for all dynamic memory allocation in clox
+ *
+ * used for all dynamic memory allocation in clox
  *
  * "allocating memory, freeing it, and changing the size of an existing
  * allocation. Routing all of those operations through a single function will be
  * important later when we add a garbage collector that needs to keep track of
  * how much memory is in use."
+ *
+ * pointer the pointer to the block in memory
+ * oldSize the size of the block in memory
  *
  * ### reallocate handles allocations like this:
  *
@@ -28,7 +32,9 @@ void* reallocate(void* pointer, size_t oldsize, size_t newSize) {
     return NULL;
   }
 
-  void* result = realloc(pointer, newSize);
+  void* result =
+      realloc(pointer, newSize);  // change the size of the block in memory
+                                  // without losing the pointer data.
   if (result == NULL) exit(1);
   return result;
 };

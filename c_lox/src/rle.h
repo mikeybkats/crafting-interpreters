@@ -8,4 +8,5 @@ typedef struct {
 
 RleData* rleInit(int capacity);
 RleData* rleEncodeLines(int* data, int length);
-int* rleDecodeLines(RleData* data);
+int* rleDecodeLines(RleData* data, int* decodedLength);
+int getLine(RleData* data, int offset);

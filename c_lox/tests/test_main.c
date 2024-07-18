@@ -20,6 +20,7 @@ int main(void) {
   // test rle.c
   RUN_TEST(test_rleEncodeLines);
   RUN_TEST(test_rleDecodeLines);
+  RUN_TEST(test_getLine);
 
   return UNITY_END();
 }

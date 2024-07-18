@@ -3,6 +3,18 @@
 
 #include "common.h"
 
+/**
+ * ## Enum: ValueType
+ *
+ * A little bit about values in clox:
+ *
+ * Values in clox are stored in a constant pool. This is similar to Java --
+ * [java constant pool
+ * spec](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4)
+ *
+ * The clox constant pool is an array of values. The instruction to load a data
+ * type (like a constant) looks up the value by index in the array.
+ */
 typedef double Value;
 
 /*

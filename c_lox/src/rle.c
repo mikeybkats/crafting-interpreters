@@ -1,6 +1,5 @@
 #include "rle.h"
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,21 +65,15 @@ RleData* rleEncodeLines(int* data, int length) {
     snprintf(encodedData, sizeof(encodedData), "%d x %s", entry, lengthCode);
 
     writeEncodedData(encodedLines, encodedData);
-    // if (i < length - 1) {
-    writeEncodedData(encodedLines, ", ");
-    // }
-    if (i == length - 1) {
-      writeEncodedData(encodedLines, "\0");
+    if (i < length - 1) {
+      writeEncodedData(encodedLines, ", ");
     }
-    // } else {
-    //   encodedLines->encodedData[encodedLines->length] = '\0';
-    // }
   }
 
   return encodedLines;
 }
 
-int* rleDecodeLines(RleData* data) {
+int* rleDecodeLines(RleData* data, int* decodedLength) {
   int* decodedData = malloc(sizeof(int) * data->capacity);
   int decodedCount = 0;
 
@@ -105,8 +98,9 @@ int* rleDecodeLines(RleData* data) {
 
     i = 0;  // reset target for writing data
     x = x + 2;
+
     // get the multiplier (number of lines)
-    while (data->encodedData[x] != ',') {
+    while (data->encodedData[x] != ',' && data->encodedData[x] != '\0') {
       if (data->encodedData[x] != ' ') {
         multiplier[i] = data->encodedData[x];
         i++;
@@ -118,19 +112,14 @@ int* rleDecodeLines(RleData* data) {
     int lineNumberInt = atoi(lineNumber);
     int multiplierInt = atoi(multiplier);
 
-    printf("lineNumberInt: %d, multiplierInt: %d\n", lineNumberInt,
-           multiplierInt);
-
     // Ensure there's enough space in decodedData
     // if the total number of entries is greater than the capacity
-    // if (multiplierInt + decodedCount >= data->capacity * REALLOCATION_BUFFER)
-    // { grow the capacity of the target
-    //   data->capacity = GROW_CAPACITY(data->capacity);
-    //   decodedData = realloc(decodedData, sizeof(int) * data->capacity);
-    // }
+    if (multiplierInt + decodedCount >= data->capacity * REALLOCATION_BUFFER) {
+      GROW_CAPACITY(data->capacity);
+      decodedData = realloc(decodedData, sizeof(int) * data->capacity);
+    }
 
     for (int j = 0; j < multiplierInt; j++) {
-      printf("pushing: %d, decodedCount: %d\n", lineNumberInt, decodedCount);
       decodedData[decodedCount] = lineNumberInt;
       decodedCount++;
     }
@@ -138,7 +127,14 @@ int* rleDecodeLines(RleData* data) {
     x++;
   }
 
+  // why is decoded length needed?
+  *decodedLength = decodedCount;
   return decodedData;
 }
 
-// int getLine(int index) { return 0; }
+int getLine(RleData* data, int offset) {
+  int length = 0;
+  int* lineNumbers = rleDecodeLines(data, &length);
+
+  return lineNumbers[offset];
+}

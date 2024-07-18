@@ -38,6 +38,10 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
     chunk->capacity = GROW_CAPACITY(oldCapacity);
     chunk->code =
         GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
+    // Grow array runs a reallocate function
+    // which under the hood is just a call of
+    // realloc, unless the new capacity is 0.
+    // In which case it frees the memory.
     chunk->lines = GROW_ARRAY(int, chunk->lines, oldCapacity, chunk->capacity);
   }
 
@@ -71,7 +75,7 @@ void writeRleChunk(Chunk* chunk, uint8_t byte, int line) {
  * @brief a function that, given the index of an instruction, determines
  * the line where the instruction occurs.
  */
-void getLine(Chunk* chunk, int offset) {}
+// void getLine(Chunk* chunk, int offset) {}
 
 /*
  * ## freeChunk

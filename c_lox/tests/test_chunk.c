@@ -2,7 +2,7 @@
 #include "unity/src/unity.h"
 
 void test_initChunk(void) {
-  printf("Test initChunk --- ");
+  printf("\n\033[0;31mTest initChunk ---\033[0m \n");
   Chunk chunk;
   initChunk(&chunk);
 
