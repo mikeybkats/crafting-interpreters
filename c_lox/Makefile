@@ -9,7 +9,7 @@ OBJ_FILES=$(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
 
 # Ensure the output directory exists
 # $(shell mkdir -p build)
-$(shell mkdir -p build $(OBJDIR))
+$(shell mkdir -p build $(BUILD_DIR))
 
 
 $(TARGET): $(OBJ_FILES)
