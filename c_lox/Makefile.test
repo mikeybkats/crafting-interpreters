@@ -4,12 +4,30 @@ CC = clang
 # Compiler flags
 CFLAGS = -Isrc -std=c11 -Wall
 
+
 # Directories
 SRC_DIR = src
 TESTS_DIR = tests
 UNITY_DIR = $(TESTS_DIR)/unity/src
 BUILD_DIR = build
 TESTS_BUILD_DIR = $(BUILD_DIR)/tests
+SRC_BUILD_DIR = ${BUILD_DIR}/src
+
+# target
+TARGET=$(TESTS_BUILD_DIR)/testRunner
+
+# Ensure the output directory exists
+$(shell mkdir -p $(BUILD_DIR))
+$(shell mkdir -p $(TESTS_BUILD_DIR))
+$(shell mkdir -p $(SRC_BUILD_DIR))
+
+# Default target
+all: directories $(TARGET)
+
+directories:
+	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(SRC_BUILD_DIR)
+	@mkdir -p $(TESTS_BUILD_DIR)
 
 # Source files - a list of all .c files in the src directory. Filter out main.c so that there are not two main functions when running tests
 SRC_FILES = $(filter-out $(SRC_DIR)/main.c,$(wildcard $(SRC_DIR)/*.c))
@@ -18,30 +36,17 @@ SRC_FILES = $(filter-out $(SRC_DIR)/main.c,$(wildcard $(SRC_DIR)/*.c))
 TEST_FILES = $(wildcard $(TESTS_DIR)/test_*.c)
 
 # Object files - a list of all .o files in the build directory
-SRC_OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
+SRC_OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(SRC_BUILD_DIR)/%.o,$(SRC_FILES))
 
 # Test object files - a list of all .o files in the tests/build directory
 TEST_OBJ_FILES = $(patsubst $(TESTS_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_FILES))
 
-# Executable targets
-TEST_RUNNER = $(TESTS_BUILD_DIR)/testRunner
-
-# Phony targets
-.PHONY: all clean
-
-# Default target
-all: directories $(TEST_RUNNER)
-
-directories:
-	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(TESTS_BUILD_DIR)
-
 # Compile test runner
-$(TEST_RUNNER): $(UNITY_DIR)/unity.o $(SRC_OBJ_FILES) $(TEST_OBJ_FILES)
+$(TARGET): $(SRC_OBJ_FILES) $(TEST_OBJ_FILES) $(UNITY_DIR)/unity.o 
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Compile source files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+$(SRC_BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile test files
@@ -52,6 +57,14 @@ $(TESTS_BUILD_DIR)/%.o: $(TESTS_DIR)/%.c
 $(UNITY_DIR)/unity.o: $(UNITY_DIR)/unity.c $(UNITY_DIR)/unity.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Print TEST_FILES to the console
+print-files:
+	@echo "TEST_FILES: $(TEST_FILES)"
+	@echo "SRC_FILES: $(SRC_FILES)"
+
 # Clean
 clean:
-	rm -rf $(BUILD_DIR)
+	@rm -rf $(TESTS_BUILD_DIR) 
+	@rm -rf $(SRC_BUILD_DIR)
+
+.PHONY: all clean

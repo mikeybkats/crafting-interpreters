@@ -19,4 +19,4 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CXX) $(CXXFLAGS) -c $< -o $@	
 
 clean:
-	rm -f $(OBJ_FILES) $(TARGET) ${OBJ_FILES}
+	rm -f $(OBJ_FILES) $(TARGET)
