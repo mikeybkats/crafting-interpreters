@@ -1,2 +1,7 @@
-**/target/**
+# mac junk
 .DS_Store
+
+# builds
+**/build/**
+build/*
+**/target/**

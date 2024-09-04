@@ -1,7 +1,5 @@
 {
   "rust-analyzer.linkedProjects": ["./Cargo.toml"],
-  "spellright.language": ["en"],
-  "spellright.documentTypes": ["latex", "plaintext"],
   "files.associations": {
     "stdint.h": "c",
     "stdbool.h": "c",
@@ -33,7 +31,10 @@
     "chrono": "c",
     "compare": "c",
     "cstddef": "c",
-    "test_chunk.h": "c"
+    "test_chunk.h": "c",
+    "rle.h": "c",
+    "test_value.h": "c",
+    "test_rle.h": "c"
   },
   "editor.formatOnSave": true
 }

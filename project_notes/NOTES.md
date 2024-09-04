@@ -186,3 +186,10 @@ A refresher on big O notation. n represents the size of the input.
 | O(n log n) | Linearithmic | Order n log n, or linearithmic time. With each step n is divided by a constant and then divided by log n. If n is 5, the runtime is 5 (log 5), or roughly 5 ( 2.3 x 2.3 ) |
 | O(n^2)     | Quadratic    | Order to the power of 2, or quadratic time. Runtime that doubles with each additional input element.                                                                      |
 | O(n!)      | Factorial    | Order n factorial, or factorial time. Runtime grows factorially with n. So if n is 5, the runtime is 5 x 4 x 3 x 2 x 1 = 120                                              |
+
+| i   | j   | entry | data[j] | occurenceCout |
+| --- | --- | ----- | ------- | ------------- |
+| 0   | 0   | 123   | 123     | 1             |
+| 1   | 1   | 123   | 123     | 2             |
+| 2   | 2   | 123   | 123     | 3             |
+| 3   | 3   | 123   |         |               |
