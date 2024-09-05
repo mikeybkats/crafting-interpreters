@@ -5,12 +5,56 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Rust Debug",
       "type": "lldb",
       "request": "launch",
-      "name": "Debug",
-      "program": "${workspaceFolder}/target/debug/rlox_interpreter",
-      "args": ["${workspaceFolder}/test/scopes.lox"],
-      "cwd": "${workspaceFolder}"
+      "program": "${workspaceFolder}/rust_lox/target/debug/rlox_interpreter",
+      "args": ["${workspaceFolder}/rust_lox/test/scopes.lox"],
+      "cwd": "${workspaceFolder}/rust_lox"
+    },
+    {
+      "name": "C Debug (Clang)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/c_lox/build/src/outputExecutable", // Path to your compiled executable
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/c_lox",
+      "environment": [],
+      "externalConsole": false,
+      "internalConsoleOptions": "openOnSessionStart",
+      "MIMode": "lldb", // Use lldb as the debugger for Clang
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for lldb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "clang with makefile" // Name of the build task to run before debugging
+      // "miDebuggerPath": "/path/to/lldb" // Path to lldb debugger (if not in PATH)
+    },
+    {
+      "name": "C Test (Clang)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/c_lox/build/tests/testRunner",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/c_lox",
+      "environment": [],
+      "externalConsole": false,
+      "internalConsoleOptions": "openOnSessionStart",
+      "MIMode": "lldb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build Tests"
+      // "miDebuggerPath": "/usr/bin/lldb"  // Update this path if necessary
     }
   ]
 }
