@@ -1,15 +1,21 @@
-# Crafting Interpreters in Rust
+# Crafting Interpreters
 
-Learning Rust by way of Robert Nystrom's Crafting Interpreter's.
+## Part One: The tree walk interpreter in Rust
 
-So far this repo just covers the first half of the book - the JLox (Java Lox) interpreter. 
+JLox becomes Rust Lox. Learning Rust by way of Robert Nystrom's Crafting Interpreter's.
 
-## running the REPL:
+The rust_lox directory covers the first half of the book - the JLox (Java Lox) interpreter.
 
-`cargo run`
+### running the REPL:
 
-## Running the REPL in multiline mode:
+From the rust_lox directory: `cargo run`
 
-`cargo run -- --multiline`
+### Running the REPL in multiline mode:
+
+From the rust_lox directory: `cargo run -- --multiline`
 
 Typing the word `RUN` followed by `Enter` will submit the code.
+
+## Part Two: The bytcode interpreter
+
+After building the tree walk interpreter in Rust, I decided to change gears and complete the rest of the story using C. Rust is a fascinating language, one I will definately use in the future. But for now, in an effort to simply 'complete' the book, the `c_lox` directory will follow along with the \_Crafting Interpreters\* book (including challenges).
