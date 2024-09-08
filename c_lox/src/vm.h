@@ -7,7 +7,9 @@
 typedef struct {
   // the VM will gradually acquire more state
   Chunk* chunk;  // the chunk to execute
-  uint8_t* ip;   // ip stands for instruction pointer
+  uint8_t* ip;   // ip stands for instruction pointer. this will point to the
+                // bytecode array inside the chunk, which is faster than looking
+                // up the bytecode by index.
 } VM;
 
 typedef enum {

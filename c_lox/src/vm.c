@@ -1,5 +1,7 @@
 #include "vm.h"
 
+#include <stdio.h>
+
 #include "common.h"
 
 /*
@@ -30,6 +32,47 @@ void initVM() {}
 void freeVM() {}
 
 /*
+ # Run
+
+ "When the interpreter executes a user’s program, it will spend something like
+ 90% of its time inside run(). It is the beating heart of the VM."
+ */
+static InterpretResult run() {
+/* READ_BYTE - macro reads the byte currently pointed at by the ip then advances
+the instruction pointer.
+*/
+#define READ_BYTE() (*vm.ip++)
+  /* as soon as the opcode is read from the ip the ip is advanced. Meaning the
+   * ip always points to the next byte of code to be used. */
+
+#define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+
+  for (;;) {
+    u_int8_t instruction;
+
+    // This switch statement will become giant to handle all the opcodes
+    switch (instruction = READ_BYTE()) {
+      case OP_CONSTANT: {
+        Value constant = READ_CONSTANT();
+        printValue(constant);
+        printf("\n");
+        break;
+      }
+      case OP_RETURN: {
+        return INTERPRET_OK;
+      }
+    }
+  }
+
+/*
+Undefining these macros explicitly might seem needlessly fastidious, but C tends
+to punish sloppy users, and the C preprocessor doubly so.
+*/
+#undef READ_BYTE
+#undef READ_CONSTANT
+}
+
+/*
 ## interpret
 
 returns InterpretResult enum
@@ -40,6 +83,8 @@ process.
 */
 InterpretResult interpret(Chunk* chunk) {
   vm.chunk = chunk;
-  vm.ip = vm.chunk->code;
+  vm.ip =
+      vm.chunk
+          ->code;  // the location of the instruction currently being executed
   return run();
 }

@@ -92,6 +92,16 @@ Q: _What's bad about the singleton pattern?_
 
 A:
 
+Q: _What's this do?_
+
+```c
+for (;;) {
+    // Loop body
+}
+```
+
+A: Infinite loop
+
 ## Common Lang Features:
 
 `*` - Dereference operator - dereferences a pointer;
