@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "common.h"
+#include "debug.h"
 
 /*
 # VM
@@ -36,6 +37,9 @@ void freeVM() {}
 
  "When the interpreter executes a user’s program, it will spend something like
  90% of its time inside run(). It is the beating heart of the VM."
+
+ "Contrast this with all of the complexity and overhead we had in jlox with the
+ Visitor pattern for walking the AST."
  */
 static InterpretResult run() {
 /* READ_BYTE - macro reads the byte currently pointed at by the ip then advances
@@ -48,12 +52,22 @@ the instruction pointer.
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 
   for (;;) {
+#ifdef DEBUG_TRACE_EXECUTION
+    disassembleInstruction(
+        vm.chunk,
+        (int)(vm.ip - vm.chunk->code));  // When you subtract two pointers, the
+                                         // result is of type ptrdiff_t, which
+                                         // represents the distance between two
+                                         // pointers, hence the int type cast
+#endif
+
     u_int8_t instruction;
 
     // This switch statement will become giant to handle all the opcodes
     switch (instruction = READ_BYTE()) {
       case OP_CONSTANT: {
         Value constant = READ_CONSTANT();
+        printf("\nOP_CONSTANT: \n");
         printValue(constant);
         printf("\n");
         break;
