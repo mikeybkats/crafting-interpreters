@@ -2,14 +2,23 @@
 #define clox_vm_h
 
 #include "chunk.h"
+#include "value.h"
 
-// you hand the virtual machine a chunk of code, and it runs it.
+#define STACK_MAX 256
+
+// "you hand the virtual machine a chunk of code, and it runs it."
 typedef struct {
-  // the VM will gradually acquire more state
-  Chunk* chunk;  // the chunk to execute
-  uint8_t* ip;   // ip stands for instruction pointer. this will point to the
-                // bytecode array inside the chunk, which is faster than looking
-                // up the bytecode by index.
+  // the chunk of code to execute "the VM will gradually acquire more state"
+  Chunk* chunk;
+  // ip points to the bytecode inside the chunk
+  uint8_t* ip;  // "ip stands for instruction pointer.  // pointing to the
+                // bytecode array inside the chunk, faster than // looking up
+                // the bytecode by index."
+  Value stack[STACK_MAX];
+  // stack top points to one past the top item in the stack
+  Value* stackTop;  // "The pointer points at the array element just past the
+                    // element containing the top value on the stack. That seems
+                    // a little odd, but almost every implementation does this."
 } VM;
 
 typedef enum {

@@ -28,7 +28,9 @@ with global variables.
 */
 VM vm;
 
-void initVM() {}
+static void resetStack() { vm.stackTop = vm.stack; }
+
+void initVM() { resetStack(); }
 
 void freeVM() {}
 

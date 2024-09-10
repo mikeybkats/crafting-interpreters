@@ -102,6 +102,41 @@ for (;;) {
 
 A: Infinite loop
 
+Q: _What is unspecified evaluation order in C? Why does it exist?_
+
+A: There is no guarentee with the order of operations. For example:
+
+```c
+int i = 0;
+int array[] = {1, 2, 3, 4, 5};
+int result = array[i] + (i = 2);  // Unspecified behavior
+// The result could be either 3 (1 + 2) or 5 (3 + 2)
+```
+
+Why does this exist? C was created in the 1970s a time when computer architecture varied greatly. Fewer specifications on a language compiler meant more flexibility of target hardware. This allowed more optimized compilers, simpler language, different CPUs might perform certain operation order more efficiently. Have an unspecified behavior requires the code writer to be more careful and specific.
+
+Q: _What is the heap data structure?_
+
+A: A heap is a tree structure with one parent node called a root. In a max heap all child nodes are less than their parents. So nodes get smaller as the tree grows larger. In a min heap the parent root node is smaller and all the child nodes grow larger as the tree does.
+
+Q: _How does data get stored on the heap?_
+
+A: By using memory allocation functions like calloc, realloc and alloc.
+
+Q: _What about using pointers? Does this store the data on the heap?_
+
+```c
+uint8_t* ip;
+```
+
+A: Memory is not allocated until the time of assignment so the above statement does not effect memory at all, it's simply a pointer to nothing. During assignment is when the pointer matters. To allocate to the heap the ip would need to use malloc.
+
+_pointers must be initilized to the size of their type:_
+
+```c
+uint8_t* p = malloc(sizeof(uint8_t));
+```
+
 ## Common Lang Features:
 
 `*` - Dereference operator - dereferences a pointer;
