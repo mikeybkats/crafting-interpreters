@@ -6,6 +6,7 @@
   - [TOC](#toc)
   - [Quiz](#quiz)
   - [Common Lang Features:](#common-lang-features)
+    - [pointers](#pointers)
   - [Makefiles](#makefiles)
   - [Libraries](#libraries)
     - [stdlib.h](#stdlibh)
@@ -137,14 +138,39 @@ _pointers must be initilized to the size of their type:_
 uint8_t* p = malloc(sizeof(uint8_t));
 ```
 
-## Common Lang Features:
-
-`*` - Dereference operator - dereferences a pointer;
+Q: _what's the difference between these two lines? Functionally and practically:_
 
 ```
-int var = 10;
-int *ptr = &var;
-int valueAtPtr = *ptr; // valueAtPtr is now 10, which is the value of var
+int* valA = malloc(sizeof(int));
+int *valB = malloc(sizeof(int));
+```
+
+A: Functionally there are no differences. The compiler treats them the same. But the first line emphasizes that the pointer points to a type of int, while the latter emphasizes that the pointer points to a variable. But both point to the same thing. The important thing to remember is dereferencing only has one syntax: `*valA = 10;` `*valB = 11;`
+
+## Common Lang Features:
+
+### pointers
+
+The asterisks can be quite ellusive to newcomers. At a glance it does different things depending on where it is in the syntax:
+
+_pointer declaration_
+
+```c
+int *value; // indicates that the pointer is pointing at an integer
+value = malloc(sizeof(int)); // creates a pointer to a block of memory
+```
+
+_pointer dereferencing_
+
+continuing from the declaration example above
+
+- `*value` returns the int stored at the address held by value.
+- `&value` is of type int\*\*. It's the address of the pointer variable.
+
+```c
+*value = 10; // stores the value at the location the pointer points to
+int *ptrVal = &value; // gets the location of the pointer
+int valueAtPtr = *ptrVal; // valueAtPtr is now 10, which is the value of value
 ```
 
 `&` - Address of operator - creates a pointer to the data. gets the value of the address.

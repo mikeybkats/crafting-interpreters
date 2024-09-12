@@ -34,6 +34,17 @@ void initVM() { resetStack(); }
 
 void freeVM() {}
 
+void push(Value value) {
+  *vm.stackTop = value;  // stores the value in the array of Values after the
+                         // last element in the array
+  vm.stackTop++;         // pointer arithmetic
+}
+
+Value pop() {
+  vm.stackTop--;  // pointer arithmetic
+  return *vm.stackTop;
+}
+
 /*
  # Run
 
@@ -55,6 +66,15 @@ the instruction pointer.
 
   for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
+    printf("         ");
+    for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+      // This loop lets us observe the effect of each instruction on the stack.
+      printf("[ ");
+      printValue(*slot);
+      printf(" ]");
+    }
+    printf("\n");
+
     disassembleInstruction(
         vm.chunk,
         (int)(vm.ip - vm.chunk->code));  // When you subtract two pointers, the
@@ -69,12 +89,15 @@ the instruction pointer.
     switch (instruction = READ_BYTE()) {
       case OP_CONSTANT: {
         Value constant = READ_CONSTANT();
-        printf("\nOP_CONSTANT: \n");
-        printValue(constant);
-        printf("\n");
+        push(constant);
         break;
       }
+      case OP_NEGATE:
+        push(-pop());
+        break;
       case OP_RETURN: {
+        printValue(pop());
+        printf("\n");
         return INTERPRET_OK;
       }
     }

@@ -31,4 +31,15 @@ void initVM();
 void freeVM();
 InterpretResult interpret(Chunk* chunk);
 
+/*
+A proper stack implementation needs to:
+
+a) Keep track of the current top of the stack.
+b) Allocate enough memory for multiple elements.
+c) Resize the allocated memory when needed.
+d) Provide both push and pop operations.
+*/
+void push(Value value);
+Value pop();
+
 #endif
