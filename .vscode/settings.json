@@ -36,5 +36,6 @@
     "test_value.h": "c",
     "test_rle.h": "c"
   },
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "C_Cpp.errorSquiggles": "enabled"
 }

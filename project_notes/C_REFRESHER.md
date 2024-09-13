@@ -147,6 +147,26 @@ int *valB = malloc(sizeof(int));
 
 A: Functionally there are no differences. The compiler treats them the same. But the first line emphasizes that the pointer points to a type of int, while the latter emphasizes that the pointer points to a variable. But both point to the same thing. The important thing to remember is dereferencing only has one syntax: `*valA = 10;` `*valB = 11;`
 
+Q: _What does the macro expand to in the below context? And how does it execute?_
+
+Macro:
+
+```c
+#define WAKE_UP() makeCoffee(); drinkCoffee(); // calling WAKE_UP() runs the two functions
+```
+
+Context:
+
+```c
+if(morning) WAKE_UP;
+```
+
+A:
+
+```c
+if (morning) makeCoffee(); drinkCoffee(); // makeCoffee executes as part of the if statement. drinkCoffee always executes.
+```
+
 ## Common Lang Features:
 
 ### pointers
