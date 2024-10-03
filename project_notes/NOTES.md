@@ -193,3 +193,19 @@ A refresher on big O notation. n represents the size of the input.
 | 1   | 1   | 123   | 123     | 2             |
 | 2   | 2   | 123   | 123     | 3             |
 | 3   | 3   | 123   |         |               |
+
+## Chapter 15 - Virtual Machine
+
+_READ_BYTE_ macro - Given a numeric opcode (the first byte of an instruction) the correct C code that implements the instructions semantics must be retrieved. This is called decoding or dispatching.
+
+_decoding and dispatching_ - retrieving and using the correct command for the given opcode.
+
+> "Programming language lore is filled with clever techniques to do bytcode dispatch efficiently. Alas, the fastest solutions require either non-standard extensions to C, or handwritten assembly code.
+
+#### If you want to learn some of these techniques, look up “direct threaded code”, “jump table”, and “computed goto”.
+
+_[direct threaded code]()_
+
+_[jump table]()_
+
+_[computed goto]()_

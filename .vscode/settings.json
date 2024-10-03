@@ -1,5 +1,5 @@
 {
-  "rust-analyzer.linkedProjects": ["./Cargo.toml"],
+  "rust-analyzer.linkedProjects": ["rust_lox/Cargo.toml"],
   "files.associations": {
     "stdint.h": "c",
     "stdbool.h": "c",
@@ -36,5 +36,7 @@
     "test_value.h": "c",
     "test_rle.h": "c"
   },
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }
