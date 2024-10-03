@@ -142,8 +142,6 @@ process.
 */
 InterpretResult interpret(Chunk* chunk) {
   vm.chunk = chunk;
-  vm.ip =
-      vm.chunk
-          ->code;  // the location of the instruction currently being executed
+  vm.ip = vm.chunk->code;  // the location of the instruction currently being executed
   return run();
 }
