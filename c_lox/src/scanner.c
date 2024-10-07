@@ -118,6 +118,7 @@ Token scanToken() {
   if (isAtEnd()) return makeToken(TOKEN_EOF);
 
   char c = advance();
+  if (isDigit(C)) return number();
 
   switch (c) {
     case '(':
