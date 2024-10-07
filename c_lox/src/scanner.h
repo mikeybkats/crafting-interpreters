@@ -56,6 +56,10 @@ type - TokenType ;
 start - char* ;
 length - int;
 line - int;
+
+"In clox, tokens only store the lexeme—the character sequence exactly as it appears in the user’s source code."
+
+In jlox the token stored an Object for the runtime value which was converted from the token's lexeme
 */
 typedef struct {
   TokenType type;
