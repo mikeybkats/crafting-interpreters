@@ -93,7 +93,7 @@ Q: _What's bad about the singleton pattern?_
 
 A:
 
-Q: _What's this do?_
+Q: _What's this do? And, why?_
 
 ```c
 for (;;) {
@@ -101,7 +101,7 @@ for (;;) {
 }
 ```
 
-A: Infinite loop
+A: It's an Infinite loop. The reason it's an infinite loop is becuase it's passing undefined to all three expressions. There is no counter, there is not condition, there is no incrementer.
 
 Q: _What is unspecified evaluation order in C? Why does it exist?_
 
@@ -166,6 +166,11 @@ A:
 ```c
 if (morning) makeCoffee(); drinkCoffee(); // makeCoffee executes as part of the if statement. drinkCoffee always executes.
 ```
+
+Q: _In C, Is it appropriate to call a struct an object? Why or why not?_
+
+It is not appropriate becuase c is not an object oriented languaged and structs lack the fundemental capabilities of OOP Languages: encapsulation (structs are public), no methods on structs, and no inheritance. 
+
 
 ## Common Lang Features:
 
