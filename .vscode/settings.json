@@ -37,6 +37,7 @@
     "test_rle.h": "c"
   },
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "ms-vscode.cpptools",
   "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "common.h"
+#include "compiler.h"
 #include "debug.h"
 
 /*
@@ -140,10 +141,7 @@ The compiler reports static errors, the VM detects runtime errors, the
 interpretter will use this information to know how to set the exit code of the
 process.
 */
-InterpretResult interpret(Chunk* chunk) {
-  vm.chunk = chunk;
-  vm.ip =
-      vm.chunk
-          ->code;  // the location of the instruction currently being executed
-  return run();
+InterpretResult interpret(const char* source) {
+  compile(source);
+  return INTERPRET_OK;
 }
