@@ -23,6 +23,9 @@ typedef enum {
   TOKEN_GREATER_EQUAL,
   TOKEN_LESS,
   TOKEN_LESS_EQUAL,
+  // Template literals
+  TOKEN_LEFT_STRING_LITERAL,   // two characters
+  TOKEN_RIGHT_STRING_LITERAL,  // one character
   // Literals.
   TOKEN_IDENTIFIER,
   TOKEN_STRING,

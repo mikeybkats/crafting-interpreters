@@ -29,7 +29,7 @@ static bool isDigit(char c) {
 
 static bool isAtEnd() {
   // If the current character is the null byte, then we’ve reached the end.
-  return *scanner.current == "\0";
+  return *scanner.current == '\0';
 }
 
 static char advance() {
@@ -192,8 +192,22 @@ static Token number() {
   return makeToken(TOKEN_NUMBER);
 }
 
+// static void stringLiteral() {
+//   if (peek() == '$' && peekNext() == '{') {
+//     advance();
+//     advance();
+
+//     // while the current position is not a closing curly brace
+//     while (peek() != '}') {
+//       scanToken();
+//     }
+//   }
+// }
+
 static Token string() {
   while (peek() != '"' && !isAtEnd()) {
+    // stringLiteral();
+
     if (peek() == '\n') scanner.line++;
     advance();
   }
