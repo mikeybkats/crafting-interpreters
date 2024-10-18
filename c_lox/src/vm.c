@@ -142,6 +142,21 @@ interpretter will use this information to know how to set the exit code of the
 process.
 */
 InterpretResult interpret(const char* source) {
-  compile(source);
-  return INTERPRET_OK;
+  Chunk chunk;
+  initChunk(&chunk);
+
+  // compiler fills chunk with bytecode
+  if (!compile(source, &chunk)) {
+    // if an error is encountered the chunk is freed and an error is returned
+    freeChunk(&chunk);
+    return INTERPRET_COMPILE_ERROR;
+  }
+
+  vm.chunk = &chunk;
+  vm.ip = vm.chunk->code;
+
+  InterpretResult result = run();
+
+  freeChunk(&chunk);
+  return result;
 }

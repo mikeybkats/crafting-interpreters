@@ -1,26 +1,75 @@
 #include "compiler.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "common.h"
 #include "scanner.h"
 
-void compile(const char* source) {
+typedef struct {
+  Token current;
+  Token previous;
+  bool hadError;
+  bool panicMode;
+} Parser;
+
+Parser parser;  // create a single global variable so state does not need to be passed around
+
+static void errorAt(Token* token, const char* message) {
+  if (parser.panicMode) return;
+  parser.panicMode = true;
+
+  fprintf(stderr, "[line %d] Error", token->line);
+
+  if (token->type == TOKEN_EOF) {
+    fprintf(stderr, " at end");
+  } else if (token->type == TOKEN_ERROR) {
+    // Nothing.
+  } else {
+    fprintf(stderr, " at '%.*s'", token->length, token->start);
+  }
+
+  fprintf(stderr, ": %s\n", message);
+  parser.hadError = true;
+}
+
+static void error(const char* message) {
+  errorAt(&parser.previous, message);
+}
+
+static void errorAtCurrent(const char* message) {
+  errorAt(&parser.current, message);
+}
+
+static void advance() {
+  parser.previous = parser.current;
+
+  for (;;) {
+    parser.current = scanToken();
+    if (parser.current.type != TOKEN_ERROR) break;  // Error tokens are created by the scanner, but the parser itself does the error reporting
+
+    errorAtCurrent(parser.current.start);
+  }
+}
+
+static void consume(TokenType type, const char* message) {
+  if (parser.current.type == type) {
+    advance();
+    return;
+  }
+
+  errorAtCurrent(message);
+}
+
+bool compile(const char* source, Chunk* chunk) {
   initScanner(source);
 
-  int line = -1;
+  parser.hadError = false;
+  parser.panicMode = false;
 
-  // "This loops indefinitely. Each turn through the loop, it scans one token and prints it. When it reaches a special “end of file” token or an error, it stops. For example, if we run the interpreter on this program:"
-  for (;;) {
-    Token token = scanToken();
-    if (token.line != line) {
-      printf("%4d ", token.line);
-      line = token.line;
-    } else {
-      printf("  | ");
-    }
-    printf("%2d '%.*s'\n", token.type, token.length, token.start);
+  advance();
+  expression();
+  consume(TOKEN_EOF, "Expect end of expression");
 
-    if (token.type == TOKEN_EOF) break;
-  }
+  return !parser.hadError;
 }
