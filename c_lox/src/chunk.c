@@ -107,7 +107,7 @@ void freeChunk(Chunk* chunk) {
 /*
  * ## addConstant
  *
- * @brief Adds a new constant to the chunk.
+ * @brief Adds a value to the end of the chunk's array of constants.
  *
  * @param chunk the Chunk to add the value to
  * @param value the Value to add to the chunk

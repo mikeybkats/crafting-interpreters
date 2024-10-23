@@ -13,12 +13,32 @@ typedef struct {
   bool panicMode;
 } Parser;
 
-Parser parser;  // create a single global variable so state does not need to be passed around
+/*
+ * ## Enum: Precedence
+ *
+ * @brief The precedence of operators
+ *
+ * "These are all of Lox’s precedence levels in order from lowest to highest."
+ */
+typedef enum {
+  PREC_NONE,
+  PREC_ASSIGNMENT,  // =
+  PREC_OR,          // or
+  PREC_AND,         // and
+  PREC_EQUALITY,    // == !=
+  PREC_COMPARISON,  // < > <= >=
+  PREC_TERM,        // + -
+  PREC_FACTOR,      // * /
+  PREC_UNARY,       // ! -
+  PREC_CALL,        // . ()
+  PREC_PRIMARY
+} Precedence;
+
+Parser parser;  // create a single global variable so state does not need to be
+                // passed around
 Chunk* compilingChunk;
 
-static Chunk* currentChunk() {
-  return compilingChunk;
-}
+static Chunk* currentChunk() { return compilingChunk; }
 
 static void errorAt(Token* token, const char* message) {
   if (parser.panicMode) return;
@@ -38,9 +58,7 @@ static void errorAt(Token* token, const char* message) {
   parser.hadError = true;
 }
 
-static void error(const char* message) {
-  errorAt(&parser.previous, message);
-}
+static void error(const char* message) { errorAt(&parser.previous, message); }
 
 static void errorAtCurrent(const char* message) {
   errorAt(&parser.current, message);
@@ -51,7 +69,9 @@ static void advance() {
 
   for (;;) {
     parser.current = scanToken();
-    if (parser.current.type != TOKEN_ERROR) break;  // Error tokens are created by the scanner, but the parser itself does the error reporting
+    if (parser.current.type != TOKEN_ERROR)
+      break;  // Error tokens are created by the scanner, but the parser itself
+              // does the error reporting
 
     errorAtCurrent(parser.current.start);
   }
@@ -66,6 +86,11 @@ static void consume(TokenType type, const char* message) {
   errorAtCurrent(message);
 }
 
+/*
+ * ## emitByte
+ *
+ * @brief emits a byte to the current chunk
+ */
 static void emitByte(uint8_t byte) {
   writeChunk(currentChunk(), byte, parser.previous.line);
 }
@@ -75,8 +100,43 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
   emitByte(byte2);
 }
 
-static void endCompiler() {
-  emitReturn(OP_RETURN);
+static void emitReturn() { emitByte(OP_RETURN); }
+
+/*
+ * ## makeConstant
+ *
+ * @brief checks to see if there are too many constants (256) in one chunk
+ */
+static uint8_t makeConstant(Value value) {
+  int constant = addConstant(currentChunk(), value);
+
+  if (constant < UINT8_MAX) {
+    error("Too many constants in one chunk");
+
+    return 0;
+  }
+
+  return (uint8_t)constant;
+}
+
+static void emitConstant(Value value) {
+  emitBytes(OP_CONSTANT, makeConstant(value));
+}
+
+static void endCompiler() { emitReturn(OP_RETURN); }
+
+/*
+ * ## grouping
+ *
+ * @brief handles the grouping operator
+ *
+ * "as far as the back end is concerned, there is nothing to a grouping
+ * expression. It just lets you insert a lower-precedence expression where a
+ * higher precedence one is expected."
+ */
+static void grouping() {
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
 }
 
 static void number() {
@@ -84,9 +144,50 @@ static void number() {
   emitConstant(value);
 }
 
-static void expression() {
-  //
+/*
+ * ## unary
+ *
+ * @brief handles the unary operator
+ */
+static void unary() {
+  TokenType operatorType = parser.previous.type;
+
+  // compile the operand
+  // as with grouping, expression is recursively called
+  parsePrecedence(PREC_UNARY);
+
+  // emit the operator instruction
+  switch (operatorType) {
+    case TOKEN_MINUS:
+      // write the negation operator to the chunk. This gets done last due to
+      // the order of exectution: Evaluate operatnd and leave the value on the
+      // stack, then pop that value, negate it and push the result.
+      emitByte(OP_NEGATE);
+      break;
+    default:
+      return;  // Unreachable
+  }
 }
+
+/*
+ * ## parsePrecedence
+ *
+ * @brief handles the precedence of operators
+ *
+ * consider this:
+ * ```
+ * -a.b + c;
+ * ```
+ *
+ * Here the operand to `-` should just be the a.b expression. But if unary is
+ * called, it will recursively eat up all of the expression and treat `-` as
+ * lower precedence than the `+` which is not how it should work.
+ */
+static void parsePrecedence(Precedence precedence) {
+  // What goes here?
+}
+
+static void expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
 bool compile(const char* source, Chunk* chunk) {
   initScanner(source);
