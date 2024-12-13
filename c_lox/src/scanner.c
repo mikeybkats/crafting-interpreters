@@ -14,18 +14,14 @@ typedef struct {
 Scanner scanner;
 
 void initScanner(const char* source) {
-  scanner.start = source;
+  scanner.start   = source;
   scanner.current = source;
-  scanner.line = 1;
+  scanner.line    = 1;
 }
 
-static bool isAlpha(char c) {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
-}
+static bool isAlpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'; }
 
-static bool isDigit(char c) {
-  return c >= '0' && c <= '9';
-}
+static bool isDigit(char c) { return c >= '0' && c <= '9'; }
 
 static bool isAtEnd() {
   // If the current character is the null byte, then we’ve reached the end.
@@ -37,9 +33,7 @@ static char advance() {
   return scanner.current[-1];
 }
 
-static char peek() {
-  return *scanner.current;
-}
+static char peek() { return *scanner.current; }
 
 static char peekNext() {
   if (isAtEnd()) return '\0';
@@ -65,21 +59,21 @@ Uses start and current pointers to get the length of the lexeme.
 */
 static Token makeToken(TokenType type) {
   Token token;
-  token.type = type;
+  token.type  = type;
   token.start = scanner.start;
   // pointer arithmetic subtract the location of the two pointers to get the length
   token.length = (int)(scanner.current - scanner.start);
-  token.line = scanner.line;
+  token.line   = scanner.line;
 
   return token;
 }
 
 static Token errorToken(const char* message) {
   Token token;
-  token.type = TOKEN_ERROR;
-  token.start = message;
+  token.type   = TOKEN_ERROR;
+  token.start  = message;
   token.length = (int)strlen(message);
-  token.line = scanner.line;
+  token.line   = scanner.line;
   return token;
 }
 
@@ -109,9 +103,11 @@ static void skipWhitespace() {
 /*
 ## checkKeyword
 
-Tests the "rest" of a potential keyword's lexeme - "rest" meaning whatever is left after the first character of the string.
+Tests the "rest" of a potential keyword's lexeme - "rest" meaning whatever is left after the first character of the
+string.
 
-It looks at the current position of the scanner, gets the characters at that position, and compares the rest with those characters.
+It looks at the current position of the scanner, gets the characters at that position, and compares the rest with those
+characters.
 */
 static TokenType checkKeyword(int start, int length, const char* rest, TokenType type) {
   if (scanner.current - scanner.start == start + length && memcmp(scanner.start + start, rest, length) == 0) {
@@ -192,22 +188,8 @@ static Token number() {
   return makeToken(TOKEN_NUMBER);
 }
 
-// static void stringLiteral() {
-//   if (peek() == '$' && peekNext() == '{') {
-//     advance();
-//     advance();
-
-//     // while the current position is not a closing curly brace
-//     while (peek() != '}') {
-//       scanToken();
-//     }
-//   }
-// }
-
 static Token string() {
   while (peek() != '"' && !isAtEnd()) {
-    // stringLiteral();
-
     if (peek() == '\n') scanner.line++;
     advance();
   }
@@ -253,17 +235,13 @@ Token scanToken() {
     case '*':
       return makeToken(TOKEN_STAR);
     case '!':
-      return makeToken(
-          match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
+      return makeToken(match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
     case '=':
-      return makeToken(
-          match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
+      return makeToken(match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
     case '<':
-      return makeToken(
-          match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);
+      return makeToken(match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);
     case '>':
-      return makeToken(
-          match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
+      return makeToken(match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
     case '"':
       return string();
   }

@@ -29,9 +29,13 @@ with global variables.
 */
 VM vm;
 
-static void resetStack() { vm.stackTop = vm.stack; }
+static void resetStack() {
+  vm.stackTop = vm.stack;
+}
 
-void initVM() { resetStack(); }
+void initVM() {
+  resetStack();
+}
 
 void freeVM() {}
 
@@ -75,7 +79,7 @@ the instruction pointer.
   for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
     printf("         ");
-    for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
+    for (Value *slot = vm.stack; slot < vm.stackTop; slot++) {
       // This loop lets us observe the effect of each instruction on the stack.
       printf("[ ");
       printValue(*slot);
@@ -95,11 +99,12 @@ the instruction pointer.
 
     // This switch statement will become giant to handle all the opcodes
     switch (instruction = READ_BYTE()) {
-      case OP_CONSTANT: {
-        Value constant = READ_CONSTANT();
-        push(constant);
-        break;
-      }
+      case OP_CONSTANT:
+        {
+          Value constant = READ_CONSTANT();
+          push(constant);
+          break;
+        }
       case OP_ADD:
         BINARY_OP(+);
         break;
@@ -115,11 +120,12 @@ the instruction pointer.
       case OP_NEGATE:
         push(-pop());
         break;
-      case OP_RETURN: {
-        printValue(pop());
-        printf("\n");
-        return INTERPRET_OK;
-      }
+      case OP_RETURN:
+        {
+          printValue(pop());
+          printf("\n");
+          return INTERPRET_OK;
+        }
     }
   }
 
@@ -141,7 +147,7 @@ The compiler reports static errors, the VM detects runtime errors, the
 interpretter will use this information to know how to set the exit code of the
 process.
 */
-InterpretResult interpret(const char* source) {
+InterpretResult interpret(const char *source) {
   Chunk chunk;
   initChunk(&chunk);
 
