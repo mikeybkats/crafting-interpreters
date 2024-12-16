@@ -38,7 +38,8 @@
     "test_rle.h": "c"
   },
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "ms-vscode.cpptools",
+  "editor.defaultFormatter": "xaver.clang-format",
+  "C_Cpp.formatting": "clangFormat",
   "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }
