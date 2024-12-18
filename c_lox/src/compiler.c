@@ -10,12 +10,12 @@
 #include "debug.h"
 #endif
 
-typedef struct {
-  Token current;
-  Token previous;
-  bool hadError;
-  bool panicMode;
-} Parser;
+// typedef struct {
+//   Token current;
+//   Token previous;
+//   bool hadError;
+//   bool panicMode;
+// } Parser;
 
 /*
  * ## Enum: Precedence
@@ -104,6 +104,8 @@ static void consume(TokenType type, const char* message) {
 static void emitByte(uint8_t byte) { writeChunk(currentChunk(), byte, parser.previous.line); }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
+  printf("emitBytes - byte1: %d\n", byte1);
+  printf("emitBytes - byte2: %d\n", byte2);
   emitByte(byte1);
   emitByte(byte2);
 }
@@ -113,7 +115,8 @@ static void emitReturn() { emitByte(OP_RETURN); }
 /*
  * ## makeConstant
  *
- * @brief checks to see if there are too many constants (256) in one chunk
+ * @brief Adds a constant value to the values array and to the chunk. Checks to see if there are too many constants
+ * (256) in one chunk
  */
 static uint8_t makeConstant(Value value) {
   int constant = addConstant(currentChunk(), value);
@@ -127,7 +130,12 @@ static uint8_t makeConstant(Value value) {
   return (uint8_t)constant;
 }
 
-static void emitConstant(Value value) { emitBytes(OP_CONSTANT, makeConstant(value)); }
+static void emitConstant(Value value) {
+  printf("emitConstant - value: %f\n", value);
+  printf("emitConstant - OP_CONSTANT: %d\n", OP_CONSTANT);
+  printf("emitConstant - makeConstant(value): %d\n", makeConstant(value));
+  emitBytes(OP_CONSTANT, makeConstant(value));
+}
 
 static void endCompiler() {
   emitReturn();
@@ -148,6 +156,7 @@ static void binary() {
 
   printf("binary: %d\n", rule->precedence);
 
+  printf("parsePrecedence binary\n");
   parsePrecedence((Precedence)(rule->precedence + 1));
 
   switch (operatorType) {
@@ -193,6 +202,7 @@ static void number() {
  * @brief handles the unary operator
  */
 static void unary() {
+  printf("parsing unary\n");
   TokenType operatorType = parser.previous.type;
 
   // compile the operand

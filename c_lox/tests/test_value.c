@@ -1,3 +1,5 @@
+#include "test_value.h"
+
 #include "../src/value.h"
 #include "unity/src/unity.h"
 
@@ -23,8 +25,7 @@ void test_writeValueArray(void) {
 
   TEST_ASSERT_EQUAL_INT_MESSAGE(1, array.count, "Count should be 1");
   TEST_ASSERT_EQUAL_INT_MESSAGE(8, array.capacity, "Capacity should be 8");
-  TEST_ASSERT_EQUAL_FLOAT_MESSAGE(value, array.values[0],
-                                  "Value should be 1.2");
+  TEST_ASSERT_EQUAL_FLOAT_MESSAGE(value, array.values[0], "Value should be 1.2");
 
   freeValueArray(&array);
 }
@@ -41,4 +42,10 @@ void test_freeValueArray(void) {
   freeValueArray(&array);
 
   TEST_ASSERT_EQUAL_INT_MESSAGE(0, array.capacity, "Capacity should be 0");
+}
+
+void run_value_tests(void) {
+  RUN_TEST(test_initValueArray);
+  RUN_TEST(test_writeValueArray);
+  RUN_TEST(test_freeValueArray);
 }

@@ -1,3 +1,5 @@
+#include "test_rle.h"
+
 #include "../src/rle.h"
 #include "unity/src/unity.h"
 
@@ -7,9 +9,8 @@ void test_rleEncodeLines(void) {
 
   RleData* encodedArr = rleEncodeLines(data, 8);
 
-  TEST_ASSERT_EQUAL_STRING_MESSAGE(
-      "123 x 3, 0 x 1, 50 x 2, 110 x 2", encodedArr->encodedData,
-      "Should be '123 x 3, 0 x 1, 50 x 2, 110 x 2'");
+  TEST_ASSERT_EQUAL_STRING_MESSAGE("123 x 3, 0 x 1, 50 x 2, 110 x 2", encodedArr->encodedData,
+                                   "Should be '123 x 3, 0 x 1, 50 x 2, 110 x 2'");
 }
 
 void test_rleDecodeLines(void) {
@@ -19,7 +20,7 @@ void test_rleDecodeLines(void) {
   RleData* encodedArr = rleEncodeLines(data, 8);
 
   int decodedLength = 0;
-  int* decodedData = rleDecodeLines(encodedArr, &decodedLength);
+  int* decodedData  = rleDecodeLines(encodedArr, &decodedLength);
 
   TEST_ASSERT_EQUAL_UINT_ARRAY(data, decodedData, decodedLength);
 }
@@ -34,4 +35,10 @@ void test_getLine(void) {
   TEST_ASSERT_EQUAL_INT_MESSAGE(0, getLine(encodedArr, 3), "Should be 0");
   TEST_ASSERT_EQUAL_INT_MESSAGE(50, getLine(encodedArr, 4), "Should be 50");
   TEST_ASSERT_EQUAL_INT_MESSAGE(110, getLine(encodedArr, 6), "Should be 110");
+}
+
+void run_rle_tests(void) {
+  RUN_TEST(test_rleEncodeLines);
+  RUN_TEST(test_rleDecodeLines);
+  RUN_TEST(test_getLine);
 }
