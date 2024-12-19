@@ -79,13 +79,21 @@ static void advance() {
 
   for (;;) {
     parser.current = scanToken();
+
     if (parser.current.type != TOKEN_ERROR)
       break;  // Error tokens are created by the scanner, but the parser itself
               // does the error reporting
-
     errorAtCurrent(parser.current.start);
   }
 }
+
+#ifdef DEBUG_TEST
+void test_advance() {
+  parser.hadError  = false;
+  parser.panicMode = false;
+  advance();
+}
+#endif
 
 static void consume(TokenType type, const char* message) {
   if (parser.current.type == type) {

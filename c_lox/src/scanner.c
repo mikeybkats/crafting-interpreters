@@ -5,12 +5,6 @@
 
 #include "common.h"
 
-typedef struct {
-  const char* start;
-  const char* current;
-  int line;
-} Scanner;
-
 Scanner scanner;
 
 void initScanner(const char* source) {
@@ -28,7 +22,7 @@ static bool isAtEnd() {
   return *scanner.current == '\0';
 }
 
-static char advance() {
+static char scannerAdvance() {
   scanner.current++;
   return scanner.current[-1];
 }
@@ -84,12 +78,12 @@ static void skipWhitespace() {
       case ' ':
       case '\r':
       case '\t':
-        advance();
+        scannerAdvance();
         break;
       case '/':
         if (peekNext() == '/') {
           // A comment goes until the end of the line.
-          while (peek() != '\n' && !isAtEnd()) advance();
+          while (peek() != '\n' && !isAtEnd()) scannerAdvance();
         } else {
           return;
         }
@@ -170,19 +164,19 @@ static TokenType identifierType() {
 }
 
 static Token identifier() {
-  while (isAlpha(peek()) || isDigit(peek())) advance();
+  while (isAlpha(peek()) || isDigit(peek())) scannerAdvance();
   return makeToken(identifierType());
 }
 
 static Token number() {
-  while (isDigit(peek())) advance();
+  while (isDigit(peek())) scannerAdvance();
 
   // Look for a fractional part.
   if (peek() == '.' && isDigit(peekNext())) {
     // consume the ".".
-    advance();
+    scannerAdvance();
 
-    while (isDigit(peek())) advance();
+    while (isDigit(peek())) scannerAdvance();
   }
 
   return makeToken(TOKEN_NUMBER);
@@ -191,13 +185,13 @@ static Token number() {
 static Token string() {
   while (peek() != '"' && !isAtEnd()) {
     if (peek() == '\n') scanner.line++;
-    advance();
+    scannerAdvance();
   }
 
   if (isAtEnd()) return errorToken("Unterminated string.");
 
   // the closing quote
-  advance();
+  scannerAdvance();
   return makeToken(TOKEN_STRING);
 }
 
@@ -207,7 +201,7 @@ Token scanToken() {
 
   if (isAtEnd()) return makeToken(TOKEN_EOF);
 
-  char c = advance();
+  char c = scannerAdvance();
   if (isAlpha(c)) return identifier();
   if (isDigit(c)) return number();
 
@@ -248,3 +242,11 @@ Token scanToken() {
 
   return errorToken("unexpected character.");
 }
+
+#ifdef DEBUG_TEST
+const char* test_get_scanner_current(void) { return scanner.current; }
+
+const char* test_get_scanner_start(void) { return scanner.start; }
+
+int test_get_scanner_line(void) { return scanner.line; }
+#endif

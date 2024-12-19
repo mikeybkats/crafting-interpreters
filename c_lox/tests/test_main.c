@@ -4,15 +4,9 @@
 #include "test_value.h"
 #include "unity/src/unity.h"
 
-void setUp(void) {
-  setUpChunk();
-  setUpCompiler();
-}
+void setUp(void) { setUpCompiler(); }
 
-void tearDown(void) { /* General cleanup */
-  tearDownChunk();
-  tearDownCompiler();
-}
+void tearDown(void) { tearDownCompiler(); }
 
 int main(void) {
   UNITY_BEGIN();
@@ -21,7 +15,7 @@ int main(void) {
   run_chunk_tests();
   // run_value_tests();
   // run_rle_tests();
-  // run_compiler_tests();
+  run_compiler_tests();
 
   return UNITY_END();
 }
