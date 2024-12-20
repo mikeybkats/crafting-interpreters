@@ -15,6 +15,7 @@ void setUpCompiler(void) {
   printf("setUpCompiler\n");
 
   testSource = "1 + 2 * 3";
+  initVM();
   initScanner(testSource);
   initChunk(&testChunk);
   compilingChunk = testChunk;
@@ -23,16 +24,22 @@ void setUpCompiler(void) {
 void tearDownCompiler(void) {
   printf("\ntearDownCompiler\n");
   freeChunk(&testChunk);
+  freeVM();
 }
 
 // Core compilation tests
 void test_compile(void) {
-  //   const bool result = compile("1 + 2 * 3", &compilingChunk);
-  //   TEST_ASSERT_TRUE_MESSAGE(result, "Compilation should succeed");
+  printf("DEBUG: starting test_compile\n");
+  TEST_ASSERT_NOT_NULL(&compilingChunk);
+
+  bool result = compile("1 + 2 * 3", &compilingChunk);
+
+  TEST_ASSERT_TRUE_MESSAGE(result, "Compilation should succeed");
   //   TEST_ASSERT_EQUAL_INT_MESSAGE(compilingChunk.count, 3, "Chunk should have 3 instructions");
   //   TEST_ASSERT_EQUAL_INT_MESSAGE(compilingChunk.constants.count, 0, "Chunk should have 0 constants");
   // TEST_FAIL_MESSAGE("Test not implemented");
-  // printf("\n");
+
+  printf("DEBUG: finished test_compile\n");
 }
 
 void test_compile_error_handling(void) { TEST_FAIL_MESSAGE("Test not implemented"); }

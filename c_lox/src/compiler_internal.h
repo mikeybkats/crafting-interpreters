@@ -9,6 +9,7 @@ extern Chunk compilingChunk;
 
 #ifdef DEBUG_TEST
 void test_advance();
+Chunk* currentChunk();
 #endif
 
 #endif

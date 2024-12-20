@@ -50,7 +50,11 @@ Parser parser;  // create a single global variable so state does not need to be
                 // passed around
 Chunk* compilingChunk;
 
+#ifdef DEBUG_TEST
+extern Chunk* currentChunk() { return compilingChunk; }
+#else
 static Chunk* currentChunk() { return compilingChunk; }
+#endif
 
 static void errorAt(Token* token, const char* message) {
   if (parser.panicMode) return;
@@ -96,6 +100,11 @@ void test_advance() {
 #endif
 
 static void consume(TokenType type, const char* message) {
+  printf("DEBUG_TEST - consume\n");
+  printf("DEBUG_TEST - parser.current.type: %d\n", parser.current.type);  // 7 is TOKEN_PLUS
+  printf("DEBUG_TEST - type: %d\n", type);                                // 41 is TOKEN_EOF
+  printf("DEBUG_TEST - message: %s\n", message);
+
   if (parser.current.type == type) {
     advance();
     return;
@@ -107,13 +116,11 @@ static void consume(TokenType type, const char* message) {
 /*
  * ## emitByte
  *
- * @brief emits a byte to the current chunk
+ * @brief emits a byte to the current chunk. The byte is the location of the constant in the values array.
  */
 static void emitByte(uint8_t byte) { writeChunk(currentChunk(), byte, parser.previous.line); }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
-  printf("emitBytes - byte1: %d\n", byte1);
-  printf("emitBytes - byte2: %d\n", byte2);
   emitByte(byte1);
   emitByte(byte2);
 }
@@ -127,6 +134,7 @@ static void emitReturn() { emitByte(OP_RETURN); }
  * (256) in one chunk
  */
 static uint8_t makeConstant(Value value) {
+  // int constant - index of the constant in the values array
   int constant = addConstant(currentChunk(), value);
 
   if (constant > UINT8_MAX) {
@@ -138,12 +146,7 @@ static uint8_t makeConstant(Value value) {
   return (uint8_t)constant;
 }
 
-static void emitConstant(Value value) {
-  printf("emitConstant - value: %f\n", value);
-  printf("emitConstant - OP_CONSTANT: %d\n", OP_CONSTANT);
-  printf("emitConstant - makeConstant(value): %d\n", makeConstant(value));
-  emitBytes(OP_CONSTANT, makeConstant(value));
-}
+static void emitConstant(Value value) { emitBytes(OP_CONSTANT, makeConstant(value)); }
 
 static void endCompiler() {
   emitReturn();
@@ -159,11 +162,11 @@ static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
 static void binary() {
+  printf("DEBUG_TEST - binary\n");
   TokenType operatorType = parser.previous.type;
   ParseRule* rule        = getRule(operatorType);
 
   printf("binary: %d\n", rule->precedence);
-
   printf("parsePrecedence binary\n");
   parsePrecedence((Precedence)(rule->precedence + 1));
 
@@ -200,6 +203,7 @@ static void grouping() {
 }
 
 static void number() {
+  printf("DEBUG_TEST - number\n");
   double value = strtod(parser.previous.start, NULL);  // string to double
   emitConstant(value);
 }
@@ -210,7 +214,7 @@ static void number() {
  * @brief handles the unary operator
  */
 static void unary() {
-  printf("parsing unary\n");
+  printf("DEBUG_TEST - unary\n");
   TokenType operatorType = parser.previous.type;
 
   // compile the operand
@@ -288,13 +292,19 @@ ParseRule rules[] = {
  * lower precedence than the `+` which is not how it should work.
  */
 static void parsePrecedence(Precedence precedence) {
+  printf("DEBUG_TEST - parsePrecedence: %d\n", precedence);
   // advance to the next token
   advance();
+  printf("DEBUG_TEST - parsePrecedence - current token: %d\n", parser.current.type);
+  printf("DEBUG_TEST - parsePrecedence - previous token: %d\n", parser.previous.type);
+
   // get the prefix rule
   // the first will always be a prefix expression
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+
   // if no rule exists throw an error and return
   if (prefixRule == NULL) {
+    printf("DEBUG_TEST - parsePrecedence - prefixRule == NULL\n");
     error("Expect expression");
     return;
   }
@@ -302,11 +312,13 @@ static void parsePrecedence(Precedence precedence) {
   prefixRule();
 
   // while precedence is less than the current rule's precedence
-  while (precedence <= getRule(parser.previous.type)->precedence) {
+  while (precedence <= getRule(parser.current.type)->precedence) {
+    printf("DEBUG_TEST - parsePrecedence while\n");
     // advance to the next token
     advance();
     // get the infix rule (because we are parsing the right side of the operator)
     ParseFn infixRule = getRule(parser.previous.type)->infix;
+    printf("DEBUG_TEST - infixRule: %d\n", infixRule);
     // else process the rule by calling the infixRule function
     infixRule();
   }
