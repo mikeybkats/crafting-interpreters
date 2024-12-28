@@ -23,7 +23,7 @@ static bool isAtEnd() {
 }
 
 static char scannerAdvance() {
-  scanner.current++;
+  scanner.current++;           // increments the pointer forward one block
   return scanner.current[-1];  // returns the character that was just moved passed
 }
 
@@ -202,7 +202,6 @@ Token scanToken() {
   if (isAtEnd()) return makeToken(TOKEN_EOF);
 
   char c = scannerAdvance();
-  printf("DEBUG: Read char: %c\n", c);
 
   if (isAlpha(c)) return identifier();
   if (isDigit(c)) return number();

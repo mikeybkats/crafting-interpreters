@@ -2,8 +2,8 @@
 #define clox_scanner_h
 
 typedef struct {
-  const char* start;
-  const char* current;
+  const char* start;    // pointer to the beginning of the current token
+  const char* current;  // pointer to the current character of the source code
   int line;
 } Scanner;
 
@@ -71,7 +71,7 @@ In jlox the token stored an Object for the runtime value which was converted fro
 */
 typedef struct {
   TokenType type;
-  const char* start;  // pointer to the first character of the lexeme source code
+  const char* start;  // pointer to the first character of the current token
   int length;
   int line;
 } Token;
