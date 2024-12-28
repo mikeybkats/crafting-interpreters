@@ -35,7 +35,8 @@
     "test_chunk.h": "c",
     "rle.h": "c",
     "test_value.h": "c",
-    "test_rle.h": "c"
+    "test_rle.h": "c",
+    "scanner.h": "c"
   },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",
