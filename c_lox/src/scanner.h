@@ -71,7 +71,7 @@ In jlox the token stored an Object for the runtime value which was converted fro
 */
 typedef struct {
   TokenType type;
-  const char* start;
+  const char* start;  // pointer to the first character of the lexeme source code
   int length;
   int line;
 } Token;

@@ -24,7 +24,7 @@ static bool isAtEnd() {
 
 static char scannerAdvance() {
   scanner.current++;
-  return scanner.current[-1];
+  return scanner.current[-1];  // returns the character that was just moved passed
 }
 
 static char peek() { return *scanner.current; }
@@ -196,14 +196,13 @@ static Token string() {
 }
 
 Token scanToken() {
-  printf("DEBUG_TEST - scanner.current: %s\n", scanner.current);
   skipWhitespace();
   scanner.start = scanner.current;
 
   if (isAtEnd()) return makeToken(TOKEN_EOF);
 
   char c = scannerAdvance();
-  printf("DEBUG_TEST - Current char: %c\n", c);
+  printf("DEBUG: Read char: %c\n", c);
 
   if (isAlpha(c)) return identifier();
   if (isDigit(c)) return number();
@@ -226,7 +225,6 @@ Token scanToken() {
     case '-':
       return makeToken(TOKEN_MINUS);
     case '+':
-      printf("DEBUG_TEST - Found plus token\n");
       return makeToken(TOKEN_PLUS);
     case '/':
       return makeToken(TOKEN_SLASH);

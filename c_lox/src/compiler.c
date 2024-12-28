@@ -41,9 +41,9 @@ typedef enum {
 typedef void (*ParseFn)();
 
 typedef struct {
-  ParseFn prefix;
-  ParseFn infix;
-  Precedence precedence;
+  ParseFn prefix;         // function pointer to the prefix rule (grouping, number, unary, ect)
+  ParseFn infix;          // function pointer to the infix rule (binary, etc)
+  Precedence precedence;  // Enum value of the precedence of the operator
 } ParseRule;
 
 Parser parser;  // create a single global variable so state does not need to be
@@ -100,11 +100,6 @@ void test_advance() {
 #endif
 
 static void consume(TokenType type, const char* message) {
-  printf("DEBUG_TEST - consume\n");
-  printf("DEBUG_TEST - parser.current.type: %d\n", parser.current.type);  // 7 is TOKEN_PLUS
-  printf("DEBUG_TEST - type: %d\n", type);                                // 41 is TOKEN_EOF
-  printf("DEBUG_TEST - message: %s\n", message);
-
   if (parser.current.type == type) {
     advance();
     return;
@@ -162,12 +157,9 @@ static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
 static void binary() {
-  printf("DEBUG_TEST - binary\n");
   TokenType operatorType = parser.previous.type;
   ParseRule* rule        = getRule(operatorType);
 
-  printf("binary: %d\n", rule->precedence);
-  printf("parsePrecedence binary\n");
   parsePrecedence((Precedence)(rule->precedence + 1));
 
   switch (operatorType) {
@@ -203,7 +195,6 @@ static void grouping() {
 }
 
 static void number() {
-  printf("DEBUG_TEST - number\n");
   double value = strtod(parser.previous.start, NULL);  // string to double
   emitConstant(value);
 }
@@ -214,7 +205,6 @@ static void number() {
  * @brief handles the unary operator
  */
 static void unary() {
-  printf("DEBUG_TEST - unary\n");
   TokenType operatorType = parser.previous.type;
 
   // compile the operand
@@ -234,6 +224,13 @@ static void unary() {
   }
 }
 
+/*
+ * ## rules
+ *
+ * @brief The rules for the parser
+ *
+ * [RULE_INDEX] = { prefix function, infix function, precedence }
+ */
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN]    = {grouping,   NULL,   PREC_NONE},
     [TOKEN_RIGHT_PAREN]   = {    NULL,   NULL,   PREC_NONE},
@@ -292,11 +289,8 @@ ParseRule rules[] = {
  * lower precedence than the `+` which is not how it should work.
  */
 static void parsePrecedence(Precedence precedence) {
-  printf("DEBUG_TEST - parsePrecedence: %d\n", precedence);
   // advance to the next token
   advance();
-  printf("DEBUG_TEST - parsePrecedence - current token: %d\n", parser.current.type);
-  printf("DEBUG_TEST - parsePrecedence - previous token: %d\n", parser.previous.type);
 
   // get the prefix rule
   // the first will always be a prefix expression
@@ -304,7 +298,6 @@ static void parsePrecedence(Precedence precedence) {
 
   // if no rule exists throw an error and return
   if (prefixRule == NULL) {
-    printf("DEBUG_TEST - parsePrecedence - prefixRule == NULL\n");
     error("Expect expression");
     return;
   }
@@ -313,12 +306,11 @@ static void parsePrecedence(Precedence precedence) {
 
   // while precedence is less than the current rule's precedence
   while (precedence <= getRule(parser.current.type)->precedence) {
-    printf("DEBUG_TEST - parsePrecedence while\n");
+    printf("DEBUG_TEST - parsePrecedence - precedence: %d - current token: %d\n", precedence, parser.current.type);
     // advance to the next token
     advance();
     // get the infix rule (because we are parsing the right side of the operator)
     ParseFn infixRule = getRule(parser.previous.type)->infix;
-    printf("DEBUG_TEST - infixRule: %d\n", infixRule);
     // else process the rule by calling the infixRule function
     infixRule();
   }
