@@ -196,7 +196,7 @@ static void grouping() {
 
 static void number() {
   double value = strtod(parser.previous.start, NULL);  // string to double
-  emitConstant(value);
+  emitConstant(NUMBER_VAL(value));
 }
 
 /*
