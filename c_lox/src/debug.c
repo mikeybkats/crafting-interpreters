@@ -47,10 +47,9 @@ void printChunk(Chunk* chunk) {
 
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
   uint8_t constantIndex = chunk->code[offset + 1];
-  printf(" %-16s", name);           // print the opcode name of the instruction
-  printf("%4d: '", constantIndex);  // print the index of the constant
-  printValue(
-      chunk->constants.values[constantIndex]);  // print the constant value
+  printf(" %-16s", name);                              // print the opcode name of the instruction
+  printf("%4d: '", constantIndex);                     // print the index of the constant
+  printValue(chunk->constants.values[constantIndex]);  // print the constant value
   printf("'\n");
 
   return offset + 2;
@@ -85,6 +84,15 @@ int disassembleInstruction(Chunk* chunk, int offset) {
   switch (opcode) {
     case OP_CONSTANT:
       return constantInstruction("OP_CONSTANT", chunk, offset);
+
+    case OP_NIL:
+      return simpleInstruction("OP_NIL", offset);
+
+    case OP_TRUE:
+      return simpleInstruction("OP_TRUE", offset);
+
+    case OP_FALSE:
+      return simpleInstruction("OP_FALSE", offset);
 
     case OP_ADD:
       return simpleInstruction("OP_ADD", offset);

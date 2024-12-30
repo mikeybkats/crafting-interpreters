@@ -93,6 +93,17 @@ the instruction pointer.
 
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 
+#define BINARY_OP(valueType, op)                      \
+  do {                                                \
+    if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
+      runtimeError("Operands must be numbers.");      \
+      return INTERPRET_RUNTIME_ERROR;                 \
+    }                                                 \
+    double b = AS_NUMBER(pop());                      \
+    double a = AS_NUMBER(pop());                      \
+    push(valueType(a op b));                          \
+  } while (false)
+
   for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
     printf("         ");
@@ -120,17 +131,26 @@ the instruction pointer.
         push(constant);
         break;
       }
+      case OP_NIL:
+        push(NIL_VAL);
+        break;
+      case OP_TRUE:
+        push(BOOL_VAL(true));
+        break;
+      case OP_FALSE:
+        push(BOOL_VAL(false));
+        break;
       case OP_ADD:
-        BINARY_OP(+);
+        BINARY_OP(NUMBER_VAL, +);
         break;
       case OP_SUBTRACT:
-        BINARY_OP(-);
+        BINARY_OP(NUMBER_VAL, -);
         break;
       case OP_MULTIPLY:
-        BINARY_OP(*);
+        BINARY_OP(NUMBER_VAL, *);
         break;
       case OP_DIVIDE:
-        BINARY_OP(/);
+        BINARY_OP(NUMBER_VAL, /);
         break;
       case OP_NEGATE:
         if (!IS_NUMBER(peek(0))) {
