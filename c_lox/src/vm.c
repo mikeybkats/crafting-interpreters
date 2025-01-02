@@ -37,7 +37,7 @@ static void runtimeError(const char *format, ...) {
   va_start(args, format);
   vfprintf(stderr, format, args);
   va_end(args);
-  fprintf("\n", stderr);
+  fprintf(stderr, "\n");
 
   size_t instruction = vm.ip - vm.chunk->code - 1;
   int line           = vm.chunk->lines[instruction];
@@ -67,6 +67,8 @@ Value pop() {
  */
 static Value peek(int distance) { return vm.stackTop[-1 - distance]; }
 
+static bool isFalsey(Value value) { return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value)); }
+
 /*
  # Run
 
@@ -83,13 +85,6 @@ the instruction pointer.
 #define READ_BYTE() (*vm.ip++)
   /* as soon as the opcode is read from the ip the ip is advanced. Meaning the
    * ip always points to the next byte of code to be used. */
-
-#define BINARY_OP(op) \
-  do {                \
-    double b = pop(); \
-    double a = pop(); \
-    push(a op b);     \
-  } while (false)
 
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 
@@ -140,6 +135,18 @@ the instruction pointer.
       case OP_FALSE:
         push(BOOL_VAL(false));
         break;
+      case OP_EQUAL: {
+        Value b = pop();
+        Value a = pop();
+        push(BOOL_VAL(valuesEqual(a, b)));
+        break;
+      }
+      case OP_GREATER:
+        BINARY_OP(BOOL_VAL, >);
+        break;
+      case OP_LESS:
+        BINARY_OP(BOOL_VAL, <);
+        break;
       case OP_ADD:
         BINARY_OP(NUMBER_VAL, +);
         break;
@@ -151,6 +158,9 @@ the instruction pointer.
         break;
       case OP_DIVIDE:
         BINARY_OP(NUMBER_VAL, /);
+        break;
+      case OP_NOT:
+        push(BOOL_VAL(!AS_BOOL(pop())));
         break;
       case OP_NEGATE:
         if (!IS_NUMBER(peek(0))) {

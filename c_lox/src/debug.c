@@ -45,6 +45,15 @@ void printChunk(Chunk* chunk) {
   printf("]\n");
 }
 
+/*
+ * ## constantInstruction
+ *
+ * @brief Prints the name of the instruction and the constant value.
+ *
+ * @param name the name of the instruction.
+ * @param chunk the Chunk containing the instruction.
+ * @param offset the offset of the current instruction.
+ */
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
   uint8_t constantIndex = chunk->code[offset + 1];
   printf(" %-16s", name);                              // print the opcode name of the instruction
@@ -55,6 +64,15 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
   return offset + 2;
 }
 
+/*
+ * ## simpleInstruction
+ *
+ * @brief Prints the name of the instruction and returns the offset of the next
+ * instruction.
+ *
+ * @param name the name of the instruction.
+ * @param offset the offset of the current instruction.
+ */
 static int simpleInstruction(const char* name, int offset) {
   printf(" %s\n", name);
   return offset + 1;
@@ -63,7 +81,8 @@ static int simpleInstruction(const char* name, int offset) {
 /*
  * ## disassembleInstruction
  *
- * @brief Returns the offset of the next instruction.
+ * @brief Prints the offset. Prints the line number. Prints the opcode of the next instruction. Returns the offset of
+ * the next instruction.
  *
  * @param chunk
  * @param offset the int distance from the beginning of a code array to access a
@@ -94,6 +113,15 @@ int disassembleInstruction(Chunk* chunk, int offset) {
     case OP_FALSE:
       return simpleInstruction("OP_FALSE", offset);
 
+    case OP_EQUAL:
+      return simpleInstruction("OP_EQUAL", offset);
+
+    case OP_GREATER:
+      return simpleInstruction("OP_GREATER", offset);
+
+    case OP_LESS:
+      return simpleInstruction("OP_LESS", offset);
+
     case OP_ADD:
       return simpleInstruction("OP_ADD", offset);
 
@@ -105,6 +133,9 @@ int disassembleInstruction(Chunk* chunk, int offset) {
 
     case OP_DIVIDE:
       return simpleInstruction("OP_DIVIDE", offset);
+
+    case OP_NOT:
+      return simpleInstruction("OP_NOT", offset);
 
     case OP_NEGATE:
       return simpleInstruction("OP_NEGATE", offset);

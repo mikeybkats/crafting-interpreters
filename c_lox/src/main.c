@@ -17,7 +17,6 @@ static void repl() {
       break;
     }
 
-    printf("DEBUG_TEST - repl - line: %s\n", line);
     interpret(line);
   }
 }
@@ -65,8 +64,7 @@ static char* readFile(const char* path) {
 }
 
 static void runFile(const char* path) {
-  char* source = readFile(path);
-  printf("DEBUG_TEST - runFile - source: %s\n", source);
+  char* source           = readFile(path);
   InterpretResult result = interpret(source);
   free(source);
 
