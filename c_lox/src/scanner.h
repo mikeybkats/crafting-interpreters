@@ -1,6 +1,12 @@
 #ifndef clox_scanner_h
 #define clox_scanner_h
 
+typedef struct {
+  const char* start;    // pointer to the beginning of the current token
+  const char* current;  // pointer to the current character of the source code
+  int line;
+} Scanner;
+
 typedef enum {
   // Single-character tokens.
   TOKEN_LEFT_PAREN,
@@ -47,7 +53,6 @@ typedef enum {
   TOKEN_TRUE,
   TOKEN_VAR,
   TOKEN_WHILE,
-
   TOKEN_ERROR,
   TOKEN_EOF
 } TokenType;
@@ -66,7 +71,7 @@ In jlox the token stored an Object for the runtime value which was converted fro
 */
 typedef struct {
   TokenType type;
-  const char* start;
+  const char* start;  // pointer to the first character of the current token
   int length;
   int line;
 } Token;

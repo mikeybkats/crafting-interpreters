@@ -2,7 +2,7 @@
 CC = clang
 
 # Compiler flags
-CFLAGS = -Isrc -std=c11 -Wall
+CFLAGS = -Isrc -std=c99 -Wall -DDEBUG_TEST -g -O0
 
 
 # Directories

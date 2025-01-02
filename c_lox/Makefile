@@ -1,5 +1,5 @@
-CXX=clang
-CXXFLAGS=-std=c11 -Wall
+CC=clang
+CFLAGS=-g -Wall -Wextra -std=c99 
 TARGET=build/src/outputExecutable
 SRC_DIR=src
 BUILD_DIR=build/src
@@ -13,10 +13,10 @@ $(shell mkdir -p build $(BUILD_DIR))
 
 
 $(TARGET): $(OBJ_FILES)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CXX) $(CXXFLAGS) -c $< -o $@	
+	$(CC) $(CFLAGS) -c $< -o $@	
 
 clean:
 	rm -f $(OBJ_FILES) $(TARGET)

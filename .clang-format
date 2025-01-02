@@ -1,0 +1,16 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+# Indentation
+IndentWidth: 2
+ContinuationIndentWidth: 4
+UseTab: Never
+# Array formatting
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments: true
+AlignConsecutiveMacros: true
+# Preprocessor directives
+# IndentPPDirectives: AfterHash
+PPIndentWidth: 2
+# Other
+ColumnLimit: 120  # Increased to accommodate table-like formatting

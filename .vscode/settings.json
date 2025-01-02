@@ -1,5 +1,6 @@
 {
   "rust-analyzer.linkedProjects": ["rust_lox/Cargo.toml"],
+  "eslint.enable": false,
   "files.associations": {
     "stdint.h": "c",
     "stdbool.h": "c",
@@ -34,10 +35,12 @@
     "test_chunk.h": "c",
     "rle.h": "c",
     "test_value.h": "c",
-    "test_rle.h": "c"
+    "test_rle.h": "c",
+    "scanner.h": "c"
   },
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "ms-vscode.cpptools",
+  "editor.defaultFormatter": "xaver.clang-format",
+  "C_Cpp.formatting": "clangFormat",
   "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }

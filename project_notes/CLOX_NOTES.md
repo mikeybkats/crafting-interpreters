@@ -70,3 +70,13 @@ word scanned "async" -->
 match keywords --> NO_MATCH
 tokenize --> "async" as IDENTIFIER
 ```
+
+# CH17 
+
+_prefix expressions_ - expressions that start with a particular token
+
+_infix expressions_ - expressions that the parser does not know it's position in the expression until after it has parsed the left operand
+
+_left associative_ : Arithmetic is left associative. This `1 + 2 + 3 + 4` will parse like this `((1 + 2) + 3) + 4`
+
+_right associative_ : Assignment is right associative. This `a = b = c = d` will parse like this `a = (b = (c = d))`
