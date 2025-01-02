@@ -4,8 +4,6 @@
 #include "common.h"
 
 /**
- * ## Enum: ValueType
- *
  * A little bit about values in clox:
  *
  * Values in clox are stored in a constant pool. This is similar to Java --
@@ -15,7 +13,61 @@
  * The clox constant pool is an array of values. The instruction to load a data
  * type (like a constant) looks up the value by index in the array.
  */
-typedef double Value;
+// typedef double Value;
+
+/**
+ * ## Enum: ValueType
+ *
+ * @brief The type of the value defined in the union type Value
+ */
+typedef enum {
+  VAL_BOOL,
+  VAL_NIL,
+  VAL_NUMBER,
+} ValueType;
+
+/**
+ * ## Struct: Value
+ *
+ * @brief A value in the constant pool.
+ *
+ * Defined as a union type to allow for different types of values without wasting memory. A union type lets the data
+ * type be used as a single type, but the actual data type is stored in the union.
+ */
+typedef struct {
+  ValueType type;
+  union {
+    bool boolean;
+    double number;
+  } as;
+} Value;
+
+/**
+ * ## Macros: Value
+ *
+ * @brief Macros to check the type of a value
+ */
+#define IS_BOOL(value)   ((value).type == VAL_BOOL)
+#define IS_NIL(value)    ((value).type == VAL_NIL)
+#define IS_NUMBER(value) ((value).type == VAL_NUMBER)
+
+/**
+ * ## Macros: Value
+ *
+ * @brief Macros to get the value of a value
+ */
+#define AS_BOOL(value)   ((value).as.boolean)
+#define AS_NUMBER(value) ((value).as.number)
+
+/**
+ * ## Macros: Value
+ *
+ * @brief Macros to create values with the correct type tag. "This hoists statically typed values up into clox's
+ * dynamically typed universe"
+ */
+#define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
+#define NIL_VAL           ((Value){VAL_NIL, {.number = 0}})
+#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
 
 /*
  * ## Struct: ValueArray
@@ -33,6 +85,7 @@ typedef struct {
   Value* values;
 } ValueArray;
 
+bool valuesEqual(Value a, Value b);
 void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);

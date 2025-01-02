@@ -24,7 +24,8 @@ static void repl() {
 static char* readFile(const char* path) {
   FILE* file = fopen(path, "rb");
 
-  // This can happen if the file doesn’t exist or the user doesn’t have access to it. It’s pretty common—people mistype paths all the time.
+  // This can happen if the file doesn’t exist or the user doesn’t have access to it. It’s pretty common—people mistype
+  // paths all the time.
   if (file == NULL) {
     fprintf(stderr, "Could not open file \"%s\".\n", path);
     exit(74);
@@ -41,7 +42,8 @@ static char* readFile(const char* path) {
   // allocate the filesize + 1 (to make room for the null byte \0)
   char* buffer = (char*)malloc(fileSize + 1);
 
-  // This is a much rarer error. if the user's machine can't allocate enough memory to run this, then their is likely a larger systemic error.
+  // This is a much rarer error. if the user's machine can't allocate enough memory to run this, then their is likely a
+  // larger systemic error.
   if (buffer == NULL) {
     fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
     exit(74);
@@ -62,7 +64,7 @@ static char* readFile(const char* path) {
 }
 
 static void runFile(const char* path) {
-  char* source = readFile(path);
+  char* source           = readFile(path);
   InterpretResult result = interpret(source);
   free(source);
 

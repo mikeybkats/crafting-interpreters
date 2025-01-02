@@ -80,6 +80,10 @@ static void skipWhitespace() {
       case '\t':
         scannerAdvance();
         break;
+      case '\n':
+        scanner.line++;
+        scannerAdvance();
+        break;
       case '/':
         if (peekNext() == '/') {
           // A comment goes until the end of the line.

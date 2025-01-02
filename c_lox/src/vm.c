@@ -1,5 +1,6 @@
 #include "vm.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "common.h"
@@ -29,13 +30,22 @@ with global variables.
 */
 VM vm;
 
-static void resetStack() {
-  vm.stackTop = vm.stack;
-}
+static void resetStack() { vm.stackTop = vm.stack; }
 
-void initVM() {
+static void runtimeError(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+  fprintf(stderr, "\n");
+
+  size_t instruction = vm.ip - vm.chunk->code - 1;
+  int line           = vm.chunk->lines[instruction];
+  fprintf(stderr, "[line %d] in script\n", line);
   resetStack();
 }
+
+void initVM() { resetStack(); }
 
 void freeVM() {}
 
@@ -49,6 +59,15 @@ Value pop() {
   vm.stackTop--;  // pointer arithmetic
   return *vm.stackTop;
 }
+
+/**
+ * ## Function: peek
+ *
+ * @brief Returns the value at the given distance from the top of the stack, but does not pop it from the stack.
+ */
+static Value peek(int distance) { return vm.stackTop[-1 - distance]; }
+
+static bool isFalsey(Value value) { return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value)); }
 
 /*
  # Run
@@ -67,14 +86,18 @@ the instruction pointer.
   /* as soon as the opcode is read from the ip the ip is advanced. Meaning the
    * ip always points to the next byte of code to be used. */
 
-#define BINARY_OP(op) \
-  do {                \
-    double b = pop(); \
-    double a = pop(); \
-    push(a op b);     \
-  } while (false)
-
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+
+#define BINARY_OP(valueType, op)                      \
+  do {                                                \
+    if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
+      runtimeError("Operands must be numbers.");      \
+      return INTERPRET_RUNTIME_ERROR;                 \
+    }                                                 \
+    double b = AS_NUMBER(pop());                      \
+    double a = AS_NUMBER(pop());                      \
+    push(valueType(a op b));                          \
+  } while (false)
 
   for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
@@ -87,45 +110,73 @@ the instruction pointer.
     }
     printf("\n");
 
-    disassembleInstruction(
-        vm.chunk,
-        (int)(vm.ip - vm.chunk->code));  // When you subtract two pointers, the
-                                         // result is of type ptrdiff_t, which
-                                         // represents the distance between two
-                                         // pointers, hence the int type cast
+    disassembleInstruction(vm.chunk,
+                           (int)(vm.ip - vm.chunk->code));  // When you subtract two pointers, the
+                                                            // result is of type ptrdiff_t, which
+                                                            // represents the distance between two
+                                                            // pointers, hence the int type cast
 #endif
 
     u_int8_t instruction;
 
     // This switch statement will become giant to handle all the opcodes
     switch (instruction = READ_BYTE()) {
-      case OP_CONSTANT:
-        {
-          Value constant = READ_CONSTANT();
-          push(constant);
-          break;
-        }
+      case OP_CONSTANT: {
+        Value constant = READ_CONSTANT();
+        push(constant);
+        break;
+      }
+      case OP_NIL:
+        push(NIL_VAL);
+        break;
+      case OP_TRUE:
+        push(BOOL_VAL(true));
+        break;
+      case OP_FALSE:
+        push(BOOL_VAL(false));
+        break;
+      case OP_EQUAL: {
+        Value b = pop();
+        Value a = pop();
+        push(BOOL_VAL(valuesEqual(a, b)));
+        break;
+      }
+      case OP_GREATER:
+        BINARY_OP(BOOL_VAL, >);
+        break;
+      case OP_LESS:
+        BINARY_OP(BOOL_VAL, <);
+        break;
       case OP_ADD:
-        BINARY_OP(+);
+        BINARY_OP(NUMBER_VAL, +);
         break;
       case OP_SUBTRACT:
-        BINARY_OP(-);
+        BINARY_OP(NUMBER_VAL, -);
         break;
       case OP_MULTIPLY:
-        BINARY_OP(*);
+        BINARY_OP(NUMBER_VAL, *);
         break;
       case OP_DIVIDE:
-        BINARY_OP(/);
+        BINARY_OP(NUMBER_VAL, /);
+        break;
+      case OP_NOT:
+        push(BOOL_VAL(!AS_BOOL(pop())));
         break;
       case OP_NEGATE:
-        push(-pop());
-        break;
-      case OP_RETURN:
-        {
-          printValue(pop());
-          printf("\n");
-          return INTERPRET_OK;
+        if (!IS_NUMBER(peek(0))) {
+          runtimeError("Operand must be a number.");  // "Lox’s approach to error-handling is rather . . . spare. All
+                                                      // errors are fatal and immediately halt the interpreter. There’s
+                                                      // no way for user code to recover from an error. If Lox were a
+                                                      // real language, this is one of the first things I would remedy."
+          return INTERPRET_RUNTIME_ERROR;
         }
+        push(NUMBER_VAL(-AS_NUMBER(pop())));
+        break;
+      case OP_RETURN: {
+        printValue(pop());
+        printf("\n");
+        return INTERPRET_OK;
+      }
     }
   }
 
@@ -159,7 +210,7 @@ InterpretResult interpret(const char *source) {
   }
 
   vm.chunk = &chunk;
-  vm.ip = vm.chunk->code;
+  vm.ip    = vm.chunk->code;
 
   InterpretResult result = run();
 
