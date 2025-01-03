@@ -42,5 +42,12 @@
   "editor.defaultFormatter": "xaver.clang-format",
   "C_Cpp.formatting": "clangFormat",
   "C_Cpp.errorSquiggles": "enabled",
-  "C_Cpp.default.compilerPath": "/usr/bin/clang"
+  "C_Cpp.default.compilerPath": "/usr/bin/clang",
+  "[markdown]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prettier.proseWrap": "always",
+  "prettier.printWidth": 100,
+  "prettier.tabWidth": 2
 }
