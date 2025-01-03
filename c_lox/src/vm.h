@@ -11,8 +11,8 @@ typedef struct {
   // the chunk of code to execute "the VM will gradually acquire more state"
   Chunk* chunk;
   // ip points to the bytecode inside the chunk
-  uint8_t* ip;  // "ip stands for instruction pointer.  // pointing to the
-                // bytecode array inside the chunk, faster than // looking up
+  uint8_t* ip;  // "ip stands for instruction pointer. Pointing to the
+                // bytecode array inside the chunk, faster than looking up
                 // the bytecode by index."
   Value stack[STACK_MAX];
   // stack top points to one past the top item in the stack
@@ -21,11 +21,7 @@ typedef struct {
                     // a little odd, but almost every implementation does this."
 } VM;
 
-typedef enum {
-  INTERPRET_OK,
-  INTERPRET_COMPILE_ERROR,
-  INTERPRET_RUNTIME_ERROR
-} InterpretResult;
+typedef enum { INTERPRET_OK, INTERPRET_COMPILE_ERROR, INTERPRET_RUNTIME_ERROR } InterpretResult;
 
 void initVM();
 void freeVM();

@@ -79,7 +79,7 @@ static bool isFalsey(Value value) { return IS_NIL(value) || (IS_BOOL(value) && !
  Visitor pattern for walking the AST."
  */
 static InterpretResult run() {
-/* READ_BYTE - macro reads the byte currently pointed at by the ip then advances
+/* READ_BYTE - macro reads the byte currently pointed at by the instruction pointer then advances
 the instruction pointer.
 */
 #define READ_BYTE() (*vm.ip++)
