@@ -36,7 +36,12 @@
     "rle.h": "c",
     "test_value.h": "c",
     "test_rle.h": "c",
-    "scanner.h": "c"
+    "scanner.h": "c",
+    "__node_handle": "c",
+    "bitset": "c",
+    "deque": "c",
+    "locale": "c",
+    "optional": "c"
   },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",

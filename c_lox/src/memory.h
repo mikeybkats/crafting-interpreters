@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+#define ALLOCATE(type, count) (type*)reallocate(NULL, 0, sizeof(type) * (count))
+
 /*
  * ## Macro: GROW_CAPACITY
  *
@@ -23,9 +25,8 @@
  * @param oldCount old length of block
  * @param newCount new length of block
  */
-#define GROW_ARRAY(type, pointer, oldCount, newCount)   \
-  (type*)reallocate(pointer, sizeof(type) * (oldCount), \
-                    sizeof(type) * (newCount))
+#define GROW_ARRAY(type, pointer, oldCount, newCount) \
+  (type*)reallocate(pointer, sizeof(type) * (oldCount), sizeof(type) * (newCount))
 
 /*
  * ## Macro: FREE_ARRAY
@@ -39,8 +40,7 @@
  *
  * @param oldCount the capacity of the array to be freed from memory
  */
-#define FREE_ARRAY(type, pointer, oldCount) \
-  (type*)reallocate(pointer, sizeof(type) * (oldCount), 0)
+#define FREE_ARRAY(type, pointer, oldCount) (type*)reallocate(pointer, sizeof(type) * (oldCount), 0)
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
 

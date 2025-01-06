@@ -4,6 +4,17 @@
 #include "common.h"
 
 /**
+ * ## Struct: Obj
+ *
+ * @brief The name “Obj” itself refers to a struct that contains the state shared across all object types. It’s sort of
+ * like the “base class” for objects. Because of some cyclic dependencies between values and objects, we forward-declare
+ * it in the “value” module.
+ */
+typedef struct Obj Obj;
+
+typedef struct ObjString ObjString;
+
+/**
  * A little bit about values in clox:
  *
  * Values in clox are stored in a constant pool. This is similar to Java --
@@ -24,6 +35,7 @@ typedef enum {
   VAL_BOOL,
   VAL_NIL,
   VAL_NUMBER,
+  VAL_OBJ
 } ValueType;
 
 /**
@@ -37,8 +49,9 @@ typedef enum {
 typedef struct {
   ValueType type;
   union {
-    bool boolean;
+    bool   boolean;
     double number;
+    Obj*   obj;
   } as;
 } Value;
 
@@ -50,12 +63,14 @@ typedef struct {
 #define IS_BOOL(value)   ((value).type == VAL_BOOL)
 #define IS_NIL(value)    ((value).type == VAL_NIL)
 #define IS_NUMBER(value) ((value).type == VAL_NUMBER)
+#define IS_OBJ(value)    ((value).type == VAL_OBJ)
 
 /**
  * ## Macros: Value
  *
  * @brief Macros to get the value of a value
  */
+#define AS_OBJ(value)    ((value).as.obj)
 #define AS_BOOL(value)   ((value).as.boolean)
 #define AS_NUMBER(value) ((value).as.number)
 
@@ -68,6 +83,7 @@ typedef struct {
 #define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
 #define NIL_VAL           ((Value){VAL_NIL, {.number = 0}})
 #define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
+#define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
 /*
  * ## Struct: ValueArray
@@ -80,8 +96,8 @@ typedef struct {
  * @param values (Value*) the pointer to the array of values
  */
 typedef struct {
-  int capacity;
-  int count;
+  int    capacity;
+  int    count;
   Value* values;
 } ValueArray;
 
