@@ -1,31 +1,35 @@
 ---
 Language: Cpp
 BasedOnStyle: Google
+
 # Overall column limit
-ColumnLimit: 120  # Increased to accommodate table-like formatting
+BreakBeforeBraces: Custom
 BraceWrapping:
   AfterStruct: true
   AfterClass: true
   AfterEnum: true
-# Indentation
+
+# Column and Indentation
+ColumnLimit: 120  # Increased to accommodate table-like formatting
 IndentWidth: 2
 ContinuationIndentWidth: 4
+PPIndentWidth: 2
 UseTab: Never
+
 # Function formatting
 AllowShortFunctionsOnASingleLine: None
 BinPackArguments: false
 BinPackParameters: false
 AlignAfterOpenBracket: Align
+
 # Enums
 BinPackEnums: false
 AllowShortEnumsOnASingleLine: false
-# Typedef formatting
-TypenameMacros: ['STACK_OF', 'LIST_OF']  # Add your typedef macros here
-AlignConsecutiveDeclarations: true
+
 # Array formatting
 AlignArrayOfStructures: Right
 AlignConsecutiveAssignments: true
 AlignConsecutiveMacros: true
-# Preprocessor directives
-# IndentPPDirectives: AfterHash
-PPIndentWidth: 2
+
+# Typedef formatting
+AlignConsecutiveDeclarations: true

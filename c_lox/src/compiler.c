@@ -24,7 +24,8 @@
  *
  * "These are all of Lox’s precedence levels in order from lowest to highest."
  */
-typedef enum {
+typedef enum
+{
   PREC_NONE,
   PREC_ASSIGNMENT,  // =
   PREC_OR,          // or
@@ -40,7 +41,8 @@ typedef enum {
 
 typedef void (*ParseFn)();
 
-typedef struct {
+typedef struct
+{
   ParseFn    prefix;      // function pointer to the prefix rule (grouping, number, unary, ect)
   ParseFn    infix;       // function pointer to the infix rule (binary, etc)
   Precedence precedence;  // Enum value of the precedence of the operator

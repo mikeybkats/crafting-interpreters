@@ -22,11 +22,13 @@ unnamed padding within a structure object, but not at its beginning.
 #define AS_STRING(value)  ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 
-typedef enum {
+typedef enum
+{
   OBJ_STRING,
 } ObjType;
 
-struct Obj {
+struct Obj
+{
   ObjType type;
 };
 
@@ -38,7 +40,8 @@ struct Obj {
  *
  * @note ObjString can safely be ast to Obj because its first member is of type Obj.
  */
-struct ObjString {
+struct ObjString
+{
   Obj obj;
   int length;  // store the length, which indicates the number of bytes in the array and allows for easier access to the
                // null terminator.
@@ -46,6 +49,8 @@ struct ObjString {
 };
 
 ObjString* copyString(const char* chars, int length);
+
+void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
