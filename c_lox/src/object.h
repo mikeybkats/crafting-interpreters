@@ -22,14 +22,25 @@ unnamed padding within a structure object, but not at its beginning.
 #define AS_STRING(value)  ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 
+/**
+ * ## Enum: ObjType
+ *
+ * @brief Enum for the types of objects.
+ */
 typedef enum
 {
   OBJ_STRING,
 } ObjType;
 
+/**
+ * ## Struct: Obj
+ *
+ * @brief Base struct for all objects.
+ */
 struct Obj
 {
-  ObjType type;
+  ObjType     type;
+  struct Obj* next;
 };
 
 /**
@@ -49,6 +60,7 @@ struct ObjString
 };
 
 ObjString* copyString(const char* chars, int length);
+ObjString* takeString(char* chars, int length);
 
 void printObject(Value value);
 

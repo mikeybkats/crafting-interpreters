@@ -2,10 +2,13 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "common.h"
 #include "compiler.h"
 #include "debug.h"
+#include "memory.h"
+#include "object.h"
 
 /*
 # VM
@@ -30,9 +33,11 @@ with global variables.
 */
 VM vm;
 
-static void resetStack() { vm.stackTop = vm.stack; }
+static void resetStack() {
+  vm.stackTop = vm.stack;
+}
 
-static void runtimeError(const char *format, ...) {
+static void runtimeError(const char* format, ...) {
   va_list args;
   va_start(args, format);
   vfprintf(stderr, format, args);
@@ -40,14 +45,19 @@ static void runtimeError(const char *format, ...) {
   fprintf(stderr, "\n");
 
   size_t instruction = vm.ip - vm.chunk->code - 1;
-  int line           = vm.chunk->lines[instruction];
+  int    line        = vm.chunk->lines[instruction];
   fprintf(stderr, "[line %d] in script\n", line);
   resetStack();
 }
 
-void initVM() { resetStack(); }
+void initVM() {
+  resetStack();
+  vm.objects = NULL;
+}
 
-void freeVM() {}
+void freeVM() {
+  freeObjects();
+}
 
 void push(Value value) {
   *vm.stackTop = value;  // stores the value in the array of Values after the
@@ -65,9 +75,28 @@ Value pop() {
  *
  * @brief Returns the value at the given distance from the top of the stack, but does not pop it from the stack.
  */
-static Value peek(int distance) { return vm.stackTop[-1 - distance]; }
+static Value peek(int distance) {
+  return vm.stackTop[-1 - distance];
+}
 
-static bool isFalsey(Value value) { return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value)); }
+static bool isFalsey(Value value) {
+  return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+static void concatenate() {
+  ObjString* a = AS_STRING(pop());
+  ObjString* b = AS_STRING(pop());
+
+  int   length = a->length + b->length;
+  char* chars  = ALLOCATE(char, length + 1);
+  memcpy(chars, a->chars, a->length);
+  memcpy(chars + a->length, b->chars, b->length);
+  chars[length] = '\0';
+
+  ObjString* result = takeString(chars, length);
+
+  push(OBJ_VAL(result));
+}
 
 /*
  # Run
@@ -102,7 +131,7 @@ the instruction pointer.
   for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
     printf("         ");
-    for (Value *slot = vm.stack; slot < vm.stackTop; slot++) {
+    for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
       // This loop lets us observe the effect of each instruction on the stack.
       printf("[ ");
       printValue(*slot);
@@ -148,7 +177,16 @@ the instruction pointer.
         BINARY_OP(BOOL_VAL, <);
         break;
       case OP_ADD:
-        BINARY_OP(NUMBER_VAL, +);
+        if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+          concatenate();
+        } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+          double b = AS_NUMBER(pop());
+          double a = AS_NUMBER(pop());
+          push(NUMBER_VAL(a + b));
+        } else {
+          runtimeError("Operands must be two numbers or two strings.");
+          return INTERPRET_RUNTIME_ERROR;
+        }
         break;
       case OP_SUBTRACT:
         BINARY_OP(NUMBER_VAL, -);
@@ -198,7 +236,7 @@ The compiler reports static errors, the VM detects runtime errors, the
 interpretter will use this information to know how to set the exit code of the
 process.
 */
-InterpretResult interpret(const char *source) {
+InterpretResult interpret(const char* source) {
   Chunk chunk;
   initChunk(&chunk);
 

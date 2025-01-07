@@ -22,6 +22,9 @@
 static Obj* allocateObject(size_t size, ObjType type) {
   Obj* object  = (Obj*)reallocate(NULL, 0, size);
   object->type = type;
+
+  object->next = vm.objects;
+  vm.objects   = object;
   return object;
 }
 
@@ -30,6 +33,15 @@ static ObjString* allocateString(char* chars, int length) {
   string->length    = length;
   string->chars     = chars;
   return string;
+}
+
+/**
+ * ## Function: takeString
+ *
+ * @brief Takes ownership of the string, so the caller must not free it.
+ */
+ObjString* takeString(char* chars, int length) {
+  return allocateString(chars, length);
 }
 
 ObjString* copyString(const char* chars, int length) {
