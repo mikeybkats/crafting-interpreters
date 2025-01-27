@@ -24,7 +24,8 @@
  *
  * "These are all of Lox’s precedence levels in order from lowest to highest."
  */
-typedef enum {
+typedef enum
+{
   PREC_NONE,
   PREC_ASSIGNMENT,  // =
   PREC_OR,          // or
@@ -40,9 +41,10 @@ typedef enum {
 
 typedef void (*ParseFn)();
 
-typedef struct {
-  ParseFn prefix;         // function pointer to the prefix rule (grouping, number, unary, ect)
-  ParseFn infix;          // function pointer to the infix rule (binary, etc)
+typedef struct
+{
+  ParseFn    prefix;      // function pointer to the prefix rule (grouping, number, unary, ect)
+  ParseFn    infix;       // function pointer to the infix rule (binary, etc)
   Precedence precedence;  // Enum value of the precedence of the operator
 } ParseRule;
 
@@ -51,9 +53,13 @@ Parser parser;  // create a single global variable so state does not need to be
 Chunk* compilingChunk;
 
 #ifdef DEBUG_TEST
-extern Chunk* currentChunk() { return compilingChunk; }
+extern Chunk* currentChunk() {
+  return compilingChunk;
+}
 #else
-static Chunk* currentChunk() { return compilingChunk; }
+static Chunk* currentChunk() {
+  return compilingChunk;
+}
 #endif
 
 static void errorAt(Token* token, const char* message) {
@@ -74,9 +80,13 @@ static void errorAt(Token* token, const char* message) {
   parser.hadError = true;
 }
 
-static void error(const char* message) { errorAt(&parser.previous, message); }
+static void error(const char* message) {
+  errorAt(&parser.previous, message);
+}
 
-static void errorAtCurrent(const char* message) { errorAt(&parser.current, message); }
+static void errorAtCurrent(const char* message) {
+  errorAt(&parser.current, message);
+}
 
 static void advance() {
   parser.previous = parser.current;
@@ -113,14 +123,18 @@ static void consume(TokenType type, const char* message) {
  *
  * @brief emits a byte to the current chunk. The byte is the location of the constant in the values array.
  */
-static void emitByte(uint8_t byte) { writeChunk(currentChunk(), byte, parser.previous.line); }
+static void emitByte(uint8_t byte) {
+  writeChunk(currentChunk(), byte, parser.previous.line);
+}
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
   emitByte(byte1);
   emitByte(byte2);
 }
 
-static void emitReturn() { emitByte(OP_RETURN); }
+static void emitReturn() {
+  emitByte(OP_RETURN);
+}
 
 /*
  * ## makeConstant
@@ -141,7 +155,9 @@ static uint8_t makeConstant(Value value) {
   return (uint8_t)constant;
 }
 
-static void emitConstant(Value value) { emitBytes(OP_CONSTANT, makeConstant(value)); }
+static void emitConstant(Value value) {
+  emitBytes(OP_CONSTANT, makeConstant(value));
+}
 
 static void endCompiler() {
   emitReturn();
@@ -152,13 +168,13 @@ static void endCompiler() {
 #endif
 }
 
-static void expression();
+static void       expression();
 static ParseRule* getRule(TokenType type);
-static void parsePrecedence(Precedence precedence);
+static void       parsePrecedence(Precedence precedence);
 
 static void binary() {
-  TokenType operatorType = parser.previous.type;
-  ParseRule* rule        = getRule(operatorType);
+  TokenType  operatorType = parser.previous.type;
+  ParseRule* rule         = getRule(operatorType);
 
   parsePrecedence((Precedence)(rule->precedence + 1));
 
@@ -233,6 +249,15 @@ static void number() {
   emitConstant(NUMBER_VAL(value));
 }
 
+/**
+ * ## string
+ *
+ * @brief handles strings
+ */
+static void string() {
+  emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+}
+
 /*
  * ## unary
  *
@@ -289,7 +314,7 @@ ParseRule rules[] = {
     [TOKEN_LESS]          = {    NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {    NULL, binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER]    = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_STRING]        = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_STRING]        = {  string,   NULL,       PREC_NONE},
     [TOKEN_NUMBER]        = {  number,   NULL,       PREC_NONE},
     [TOKEN_AND]           = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_CLASS]         = {    NULL,   NULL,       PREC_NONE},
@@ -353,9 +378,13 @@ static void parsePrecedence(Precedence precedence) {
   }
 }
 
-static ParseRule* getRule(TokenType type) { return &rules[type]; }
+static ParseRule* getRule(TokenType type) {
+  return &rules[type];
+}
 
-static void expression() { parsePrecedence(PREC_ASSIGNMENT); }
+static void expression() {
+  parsePrecedence(PREC_ASSIGNMENT);
+}
 
 bool compile(const char* source, Chunk* chunk) {
   initScanner(source);

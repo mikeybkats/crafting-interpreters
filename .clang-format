@@ -1,16 +1,35 @@
 ---
 Language: Cpp
 BasedOnStyle: Google
-# Indentation
+
+# Overall column limit
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterStruct: true
+  AfterClass: true
+  AfterEnum: true
+
+# Column and Indentation
+ColumnLimit: 120  # Increased to accommodate table-like formatting
 IndentWidth: 2
 ContinuationIndentWidth: 4
+PPIndentWidth: 2
 UseTab: Never
+
+# Function formatting
+AllowShortFunctionsOnASingleLine: None
+BinPackArguments: false
+BinPackParameters: false
+AlignAfterOpenBracket: Align
+
+# Enums
+BinPackEnums: false
+AllowShortEnumsOnASingleLine: false
+
 # Array formatting
 AlignArrayOfStructures: Right
 AlignConsecutiveAssignments: true
 AlignConsecutiveMacros: true
-# Preprocessor directives
-# IndentPPDirectives: AfterHash
-PPIndentWidth: 2
-# Other
-ColumnLimit: 120  # Increased to accommodate table-like formatting
+
+# Typedef formatting
+AlignConsecutiveDeclarations: true
