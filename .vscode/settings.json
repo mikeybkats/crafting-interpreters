@@ -41,7 +41,8 @@
     "bitset": "c",
     "deque": "c",
     "locale": "c",
-    "optional": "c"
+    "optional": "c",
+    "cstring": "c"
   },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",
