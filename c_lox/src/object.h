@@ -56,7 +56,8 @@ struct ObjString
   Obj obj;
   int length;  // store the length, which indicates the number of bytes in the array and allows for easier access to the
                // null terminator.
-  char* chars;
+  char*    chars;
+  uint32_t hash;  // "calculate the hash code once up front and be certain that it will never get invalidated"
 };
 
 ObjString* copyString(const char* chars, int length);
