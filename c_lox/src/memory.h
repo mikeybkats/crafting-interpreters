@@ -4,6 +4,14 @@
 #include "common.h"
 #include "object.h"
 
+/**
+ * ## Macro: ALLOCATE
+ *
+ * @brief Allocates a block of memory according to the given size type and length
+ *
+ * @param type
+ * @param count
+ */
 #define ALLOCATE(type, count) (type *)reallocate(NULL, 0, sizeof(type) * (count))
 
 #define FREE(type, pointer) reallocate(pointer, sizeof(type), 0)
