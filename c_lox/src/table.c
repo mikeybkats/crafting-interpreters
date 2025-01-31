@@ -64,6 +64,7 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
  */
 static void adjustCapacity(Table* table, int capacity) {
   Entry* entries = ALLOCATE(Entry, capacity);
+  table->count   = 0;
   for (int i = 0; i < capacity; i++) {
     entries[i].key   = NULL;
     entries[i].value = NIL_VAL;
@@ -77,6 +78,7 @@ static void adjustCapacity(Table* table, int capacity) {
     Entry* dest = findEntry(entries, capacity, entry->key);
     dest->key   = entry->key;
     dest->value = entry->value;
+    table->count++;
   }
 
   FREE_ARRAY(Entry, table->entries, table->capacity);
@@ -96,7 +98,8 @@ bool tableSet(Table* table, ObjString* key, Value value) {
 
   // update the size of the table
   bool isNewKey = entry->key == NULL;
-  if (isNewKey) table->count++;
+  // increment the count only if the new entry is not a tombstone (key is null and value is Nil)
+  if (isNewKey && IS_NIL(entry->value)) table->count++;
 
   // copy the entry into the table
   entry->key   = key;
@@ -137,5 +140,27 @@ void tableAddAll(Table* from, Table* to) {
     if (entry->key != NULL) {
       tableSet(to, entry->key, entry->value);
     }
+  }
+}
+
+ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t hash) {
+  if (table->count == 0) return NULL;
+
+  uint32_t index = hash % table->capacity;
+  for (;;) {
+    Entry* entry = &table->entries[index];
+
+    if (entry->key == NULL) {
+      // stop if an empty non-tombstone entry is found
+      if (IS_NIL(entry->value)) return NULL;
+    }
+    // if there is a hash collision, do a character by character string comparison
+    else if (entry->key->length == length && entry->key->hash == hash &&
+             memcmp(entry->key->chars, chars, length) == 0) {
+      // entry matches -- found!
+      return entry->key;
+    }
+
+    index = (index + 1) % table->capacity;
   }
 }
