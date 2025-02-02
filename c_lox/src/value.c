@@ -72,7 +72,9 @@ bool valuesEqual(Value a, Value b) {
     case VAL_NUMBER:
       return AS_NUMBER(a) == AS_NUMBER(b);
     case VAL_OBJ:
-      return AS_OBJ(a) == AS_OBJ(b);
+      // expands to pointers to a.as.obj == b.as.obj;
+      // !! this compares the interned string objects not the actual values
+      return AS_OBJ(a) == AS_OBJ(b);  // compares the memory address of the objects not the contents or actual values
     default:
       return false;
   }

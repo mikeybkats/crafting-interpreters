@@ -2,7 +2,7 @@
 CC = clang
 
 # Compiler flags
-CFLAGS = -Isrc -std=c99 -Wall -DDEBUG_TEST -g
+CFLAGS = -Isrc -std=c99 -Wall -DDEBUG_TEST -DUNITY_INCLUDE_DOUBLE -DUNITY_INCLUDE_FLOAT -g
 
 # Directories
 SRC_DIR = src
