@@ -8,6 +8,23 @@
 #include "../src/vm.h"
 #include "unity/src/unity.h"
 
+VM vm;
+
+void setup_test_object(void) {
+  vm.objects = NULL;
+  initTable(&vm.strings);
+}
+
+void teardown_test_object(void) {
+  freeTable(&vm.strings);
+  Obj* object = vm.objects;
+  while (object != NULL) {
+    Obj* next = object->next;
+    free(object);
+    object = next;
+  }
+}
+
 void test_string_value_creation(void) {
   const char* input = "hello world";
 
@@ -35,10 +52,6 @@ void test_number_value_creation(void) {
 }
 
 void test_string_interning_pointer_equality(void) {
-  VM vm;
-  vm.objects = NULL;
-  initTable(&vm.strings);
-
   ObjString* string1 = copyString("hello", 5);
   ObjString* string2 = copyString("hello", 5);
 
@@ -53,18 +66,12 @@ void test_string_interning_pointer_equality(void) {
 
   TEST_ASSERT_EQUAL_INT(AS_OBJ(hello1), AS_OBJ(hello2));
   TEST_ASSERT_NOT_EQUAL_INT(AS_OBJ(world1), AS_OBJ(world2));
-
-  freeTable(&vm.strings);
-  Obj* object = vm.objects;
-  while (object != NULL) {
-    Obj* next = object->next;
-    free(object);
-    object = next;
-  }
 }
 
 void run_object_tests(void) {
+  setup_test_object();
   RUN_TEST(test_string_value_creation);
   RUN_TEST(test_number_value_creation);
   RUN_TEST(test_string_interning_pointer_equality);
+  teardown_test_object();
 }

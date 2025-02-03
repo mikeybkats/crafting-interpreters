@@ -20,9 +20,35 @@ void freeTable(Table* table) {
   initTable(table);
 }
 
-static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
+uint32_t getHashValue(Value value) {
+  switch (value.type) {
+    case VAL_NIL:
+      return 0;
+    case VAL_BOOL:
+      return AS_BOOL(value) ? 1 : 2;
+    case VAL_NUMBER: {
+      double number = AS_NUMBER(value);
+
+      uint32_t hash  = 0;
+      uint8_t* bytes = (uint8_t*)&number;
+      for (int i = 0; i < sizeof(double); i++) {
+        hash = 31 * hash + bytes[i];
+      }
+      return hash;
+    }
+    case VAL_OBJ:
+      if (IS_STRING(value)) {
+        return AS_STRING(value)->hash;
+      }
+      // return AS_OBJ(value);
+  }
+  return 0;
+}
+
+static Entry* findEntry(Entry* entries, int capacity, Value* key) {
   // map key's hash code to an index within the array bounds
-  uint32_t index     = key->hash % capacity;
+  // uint32_t index     = key->hash % capacity;
+  uint32_t index     = getHashValue(*key) % capacity;
   Entry*   tombstone = NULL;
 
   for (;;) {
@@ -30,7 +56,7 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
     Entry* entry = &entries[index];
 
     // check for tombstones
-    if (entry->key == NULL) {
+    if (entry->isTombstone == true) {
       // if truely empty, return the entry
       // a truely empty entry is one with NULL key and Nil value
       if (IS_NIL(entry->value)) {
@@ -40,7 +66,7 @@ static Entry* findEntry(Entry* entries, int capacity, ObjString* key) {
         // tombstone found
         if (tombstone == NULL) tombstone = entry;
       }
-    } else if (entry->key == key) {
+    } else if (valuesEqual(entry->key, *key)) {
       // key found
       return entry;
     }
@@ -66,16 +92,16 @@ static void adjustCapacity(Table* table, int capacity) {
   Entry* entries = ALLOCATE(Entry, capacity);
   table->count   = 0;
   for (int i = 0; i < capacity; i++) {
-    entries[i].key   = NULL;
+    entries[i].key   = NIL_VAL;  // previously NULL
     entries[i].value = NIL_VAL;
   }
 
   // take the old table entries and copy them into the newly sized entries
   for (int i = 0; i < table->capacity; i++) {
     Entry* entry = &table->entries[i];
-    if (entry->key == NULL) continue;
+    if (&entry->key == NULL) continue;
 
-    Entry* dest = findEntry(entries, capacity, entry->key);
+    Entry* dest = findEntry(entries, capacity, &entry->key);
     dest->key   = entry->key;
     dest->value = entry->value;
     table->count++;
@@ -86,7 +112,7 @@ static void adjustCapacity(Table* table, int capacity) {
   table->capacity = capacity;
 }
 
-bool tableSet(Table* table, ObjString* key, Value value) {
+bool tableSet(Table* table, Value* key, Value* value) {
   // check to make sure the entry can fit
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     int capacity = GROW_CAPACITY(table->capacity);
@@ -97,38 +123,38 @@ bool tableSet(Table* table, ObjString* key, Value value) {
   Entry* entry = findEntry(table->entries, table->capacity, key);
 
   // update the size of the table
-  bool isNewKey = entry->key == NULL;
+  bool isNewKey = &entry->key == NULL;
   // increment the count only if the new entry is not a tombstone (key is null and value is Nil)
   if (isNewKey && IS_NIL(entry->value)) table->count++;
 
   // copy the entry into the table
-  entry->key   = key;
-  entry->value = value;
+  entry->key   = *key;
+  entry->value = *value;
 
   return isNewKey;
 }
 
-bool tableDelete(Table* table, ObjString* key) {
+bool tableDelete(Table* table, Value* key) {
   if (table->count == 0) return false;
 
   // find the entry
   Entry* entry = findEntry(table->entries, table->capacity, key);
 
   // nothing to delete if not found
-  if (entry->key == NULL) return false;
+  if (&entry->key == NULL) return false;
 
   // place a tombstone in the entry
   // a tombstone is an entry with no key and a value of true
-  entry->key   = NULL;
+  entry->key   = NIL_VAL;  // previously NULL
   entry->value = BOOL_VAL(true);
   return true;
 }
 
-bool tableGet(Table* table, ObjString* key, Value* value) {
+bool tableGet(Table* table, Value* key, Value* value) {
   if (table->count == 0) return false;
 
   Entry* entry = findEntry(table->entries, table->capacity, key);
-  if (entry->key == NULL) return false;
+  if (&entry->key == NULL) return false;
 
   *value = entry->value;
   return true;
@@ -137,8 +163,8 @@ bool tableGet(Table* table, ObjString* key, Value* value) {
 void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry* entry = &from->entries[i];
-    if (entry->key != NULL) {
-      tableSet(to, entry->key, entry->value);
+    if (&entry->key != NULL) {
+      tableSet(to, &entry->key, &entry->value);
     }
   }
 }
@@ -150,17 +176,18 @@ ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t
   for (;;) {
     Entry* entry = &table->entries[index];
 
-    if (entry->key == NULL) {
+    if (&entry->key == NULL) {
       // stop if an empty non-tombstone entry is found
       if (IS_NIL(entry->value)) return NULL;
     }
     // if there is a hash collision, do a character by character string comparison
-    else if (entry->key->length == length && entry->key->hash == hash &&
-             memcmp(entry->key->chars, chars, length) == 0) {
-      // entry matches -- found!
-      return entry->key;
-    }
+    else if (IS_STRING(entry->key)) {
+      ObjString* string = AS_STRING(entry->key);
+      if (string->length == length && string->hash == hash && memcmp(string->chars, chars, length) == 0) {
+        // entry matches -- found!
+        return string;
+      }
 
-    index = (index + 1) % table->capacity;
+      index = (index + 1) % table->capacity;
+    }
   }
-}

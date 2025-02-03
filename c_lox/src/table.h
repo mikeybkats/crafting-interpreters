@@ -6,8 +6,9 @@
 
 typedef struct
 {
-  ObjString* key;
-  Value      value;
+  Value key;
+  Value value;
+  bool  isTombstone;
 } Entry;
 
 typedef struct
