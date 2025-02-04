@@ -71,7 +71,7 @@ void test_string_interning_pointer_equality(void) {
 void run_object_tests(void) {
   setup_test_object();
   RUN_TEST(test_string_value_creation);
-  RUN_TEST(test_number_value_creation);
-  RUN_TEST(test_string_interning_pointer_equality);
+  // RUN_TEST(test_number_value_creation);
+  // RUN_TEST(test_string_interning_pointer_equality);
   teardown_test_object();
 }

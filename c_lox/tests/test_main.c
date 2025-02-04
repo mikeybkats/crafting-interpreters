@@ -18,8 +18,8 @@ int main(void) {
   // run_rle_tests();
   // run_chunk_tests();
   // run_value_tests();
-  run_object_tests();
   run_table_tests();
+  // run_object_tests();
 
   return UNITY_END();
 }

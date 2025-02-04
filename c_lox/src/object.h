@@ -36,6 +36,9 @@ unnamed padding within a structure object, but not at its beginning.
 typedef enum
 {
   OBJ_STRING,
+  OBJ_NUMBER,
+  OBJ_NIL,
+  OBJ_BOOL,
 } ObjType;
 
 /**

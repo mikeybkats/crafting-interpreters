@@ -31,10 +31,11 @@ static Obj* allocateObject(size_t size, ObjType type) {
 
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
   ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+  Value*     value  = ALLOCATE_OBJ(Value, OBJ_NIL);
   string->length    = length;
   string->chars     = chars;
   string->hash      = hash;
-  tableSet(&vm.strings, string, NIL_VAL);
+  tableSet(&vm.strings, string, value);
   return string;
 }
 

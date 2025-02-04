@@ -45,6 +45,16 @@ uint32_t getHashValue(Value value) {
   return 0;
 }
 
+/**
+ * ## findEntry
+ *
+ * @brief find an entry in the table
+ *
+ * @param entries
+ * @param capacity
+ * @param key
+ * @return
+ */
 static Entry* findEntry(Entry* entries, int capacity, Value* key) {
   // map key's hash code to an index within the array bounds
   // uint32_t index     = key->hash % capacity;
@@ -99,7 +109,7 @@ static void adjustCapacity(Table* table, int capacity) {
   // take the old table entries and copy them into the newly sized entries
   for (int i = 0; i < table->capacity; i++) {
     Entry* entry = &table->entries[i];
-    if (&entry->key == NULL) continue;
+    if (IS_NIL(entry->key)) continue;
 
     Entry* dest = findEntry(entries, capacity, &entry->key);
     dest->key   = entry->key;
@@ -123,7 +133,7 @@ bool tableSet(Table* table, Value* key, Value* value) {
   Entry* entry = findEntry(table->entries, table->capacity, key);
 
   // update the size of the table
-  bool isNewKey = &entry->key == NULL;
+  bool isNewKey = IS_NIL(entry->key);
   // increment the count only if the new entry is not a tombstone (key is null and value is Nil)
   if (isNewKey && IS_NIL(entry->value)) table->count++;
 
@@ -141,7 +151,7 @@ bool tableDelete(Table* table, Value* key) {
   Entry* entry = findEntry(table->entries, table->capacity, key);
 
   // nothing to delete if not found
-  if (&entry->key == NULL) return false;
+  if (IS_NIL(entry->key)) return false;
 
   // place a tombstone in the entry
   // a tombstone is an entry with no key and a value of true
@@ -154,7 +164,7 @@ bool tableGet(Table* table, Value* key, Value* value) {
   if (table->count == 0) return false;
 
   Entry* entry = findEntry(table->entries, table->capacity, key);
-  if (&entry->key == NULL) return false;
+  if (IS_NIL(entry->key)) return false;
 
   *value = entry->value;
   return true;
@@ -163,7 +173,7 @@ bool tableGet(Table* table, Value* key, Value* value) {
 void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry* entry = &from->entries[i];
-    if (&entry->key != NULL) {
+    if (IS_NIL(entry->key)) {
       tableSet(to, &entry->key, &entry->value);
     }
   }
@@ -176,7 +186,7 @@ ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t
   for (;;) {
     Entry* entry = &table->entries[index];
 
-    if (&entry->key == NULL) {
+    if (IS_NIL(entry->key)) {
       // stop if an empty non-tombstone entry is found
       if (IS_NIL(entry->value)) return NULL;
     }
@@ -191,3 +201,6 @@ ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t
       index = (index + 1) % table->capacity;
     }
   }
+
+  return NULL;
+}
