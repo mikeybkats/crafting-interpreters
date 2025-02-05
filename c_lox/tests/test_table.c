@@ -26,7 +26,8 @@ void test_table_init(void) {
 }
 
 void test_table_find_entry(void) {
-  Value key   = NUMBER_VAL(3);
+  initTable(&table);
+  Value key   = NUMBER_VAL(1);
   Value value = NUMBER_VAL(2);
 
   tableSet(&table, &key, &value);
@@ -38,7 +39,8 @@ void test_table_find_entry(void) {
 }
 
 void test_table_set(void) {
-  Value key   = NUMBER_VAL(1);
+  initTable(&table);
+  Value key   = NUMBER_VAL(2);
   Value value = NUMBER_VAL(2);
 
   bool newKey = tableSet(&table, &key, &value);
@@ -64,7 +66,8 @@ void test_table_get(void) {
 }
 
 void test_table_delete(void) {
-  Value key   = NUMBER_VAL(5);
+  initTable(&table);
+  Value key   = NUMBER_VAL(4);
   Value value = NUMBER_VAL(6);
 
   tableSet(&table, &key, &value);
