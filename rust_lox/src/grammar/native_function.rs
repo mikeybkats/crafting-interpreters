@@ -7,6 +7,7 @@ pub enum LoxNativeFunctions {
     Clock(Clock),
 }
 
+#[allow(dead_code)]
 struct LoxNativeFunction {
     function: LoxNativeFunctions,
 }

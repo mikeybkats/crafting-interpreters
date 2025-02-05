@@ -33,6 +33,7 @@ pub fn generate_id() -> String {
     id
 }
 
+#[warn(dead_code)]
 #[derive(Debug, Clone)]
 /// # Environment
 /// The environment stores program variables and function declarations.  Its values are accessed by the interpreter.
@@ -45,22 +46,26 @@ pub fn generate_id() -> String {
 pub struct Environment {
     pub values: HashMap<String, Object>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
-    pub name: String,
+    pub _name: String,
 }
 
 impl Environment {
     pub fn new() -> Self {
         Self {
-            name: generate_id(),
+            _name: generate_id(),
             enclosing: None,
             values: HashMap::new(),
         }
     }
 
+    pub fn _print_name(&self) {
+        println!("{}", self._name);
+    }
+
     // Secondary constructor: With an enclosing environment
     pub fn with_enclosing(enclosing: Rc<RefCell<Environment>>) -> Self {
         Self {
-            name: format!("{}-child", generate_id()),
+            _name: format!("{}-child", generate_id()),
             enclosing: Some(enclosing),
             values: HashMap::new(),
         }

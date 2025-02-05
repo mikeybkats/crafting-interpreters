@@ -36,7 +36,7 @@ void test_table_set(void) {
   TEST_ASSERT_EQUAL_INT(table.capacity, 8);
   TEST_ASSERT_EQUAL_INT(newKey, true);
   TEST_ASSERT_EQUAL_INT(AS_NUMBER(table.entries[index].key), AS_NUMBER(key));
-  TEST_ASSERT_EQUAL_INT(table.entries[index].value.as.number, value.as.number);
+  TEST_ASSERT_EQUAL_INT(AS_NUMBER(table.entries[index].value), AS_NUMBER(value));
 }
 
 void test_table_get(void) {
