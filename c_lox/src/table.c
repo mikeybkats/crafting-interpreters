@@ -64,7 +64,7 @@ int getEntryIndex(Table* table, Value* key) {
  * @param key
  * @return
  */
-static Entry* findEntry(Entry* entries, int capacity, Value* key) {
+STATIC Entry* findEntry(Entry* entries, int capacity, Value* key) {
   // map key's hash code to an index within the array bounds
   // uint32_t index     = key->hash % capacity;
   uint32_t index     = getHashValue(*key) % capacity;

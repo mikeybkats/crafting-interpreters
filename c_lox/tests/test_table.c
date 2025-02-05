@@ -25,6 +25,18 @@ void test_table_init(void) {
   TEST_ASSERT_NULL(table.entries);
 }
 
+void test_table_find_entry(void) {
+  Value key   = NUMBER_VAL(3);
+  Value value = NUMBER_VAL(2);
+
+  tableSet(&table, &key, &value);
+
+  Entry* entry = findEntry(table.entries, table.capacity, &key);
+
+  TEST_ASSERT_EQUAL_INT(AS_NUMBER(entry->key), AS_NUMBER(key));
+  TEST_ASSERT_EQUAL_INT(AS_NUMBER(entry->value), AS_NUMBER(value));
+}
+
 void test_table_set(void) {
   Value key   = NUMBER_VAL(1);
   Value value = NUMBER_VAL(2);
@@ -51,10 +63,25 @@ void test_table_get(void) {
   TEST_ASSERT_EQUAL_INT(AS_NUMBER(result), AS_NUMBER(value));
 }
 
+void test_table_delete(void) {
+  Value key   = NUMBER_VAL(5);
+  Value value = NUMBER_VAL(6);
+
+  tableSet(&table, &key, &value);
+  tableDelete(&table, &key);
+
+  int  index     = getEntryIndex(&table, &key);
+  bool tombstone = isTombstone(&table.entries[index]);
+
+  TEST_ASSERT_EQUAL_INT(tombstone, true);
+}
+
 void run_table_tests(void) {
   test_table_setup();
   RUN_TEST(test_table_init);
+  RUN_TEST(test_table_find_entry);
   RUN_TEST(test_table_set);
   RUN_TEST(test_table_get);
+  RUN_TEST(test_table_delete);
   test_table_teardown();
 }
