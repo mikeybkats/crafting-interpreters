@@ -29,17 +29,32 @@ void test_table_set(void) {
   Value key   = NUMBER_VAL(1);
   Value value = NUMBER_VAL(2);
 
-  tableSet(&table, &key, &value);
+  bool newKey = tableSet(&table, &key, &value);
+  int  index  = getEntryIndex(&table, &key);
 
   TEST_ASSERT_EQUAL_INT(table.count, 1);
   TEST_ASSERT_EQUAL_INT(table.capacity, 8);
-  TEST_ASSERT_EQUAL_INT(table.entries[0].key.as.number, key.as.number);
-  TEST_ASSERT_EQUAL_INT(table.entries[0].value.as.number, value.as.number);
+  TEST_ASSERT_EQUAL_INT(newKey, true);
+  TEST_ASSERT_EQUAL_INT(AS_NUMBER(table.entries[index].key), AS_NUMBER(key));
+  TEST_ASSERT_EQUAL_INT(table.entries[index].value.as.number, value.as.number);
+}
+
+void test_table_get(void) {
+  Value key   = NUMBER_VAL(3);
+  Value value = NUMBER_VAL(4);
+
+  tableSet(&table, &key, &value);
+
+  Value result = NIL_VAL;
+  tableGet(&table, &key, &result);
+
+  TEST_ASSERT_EQUAL_INT(AS_NUMBER(result), AS_NUMBER(value));
 }
 
 void run_table_tests(void) {
   test_table_setup();
   RUN_TEST(test_table_init);
   RUN_TEST(test_table_set);
+  RUN_TEST(test_table_get);
   test_table_teardown();
 }

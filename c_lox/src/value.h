@@ -34,10 +34,10 @@ typedef struct ObjString ObjString;
  */
 typedef enum
 {
-  VAL_BOOL,
-  VAL_NIL,
-  VAL_NUMBER,
-  VAL_OBJ
+  VAL_BOOL,    // 0 enums index from 0 just like an array
+  VAL_NIL,     // 1
+  VAL_NUMBER,  // 2
+  VAL_OBJ      // 3
 } ValueType;
 
 /**

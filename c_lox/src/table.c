@@ -1,5 +1,6 @@
 #include "table.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,6 +46,14 @@ uint32_t getHashValue(Value value) {
   return 0;
 }
 
+bool isTombstone(Entry* entry) {
+  return IS_NIL(entry->key) && AS_BOOL(entry->value) == true;
+}
+
+int getEntryIndex(Table* table, Value* key) {
+  return getHashValue(*key) % table->capacity;
+}
+
 /**
  * ## findEntry
  *
@@ -65,29 +74,17 @@ static Entry* findEntry(Entry* entries, int capacity, Value* key) {
     // get the entry by index
     Entry* entry = &entries[index];
 
-    // check for tombstones
-    if (entry->isTombstone == true) {
-      // if truely empty, return the entry
-      // a truely empty entry is one with NULL key and Nil value
+    if (IS_NIL(entry->key)) {
       if (IS_NIL(entry->value)) {
+        // empty entry found
         return tombstone != NULL ? tombstone : entry;
       } else {
-        // a tombstone has a value of true and an empty NULL key
-        // tombstone found
         if (tombstone == NULL) tombstone = entry;
       }
     } else if (valuesEqual(entry->key, *key)) {
       // key found
       return entry;
     }
-
-    // if the entry key equals the find key
-    // or
-    // if the entry key is NULL (the bucket contains no entry)
-    // if (entry->key == key || entry->key == NULL) {
-    //   // entry found, return the entry
-    //   return entry;
-    // }
 
     // if the previous conditions don't pass then there is a collision in the table
     // index to the next entry
