@@ -74,11 +74,22 @@ STATIC Entry* findEntry(Entry* entries, int capacity, Value* key) {
     // get the entry by index
     Entry* entry = &entries[index];
 
+    /*
+      Tombstone = {
+        key: NIL_VAL
+        value: BOOL_VAL(true)
+      }
+    */
+
     if (IS_NIL(entry->key)) {
+      // might be empty entry
       if (IS_NIL(entry->value)) {
         // empty entry found
+        // if a tombstone was found on previous iteration, return it
+        // otherwise return the empty entry
         return tombstone != NULL ? tombstone : entry;
       } else {
+        // it's a tombstone
         if (tombstone == NULL) tombstone = entry;
       }
     } else if (valuesEqual(entry->key, *key)) {

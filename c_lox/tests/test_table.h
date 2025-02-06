@@ -6,8 +6,6 @@ void test_table_find_entry(void);
 void test_table_set(void);
 void test_table_get(void);
 void test_table_delete(void);
-void test_table_add_all(void);
-void test_table_find_string(void);
 void run_table_tests(void);
 
 #endif
