@@ -60,7 +60,8 @@
     "stack": "c",
     "streambuf": "c",
     "utility": "c",
-    "*.inc": "c"
+    "*.inc": "c",
+    "table.h": "c"
   },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",
