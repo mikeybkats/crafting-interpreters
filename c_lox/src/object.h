@@ -19,7 +19,13 @@ initial member (or if that member is a bit-field, then to the unit in which it r
 unnamed padding within a structure object, but not at its beginning.
 */
 
-#define AS_STRING(value)  ((ObjString*)AS_OBJ(value))
+#define AS_STRING(value) ((ObjString*)AS_OBJ(value))
+
+/**
+ * ## Macro: AS_CSTRING
+ *
+ * @brief gets the actual string of chars
+ */
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 
 /**
@@ -30,6 +36,9 @@ unnamed padding within a structure object, but not at its beginning.
 typedef enum
 {
   OBJ_STRING,
+  OBJ_NUMBER,
+  OBJ_NIL,
+  OBJ_BOOL,
 } ObjType;
 
 /**
@@ -53,10 +62,17 @@ struct Obj
  */
 struct ObjString
 {
-  Obj obj;
+  /* First 'slot' is the Obj base struct */
+  Obj obj;     /*
+      {
+        ObjType Type;
+        struct Obj* next;
+      }
+               */
   int length;  // store the length, which indicates the number of bytes in the array and allows for easier access to the
                // null terminator.
-  char* chars;
+  char*    chars;
+  uint32_t hash;  // "calculate the hash code once up front and be certain that it will never get invalidated"
 };
 
 ObjString* copyString(const char* chars, int length);

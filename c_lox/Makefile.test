@@ -2,8 +2,7 @@
 CC = clang
 
 # Compiler flags
-CFLAGS = -Isrc -std=c99 -Wall -DDEBUG_TEST -g
-
+CFLAGS = -Isrc -std=c99 -Wall -DDEBUG_TEST -DUNITY_INCLUDE_DOUBLE -DUNITY_INCLUDE_FLOAT -g
 
 # Directories
 SRC_DIR = src
@@ -23,7 +22,10 @@ $(shell mkdir -p $(SRC_BUILD_DIR))
 
 # Default target
 all: directories $(TARGET)
+	@echo "Running tests..."
+	@./$(TARGET)
 
+# Create directories
 directories:
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(SRC_BUILD_DIR)
@@ -40,6 +42,10 @@ SRC_OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(SRC_BUILD_DIR)/%.o,$(SRC_FILES))
 
 # Test object files - a list of all .o files in the tests/build directory
 TEST_OBJ_FILES = $(patsubst $(TESTS_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_FILES))
+
+# Compile test runner
+# $(TARGET): $(SRC_OBJ_FILES) $(TEST_OBJ_FILES) $(UNITY_DIR)/unity.o 
+#	$(CC) $(CFLAGS) -o $@ $^
 
 # Compile test runner
 $(TARGET): $(SRC_OBJ_FILES) $(TEST_OBJ_FILES) $(UNITY_DIR)/unity.o 

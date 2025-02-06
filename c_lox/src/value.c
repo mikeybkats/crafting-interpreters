@@ -71,11 +71,10 @@ bool valuesEqual(Value a, Value b) {
       return true;
     case VAL_NUMBER:
       return AS_NUMBER(a) == AS_NUMBER(b);
-    case VAL_OBJ: {
-      ObjString* aString = AS_STRING(a);
-      ObjString* bString = AS_STRING(b);
-      return aString->length == bString->length && memcmp(aString->chars, bString->chars, aString->length) == 0;
-    }
+    case VAL_OBJ:
+      // expands to pointers to a.as.obj == b.as.obj;
+      // !! this compares the interned string objects not the actual values
+      return AS_OBJ(a) == AS_OBJ(b);  // compares the memory address of the objects not the contents or actual values
     default:
       return false;
   }

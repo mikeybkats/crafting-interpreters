@@ -3,11 +3,13 @@
 #include "../src/chunk.h"
 #include "unity/src/unity.h"
 
-void setUpChunk(void) { /* General initialization */ }
-void tearDownChunk(void) { /* General cleanup */ }
+void setUpChunk(void) { /* General initialization */
+}
+void tearDownChunk(void) { /* General cleanup */
+}
 
 void test_initChunk(void) {
-  printf("\n\033[0;31mTest initChunk ---\033[0m \n");
+  // printf("\n\033[0;31mTest initChunk ---\033[0m \n");
   Chunk chunk;
   initChunk(&chunk);
 

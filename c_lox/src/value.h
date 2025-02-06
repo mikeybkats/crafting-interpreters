@@ -10,7 +10,8 @@
  * like the “base class” for objects. Because of some cyclic dependencies between values and objects, we forward-declare
  * it in the “value” module.
  */
-typedef struct Obj Obj;
+typedef struct Obj Obj;  // this is called a forward declaration in C. Object.h references this too. Without the forward
+                         // declaration the compiler would throw an error for an undefined type.
 
 typedef struct ObjString ObjString;
 
@@ -31,11 +32,12 @@ typedef struct ObjString ObjString;
  *
  * @brief The type of the value defined in the union type Value
  */
-typedef enum {
-  VAL_BOOL,
-  VAL_NIL,
-  VAL_NUMBER,
-  VAL_OBJ
+typedef enum
+{
+  VAL_BOOL,    // 0 enums index from 0 just like an array
+  VAL_NIL,     // 1
+  VAL_NUMBER,  // 2
+  VAL_OBJ      // 3
 } ValueType;
 
 /**
@@ -46,7 +48,8 @@ typedef enum {
  * Defined as a union type to allow for different types of values without wasting memory. A union type lets the data
  * type be used as a single type, but the actual data type is stored in the union.
  */
-typedef struct {
+typedef struct
+{
   ValueType type;
   union {
     bool   boolean;
@@ -66,12 +69,24 @@ typedef struct {
 #define IS_OBJ(value)    ((value).type == VAL_OBJ)
 
 /**
- * ## Macros: Value
+ * ## Macro: AS_OBJ
  *
- * @brief Macros to get the value of a value
+ * @brief AS_OBJ(myString) expands to myString.as.obj
  */
-#define AS_OBJ(value)    ((value).as.obj)
-#define AS_BOOL(value)   ((value).as.boolean)
+#define AS_OBJ(value) ((value).as.obj)
+
+/**
+ * ## Macro: AS_BOOL
+ *
+ * @brief AS_BOOL(myBoolString) expands to myBoolString.as.boolean
+ */
+#define AS_BOOL(value) ((value).as.boolean)
+
+/**
+ * ## Macro: AS_NUMBER
+ *
+ * @brief AS_NUMBER(myStringNumber) expands to myStringNumber.as.number
+ */
 #define AS_NUMBER(value) ((value).as.number)
 
 /**
@@ -95,7 +110,8 @@ typedef struct {
  * @param count (int) how many entries in the array are in use
  * @param values (Value*) the pointer to the array of values
  */
-typedef struct {
+typedef struct
+{
   int    capacity;
   int    count;
   Value* values;

@@ -5,7 +5,8 @@
 #include "memory.h"
 #include "value.h"
 
-typedef enum {
+typedef enum
+{
   OP_CONSTANT,
   OP_NIL,
   OP_TRUE,
@@ -35,12 +36,13 @@ typedef enum {
  * @param constants constants associated with the code
  * @param lines the lines of code in the chunk
  */
-typedef struct {
-  int count;
-  int capacity;
-  uint8_t* code;
-  int* lines;
-  char* rleLines;
+typedef struct
+{
+  int        count;
+  int        capacity;
+  uint8_t*   code;
+  int*       lines;
+  char*      rleLines;
   ValueArray constants;
 } Chunk;
 
@@ -48,7 +50,7 @@ void initChunk(Chunk* chunk);
 
 void freeChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);
-void writeRleChunk(Chunk* chunk, uint8_t byte, int line);
+void writeRleChunk(Chunk* chunk, uint8_t byte);
 // void getLine(Chunk* chunk, int offset);
 int addConstant(Chunk* chunk, Value value);
 

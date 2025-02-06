@@ -13,10 +13,10 @@
  * Q: What should the max capacity for a chunk be?
  */
 void initChunk(Chunk* chunk) {
-  chunk->count = 0;
+  chunk->count    = 0;
   chunk->capacity = 0;
-  chunk->code = NULL;
-  chunk->lines = NULL;
+  chunk->code     = NULL;
+  chunk->lines    = NULL;
   chunk->rleLines = NULL;
   initValueArray(&chunk->constants);
 }
@@ -36,8 +36,7 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
     // if it does not, then grown the array
     int oldCapacity = chunk->capacity;
     chunk->capacity = GROW_CAPACITY(oldCapacity);
-    chunk->code =
-        GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
+    chunk->code     = GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
     // Grow array runs a reallocate function
     // which under the hood is just a call of
     // realloc, unless the new capacity is 0.
@@ -45,7 +44,7 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
     chunk->lines = GROW_ARRAY(int, chunk->lines, oldCapacity, chunk->capacity);
   }
 
-  chunk->code[chunk->count] = byte;
+  chunk->code[chunk->count]  = byte;
   chunk->lines[chunk->count] = line;
   chunk->count++;
 }
@@ -67,14 +66,13 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
  * is called only when a runtime error occurs, it is well off the critical path
  * where performance matters.
  */
-void writeRleChunk(Chunk* chunk, uint8_t byte, int line) {
+void writeRleChunk(Chunk* chunk, uint8_t byte) {
   // check to see if the array has adequate capacity
   if (chunk->capacity < chunk->count + 1) {
     // if it does not, then grown the array
     int oldCapacity = chunk->capacity;
     chunk->capacity = GROW_CAPACITY(oldCapacity);
-    chunk->code =
-        GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
+    chunk->code     = GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
     // chunk->lines = rle_encode
   }
 
@@ -99,8 +97,7 @@ void writeRleChunk(Chunk* chunk, uint8_t byte, int line) {
 void freeChunk(Chunk* chunk) {
   FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
   FREE_ARRAY(int, chunk->lines, chunk->capacity);
-  freeValueArray(
-      &chunk->constants);  // free the constants when the chunk is freed
+  freeValueArray(&chunk->constants);  // free the constants when the chunk is freed
   initChunk(chunk);
 }
 
