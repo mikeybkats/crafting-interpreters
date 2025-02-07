@@ -392,7 +392,6 @@ static void parsePrecedence(Precedence precedence) {
 
   // while precedence is less than the current rule's precedence
   while (precedence <= getRule(parser.current.type)->precedence) {
-    printf("DEBUG_TEST - parsePrecedence - precedence: %d - current token: %d\n", precedence, parser.current.type);
     // advance to the next token
     advance();
     // get the infix rule (because we are parsing the right side of the operator)
@@ -440,9 +439,6 @@ bool compile(const char* source, Chunk* chunk) {
   while (!match(TOKEN_EOF)) {
     declaration();
   }
-
-  expression();
-  consume(TOKEN_EOF, "Expect end of expression");
 
   endCompiler();
 
