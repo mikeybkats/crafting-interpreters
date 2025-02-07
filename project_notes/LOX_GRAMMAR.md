@@ -169,19 +169,15 @@ Identifier     → LoxWord;
 
 expression     → assignment ;
 
+exprStmt       → expression ";" ;
+
 assignment     → ( call "." )? IDENTIFIER "=" assignment
                | logic_or ;
 
-statement      → exprStmt
-               | forStmt
-               | ifStmt
-               | printStmt
-               | whileStmt
-               | block ;
-
 block          → "{" declaration* "}" ;
-exprStmt       → expression ";" ;
+
 printStmt      → "print" expression ";" ;
+
 forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
                  expression? ";"
                  expression? ")" statement ;
@@ -198,14 +194,20 @@ parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
 arguments      → expression ( "," expression )* ;
 
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+funDecl        → "fun" function ;
+classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
+                 "{" function* "}" ;
+
+statement      → exprStmt
+               | forStmt
+               | ifStmt
+               | printStmt
+               | whileStmt
+               | block ;
 
 declaration    → classDecl
                | funDecl
                | varDecl
                | statement ;
-
-varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
-funDecl        → "fun" function ;
-classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
-                 "{" function* "}" ;
 ```
