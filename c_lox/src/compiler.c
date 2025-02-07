@@ -52,6 +52,13 @@ Parser parser;  // create a single global variable so state does not need to be
                 // passed around
 Chunk* compilingChunk;
 
+// forward declarations
+static void       expression();
+static void       statement();
+static void       declaration();
+static ParseRule* getRule(TokenType type);
+static void       parsePrecedence(Precedence precedence);
+
 #ifdef DEBUG_TEST
 extern Chunk* currentChunk() {
   return compilingChunk;
@@ -118,6 +125,27 @@ static void consume(TokenType type, const char* message) {
   errorAtCurrent(message);
 }
 
+/**
+ * ## check
+ *
+ * @brief returns true if the current token has the given type
+ * @param type the type to check
+ */
+static bool check(TokenType type) {
+  return parser.current.type == type;
+}
+
+/**
+ * ## match
+ *
+ * @brief if the current token is the given type, it is consumed and true is returned. Otherwise false is returned.
+ */
+static bool match(TokenType type) {
+  if (!check(type)) return false;
+  advance();
+  return true;
+}
+
 /*
  * ## emitByte
  *
@@ -167,10 +195,6 @@ static void endCompiler() {
   }
 #endif
 }
-
-static void       expression();
-static ParseRule* getRule(TokenType type);
-static void       parsePrecedence(Precedence precedence);
 
 static void binary() {
   TokenType  operatorType = parser.previous.type;
@@ -386,6 +410,22 @@ static void expression() {
   parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void printStatement() {
+  expression();
+  consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+  emitByte(OP_PRINT);
+}
+
+static void declaration() {
+  statement();
+}
+
+static void statement() {
+  if (match(TOKEN_PRINT)) {
+    printStatement();
+  }
+}
+
 bool compile(const char* source, Chunk* chunk) {
   initScanner(source);
 
@@ -396,6 +436,11 @@ bool compile(const char* source, Chunk* chunk) {
   parser.panicMode = false;
 
   advance();
+
+  while (!match(TOKEN_EOF)) {
+    declaration();
+  }
+
   expression();
   consume(TOKEN_EOF, "Expect end of expression");
 

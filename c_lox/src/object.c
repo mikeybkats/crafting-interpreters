@@ -35,11 +35,16 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
   string->length    = length;
   string->chars     = chars;
   string->hash      = hash;
-  tableSet(&vm.strings, string, value);
+
+  Value* stringValue  = ALLOCATE_OBJ(Value, OBJ_STRING);
+  stringValue->type   = VAL_OBJ;
+  stringValue->as.obj = (Obj*)string;
+
+  tableSet(&vm.strings, stringValue, value);
   return string;
 }
 
-static uint32_t hashString(char* key, int length) {
+static uint32_t hashString(const char* key, int length) {
   uint32_t hash = 2166136261u;
   for (int i = 0; i < length; i++) {
     hash ^= (uint8_t)
@@ -87,8 +92,20 @@ ObjString* copyString(const char* chars, int length) {
 
 void printObject(Value value) {
   switch (OBJ_TYPE(value)) {
+    case OBJ_BOOL:
+      printf(AS_BOOL(value) ? "true" : "false");
+      break;
+    case OBJ_NIL:
+      printf("nil");
+      break;
+    case OBJ_NUMBER:
+      printf("%g", AS_NUMBER(value));
+      break;
     case OBJ_STRING:
       printf("%s", AS_CSTRING(value));
+      break;
+    default:
+      printf("<object>");
       break;
   }
 }

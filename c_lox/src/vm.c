@@ -148,7 +148,7 @@ the instruction pointer.
                                                             // pointers, hence the int type cast
 #endif
 
-    u_int8_t instruction;
+    u_int8_t instruction;  // every bytecode instruction modifies the stack
 
     // This switch statement will become giant to handle all the opcodes
     switch (instruction = READ_BYTE()) {
@@ -212,9 +212,13 @@ the instruction pointer.
         }
         push(NUMBER_VAL(-AS_NUMBER(pop())));
         break;
-      case OP_RETURN: {
+      case OP_PRINT:
         printValue(pop());
         printf("\n");
+        break;
+      case OP_RETURN: {
+        // printValue(pop());
+        // printf("\n");
         return INTERPRET_OK;
       }
     }
