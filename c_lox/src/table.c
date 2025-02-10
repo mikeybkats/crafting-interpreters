@@ -130,7 +130,7 @@ static void adjustCapacity(Table* table, int capacity) {
   table->capacity = capacity;
 }
 
-bool tableSet(Table* table, Value* key, Value* value) {
+bool tableSet(Table* table, Value* key, Value value) {
   // check to make sure the entry can fit
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     int capacity = GROW_CAPACITY(table->capacity);
@@ -147,7 +147,7 @@ bool tableSet(Table* table, Value* key, Value* value) {
 
   // copy the entry into the table
   entry->key   = *key;
-  entry->value = *value;
+  entry->value = value;
 
   return isNewKey;
 }
@@ -182,7 +182,7 @@ void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry* entry = &from->entries[i];
     if (IS_NIL(entry->key)) {
-      tableSet(to, &entry->key, &entry->value);
+      tableSet(to, &entry->key, entry->value);
     }
   }
 }

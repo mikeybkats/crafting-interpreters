@@ -30,7 +30,7 @@ void freeTable(Table* table);
 STATIC Entry* findEntry(Entry* entries, int capacity, Value* key);
 #endif
 
-bool       tableSet(Table* table, Value* key, Value* value);
+bool       tableSet(Table* table, Value* key, Value value);
 bool       tableDelete(Table* table, Value* key);
 bool       tableGet(Table* table, Value* key, Value* value);
 void       tableAddAll(Table* from, Table* to);

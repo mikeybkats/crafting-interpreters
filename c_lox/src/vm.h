@@ -22,6 +22,7 @@ typedef struct
   // element containing the top value on the stack. That seems
   // a little odd, but almost every implementation does this."
   Table strings;  // the interned strings for our interpreter
+  Table globals;  // the global variables for our interpreter
   Obj*  objects;
 } VM;
 
