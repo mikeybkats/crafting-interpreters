@@ -52,13 +52,6 @@ Parser parser;  // create a single global variable so state does not need to be
                 // passed around
 Chunk* compilingChunk;
 
-// forward declarations
-static void       expression();
-static void       statement();
-static void       declaration();
-static ParseRule* getRule(TokenType type);
-static void       parsePrecedence(Precedence precedence);
-
 #ifdef DEBUG_TEST
 extern Chunk* currentChunk() {
   return compilingChunk;
@@ -187,6 +180,16 @@ static void emitConstant(Value value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+static void       expression();
+static void       statement();
+static void       declaration();
+static ParseRule* getRule(TokenType type);
+static void       parsePrecedence(Precedence precedence);
+
+static uint8_t identifierConstant(Token* name) {
+  return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
 static void endCompiler() {
   emitReturn();
 #ifdef DEBUG_PRINT_CODE
@@ -282,6 +285,15 @@ static void string() {
   emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+static void namedVariable(Token name) {
+  uint8_t arg = identifierConstant(&name);
+  emitBytes(OP_GET_GLOBAL, arg);
+}
+
+static void variable() {
+  namedVariable(parser.previous);
+}
+
 /*
  * ## unary
  *
@@ -337,7 +349,7 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL] = {    NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS]          = {    NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {    NULL, binary, PREC_COMPARISON},
-    [TOKEN_IDENTIFIER]    = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_IDENTIFIER]    = {variable,   NULL,       PREC_NONE},
     [TOKEN_STRING]        = {  string,   NULL,       PREC_NONE},
     [TOKEN_NUMBER]        = {  number,   NULL,       PREC_NONE},
     [TOKEN_AND]           = {    NULL,   NULL,       PREC_NONE},
@@ -399,10 +411,6 @@ static void parsePrecedence(Precedence precedence) {
     // else process the rule by calling the infixRule function
     infixRule();
   }
-}
-
-static uint8_t identifierConstant(Token* name) {
-  return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
 static uint8_t parseVariable(const char* errorMessage) {

@@ -40,7 +40,7 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
   stringValue->type   = VAL_OBJ;
   stringValue->as.obj = (Obj*)string;
 
-  tableSet(&vm.strings, stringValue, value);
+  tableSet(&vm.strings, stringValue, *value);
   return string;
 }
 
