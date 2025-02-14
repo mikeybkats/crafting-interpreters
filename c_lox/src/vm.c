@@ -188,6 +188,17 @@ the instruction pointer.
         pop();
         break;
       }
+      case OP_SET_GLOBAL: {
+        ObjString* name = READ_STRING();
+        // if a variable is not defined, then it is a runtime error.
+        // Because in this case, there would be nothing to set the variable to
+        if (tableSet(&vm.globals, name, peek(0))) {
+          tableDelete(&vm.globals, name);
+          runtimeError("Undefined variable '%s'.", name->chars);
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+      }
       case OP_EQUAL: {
         Value b = pop();
         Value a = pop();

@@ -5,6 +5,11 @@
 
 #include "common.h"
 
+/**
+ * ## Struct: Scanner
+ *
+ * the scanner is responsible for tokenizing the input
+ */
 Scanner scanner;
 
 void initScanner(const char* source) {
@@ -13,9 +18,13 @@ void initScanner(const char* source) {
   scanner.line    = 1;
 }
 
-static bool isAlpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'; }
+static bool isAlpha(char c) {
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+}
 
-static bool isDigit(char c) { return c >= '0' && c <= '9'; }
+static bool isDigit(char c) {
+  return c >= '0' && c <= '9';
+}
 
 static bool isAtEnd() {
   // If the current character is the null byte, then we’ve reached the end.
@@ -27,7 +36,9 @@ static char scannerAdvance() {
   return scanner.current[-1];  // returns the character that was just moved passed
 }
 
-static char peek() { return *scanner.current; }
+static char peek() {
+  return *scanner.current;
+}
 
 static char peekNext() {
   if (isAtEnd()) return '\0';
@@ -106,6 +117,13 @@ string.
 
 It looks at the current position of the scanner, gets the characters at that position, and compares the rest with those
 characters.
+
+@param start - the starting index of the keyword
+@param length - the length of the keyword
+@param rest - the rest of the keyword
+@param type - the type of the keyword
+
+@return - the type of the keyword if it is a keyword, otherwise TOKEN_IDENTIFIER
 */
 static TokenType checkKeyword(int start, int length, const char* rest, TokenType type) {
   if (scanner.current - scanner.start == start + length && memcmp(scanner.start + start, rest, length) == 0) {
@@ -249,9 +267,15 @@ Token scanToken() {
 }
 
 #ifdef DEBUG_TEST
-const char* test_get_scanner_current(void) { return scanner.current; }
+const char* test_get_scanner_current(void) {
+  return scanner.current;
+}
 
-const char* test_get_scanner_start(void) { return scanner.start; }
+const char* test_get_scanner_start(void) {
+  return scanner.start;
+}
 
-int test_get_scanner_line(void) { return scanner.line; }
+int test_get_scanner_line(void) {
+  return scanner.line;
+}
 #endif
