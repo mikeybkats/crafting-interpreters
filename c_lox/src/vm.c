@@ -83,9 +83,9 @@ static Value peek(int distance) {
   return vm.stackTop[-1 - distance];
 }
 
-static bool isFalsey(Value value) {
-  return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
-}
+// static bool isFalsey(Value value) {
+//   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+// }
 
 static void concatenate() {
   ObjString* a = AS_STRING(pop());
@@ -175,7 +175,7 @@ the instruction pointer.
       case OP_GET_GLOBAL: {
         ObjString* name = READ_STRING();
         Value      value;
-        if (!tableGet(&vm.globals, name, &value)) {
+        if (!tableGet(&vm.globals, &OBJ_VAL(name), &value)) {
           runtimeError("Undefined variable '%s'.", name->chars);
           return INTERPRET_RUNTIME_ERROR;
         }
@@ -184,7 +184,7 @@ the instruction pointer.
       }
       case OP_DEFINE_GLOBAL: {
         ObjString* name = READ_STRING();
-        tableSet(&vm.globals, name, peek(0));
+        tableSet(&vm.globals, &OBJ_VAL(name), peek(0));
         pop();
         break;
       }
@@ -192,8 +192,8 @@ the instruction pointer.
         ObjString* name = READ_STRING();
         // if a variable is not defined, then it is a runtime error.
         // Because in this case, there would be nothing to set the variable to
-        if (tableSet(&vm.globals, name, peek(0))) {
-          tableDelete(&vm.globals, name);
+        if (tableSet(&vm.globals, &OBJ_VAL(name), peek(0))) {
+          tableDelete(&vm.globals, &OBJ_VAL(name));
           runtimeError("Undefined variable '%s'.", name->chars);
           return INTERPRET_RUNTIME_ERROR;
         }

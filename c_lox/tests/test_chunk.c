@@ -80,8 +80,40 @@ void test_freeChunk(void) {
   TEST_ASSERT_EQUAL_INT_MESSAGE(0, chunk.constants.capacity, "Constants capacity should be 0");
 }
 
+void test_addConstant(void) {
+  Chunk chunk;
+  initChunk(&chunk);
+
+  // Test adding a number constant
+  Value numValue = NUMBER_VAL(1.2);
+  int   numIndex = addConstant(&chunk, numValue);
+  TEST_ASSERT_EQUAL_INT_MESSAGE(0, numIndex, "First constant should have index 0");
+  TEST_ASSERT_EQUAL_MESSAGE(1.2, AS_NUMBER(chunk.constants.values[0]), "First constant should be 1.2");
+
+  // Test adding a boolean constant
+  Value boolValue = BOOL_VAL(true);
+  int   boolIndex = addConstant(&chunk, boolValue);
+  TEST_ASSERT_EQUAL_INT_MESSAGE(1, boolIndex, "Second constant should have index 1");
+  TEST_ASSERT_EQUAL_MESSAGE(true, AS_BOOL(chunk.constants.values[1]), "Second constant should be true");
+
+  // Test adding nil constant
+  Value nilValue = NIL_VAL;
+  int   nilIndex = addConstant(&chunk, nilValue);
+  TEST_ASSERT_EQUAL_INT_MESSAGE(2, nilIndex, "Third constant should have index 2");
+  TEST_ASSERT_TRUE_MESSAGE(IS_NIL(chunk.constants.values[2]), "Third constant should be nil");
+
+  // Test adding duplicate constant
+  int dupIndex = addConstant(&chunk, numValue);
+  TEST_ASSERT_EQUAL_INT_MESSAGE(0, dupIndex, "Duplicate constant should reuse existing index");
+  TEST_ASSERT_EQUAL_INT_MESSAGE(3, chunk.constants.count, "Constants count should remain unchanged");
+  TEST_ASSERT_EQUAL_MESSAGE(1.2, AS_NUMBER(chunk.constants.values[0]), "Original constant should be unchanged");
+
+  freeChunk(&chunk);
+}
+
 void run_chunk_tests(void) {
   RUN_TEST(test_initChunk);
   RUN_TEST(test_writeChunk);
   RUN_TEST(test_freeChunk);
+  RUN_TEST(test_addConstant);
 }

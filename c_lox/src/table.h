@@ -26,6 +26,7 @@ typedef struct
 void initTable(Table* table);
 void freeTable(Table* table);
 
+// The -DDEBUG_TEST flag tells the compiler to define DEBUG_TEST during compilation.
 #ifdef DEBUG_TEST
 STATIC Entry* findEntry(Entry* entries, int capacity, Value* key);
 #endif

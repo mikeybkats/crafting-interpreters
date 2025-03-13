@@ -7,6 +7,7 @@ void tearDownChunk(void);
 void test_initChunk(void);
 void test_writeChunk(void);
 void test_freeChunk(void);
+void test_addConstant(void);
 
 // Run all chunk tests
 void run_chunk_tests(void);

@@ -112,6 +112,14 @@ void freeChunk(Chunk* chunk) {
  * @returns the index of the constants array
  */
 int addConstant(Chunk* chunk, Value value) {
+  // search through existing constants to see if the value already exists
+  for (int i = 0; i < chunk->constants.count; i++) {
+    Value curValue = chunk->constants.values[i];
+    if (valuesEqual(curValue, value)) {
+      chunk->constants.values[i] = value;
+    }
+  }
+
   writeValueArray(&chunk->constants, value);
   return chunk->constants.count - 1;
 }
