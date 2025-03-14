@@ -1,5 +1,6 @@
 #include "chunk.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "memory.h"
@@ -104,7 +105,7 @@ void freeChunk(Chunk* chunk) {
 /*
  * ## addConstant
  *
- * @brief Adds a value to the end of the chunk's array of constants.
+ * @brief Adds a value to the end of the chunk's array of constants. If the value exists it will replace that value.
  *
  * @param chunk the Chunk to add the value to
  * @param value the Value to add to the chunk
@@ -114,9 +115,8 @@ void freeChunk(Chunk* chunk) {
 int addConstant(Chunk* chunk, Value value) {
   // search through existing constants to see if the value already exists
   for (int i = 0; i < chunk->constants.count; i++) {
-    Value curValue = chunk->constants.values[i];
-    if (valuesEqual(curValue, value)) {
-      chunk->constants.values[i] = value;
+    if (valuesEqual(chunk->constants.values[i], value)) {
+      return i;
     }
   }
 

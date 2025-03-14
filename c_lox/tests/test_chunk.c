@@ -108,6 +108,13 @@ void test_addConstant(void) {
   TEST_ASSERT_EQUAL_INT_MESSAGE(3, chunk.constants.count, "Constants count should remain unchanged");
   TEST_ASSERT_EQUAL_MESSAGE(1.2, AS_NUMBER(chunk.constants.values[0]), "Original constant should be unchanged");
 
+  // Test adding another duplicate constant
+  Value boolValue2 = BOOL_VAL(true);
+  int   dupIndex2  = addConstant(&chunk, boolValue2);
+  TEST_ASSERT_EQUAL_INT_MESSAGE(1, dupIndex2, "Duplicate boolean constant should reuse existing index");
+  TEST_ASSERT_EQUAL_INT_MESSAGE(3, chunk.constants.count, "Constants count should remain unchanged after duplicate");
+  TEST_ASSERT_EQUAL_MESSAGE(true, AS_BOOL(chunk.constants.values[1]), "Original boolean constant should be unchanged");
+
   freeChunk(&chunk);
 }
 
