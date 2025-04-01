@@ -1,15 +1,16 @@
 #ifndef clox_scanner_h
 #define clox_scanner_h
 
-typedef struct {
+typedef struct
+{
   const char* start;    // pointer to the beginning of the current token
   const char* current;  // pointer to the current character of the source code
-  int line;
+  int         line;
 } Scanner;
 
-typedef enum {
-  // Single-character tokens.
-  TOKEN_LEFT_PAREN,
+typedef enum
+{
+  TOKEN_LEFT_PAREN,  // Single-character tokens.
   TOKEN_RIGHT_PAREN,
   TOKEN_LEFT_BRACE,
   TOKEN_RIGHT_BRACE,
@@ -19,8 +20,7 @@ typedef enum {
   TOKEN_PLUS,
   TOKEN_SEMICOLON,
   TOKEN_SLASH,
-  TOKEN_STAR,
-  // One or two character tokens.
+  TOKEN_STAR,  // One or two character tokens.
   TOKEN_BANG,
   TOKEN_BANG_EQUAL,
   TOKEN_EQUAL,
@@ -28,15 +28,12 @@ typedef enum {
   TOKEN_GREATER,
   TOKEN_GREATER_EQUAL,
   TOKEN_LESS,
-  TOKEN_LESS_EQUAL,
-  // Template literals
+  TOKEN_LESS_EQUAL,            // Template literals
   TOKEN_LEFT_STRING_LITERAL,   // two characters
   TOKEN_RIGHT_STRING_LITERAL,  // one character
-  // Literals.
-  TOKEN_IDENTIFIER,
+  TOKEN_IDENTIFIER,            // Literals.
   TOKEN_STRING,
-  TOKEN_NUMBER,
-  // Keywords.
+  TOKEN_NUMBER,  // Keywords.
   TOKEN_AND,
   TOKEN_CLASS,
   TOKEN_ELSE,
@@ -69,11 +66,12 @@ line - int;
 
 In jlox the token stored an Object for the runtime value which was converted from the token's lexeme
 */
-typedef struct {
-  TokenType type;
+typedef struct
+{
+  TokenType   type;
   const char* start;  // pointer to the first character of the current token
-  int length;
-  int line;
+  int         length;
+  int         line;
 } Token;
 
 void initScanner(const char* source);

@@ -110,8 +110,9 @@ static void adjustCapacity(Table* table, int capacity) {
   Entry* entries = ALLOCATE(Entry, capacity);
   table->count   = 0;
   for (int i = 0; i < capacity; i++) {
-    entries[i].key   = NIL_VAL;  // previously NULL
-    entries[i].value = NIL_VAL;
+    entries[i].key         = NIL_VAL;  // previously NULL
+    entries[i].value       = NIL_VAL;
+    entries[i].globalIndex = i;
   }
 
   // take the old table entries and copy them into the newly sized entries
@@ -130,7 +131,7 @@ static void adjustCapacity(Table* table, int capacity) {
   table->capacity = capacity;
 }
 
-bool tableSet(Table* table, Value* key, Value* value) {
+bool tableSet(Table* table, Value* key, Value value) {
   // check to make sure the entry can fit
   if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
     int capacity = GROW_CAPACITY(table->capacity);
@@ -142,12 +143,22 @@ bool tableSet(Table* table, Value* key, Value* value) {
 
   // update the size of the table
   bool isNewKey = IS_NIL(entry->key);
+
   // increment the count only if the new entry is not a tombstone (key is null and value is Nil)
-  if (isNewKey && IS_NIL(entry->value)) table->count++;
+  if (isNewKey && IS_NIL(entry->value)) {
+    table->count++;
+    // increment global cache count
+    // globalsCacheCount++;
+  }
 
   // copy the entry into the table
   entry->key   = *key;
-  entry->value = *value;
+  entry->value = value;
+
+  //  set the globals cache index for the entry
+  // entry->globalsIndex = globalsCacheCount;
+  // Store the value in both the hash table and at that index in the global values array
+  // globalsCache[globalsCacheCount] = *entry;
 
   return isNewKey;
 }
@@ -168,13 +179,14 @@ bool tableDelete(Table* table, Value* key) {
   return true;
 }
 
-bool tableGet(Table* table, Value* key, Value* value) {
+bool tableGet(Table* table, Value* key, Value* value, int* globalIndex) {
   if (table->count == 0) return false;
 
   Entry* entry = findEntry(table->entries, table->capacity, key);
   if (IS_NIL(entry->key)) return false;
 
-  *value = entry->value;
+  *value       = entry->value;
+  *globalIndex = entry->globalIndex;
   return true;
 }
 
@@ -182,7 +194,7 @@ void tableAddAll(Table* from, Table* to) {
   for (int i = 0; i < from->capacity; i++) {
     Entry* entry = &from->entries[i];
     if (IS_NIL(entry->key)) {
-      tableSet(to, &entry->key, &entry->value);
+      tableSet(to, &entry->key, entry->value);
     }
   }
 }

@@ -8,6 +8,14 @@
 #define STACK_MAX 256
 
 // "you hand the virtual machine a chunk of code, and it runs it."
+
+typedef struct
+{
+  char* name;
+  Value value;
+  int   index;
+} CachedGlobal;
+
 typedef struct
 {
   // the chunk of code to execute "the VM will gradually acquire more state"
@@ -22,7 +30,13 @@ typedef struct
   // element containing the top value on the stack. That seems
   // a little odd, but almost every implementation does this."
   Table strings;  // the interned strings for our interpreter
-  Obj*  objects;
+  Table globals;  // a hash table of the global variables for our interpreter
+  CachedGlobal*
+      globalsCache;  // The first time a global is defined, it gets added to both the hash table AND assigned the
+  // next available index in the array
+  uint8_t globalsCacheCount;
+
+  Obj* objects;
 } VM;
 
 typedef enum

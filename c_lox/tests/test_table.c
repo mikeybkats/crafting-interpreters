@@ -30,7 +30,7 @@ void test_table_find_entry(void) {
   Value key   = NUMBER_VAL(1);
   Value value = NUMBER_VAL(2);
 
-  tableSet(&table, &key, &value);
+  tableSet(&table, &key, value);
 
   Entry* entry = findEntry(table.entries, table.capacity, &key);
 
@@ -45,7 +45,7 @@ void test_table_set(void) {
   Value key   = NUMBER_VAL(2);
   Value value = NUMBER_VAL(2);
 
-  bool newKey = tableSet(&table, &key, &value);
+  bool newKey = tableSet(&table, &key, value);
   int  index  = getEntryIndex(&table, &key);
 
   TEST_ASSERT_EQUAL_INT(table.count, 1);
@@ -57,7 +57,7 @@ void test_table_set(void) {
   Value keyString   = OBJ_VAL(copyString("helloKey", 8));
   Value valueString = OBJ_VAL(copyString("hello value", 11));
 
-  tableSet(&table, &keyString, &valueString);
+  tableSet(&table, &keyString, valueString);
   index = getEntryIndex(&table, &keyString);
 
   TEST_ASSERT_EQUAL_INT(table.count, 2);
@@ -68,7 +68,7 @@ void test_table_set(void) {
   Value keyBool   = BOOL_VAL(true);
   Value valueBool = BOOL_VAL(false);
 
-  tableSet(&table, &keyBool, &valueBool);
+  tableSet(&table, &keyBool, valueBool);
   index = getEntryIndex(&table, &keyBool);
 
   TEST_ASSERT_EQUAL_INT(table.count, 3);
@@ -81,11 +81,12 @@ void test_table_set(void) {
 void test_table_get(void) {
   Value key   = NUMBER_VAL(3);
   Value value = NUMBER_VAL(4);
+  int   globalIndex;
 
-  tableSet(&table, &key, &value);
+  tableSet(&table, &key, value);
 
   Value result = NIL_VAL;
-  tableGet(&table, &key, &result);
+  tableGet(&table, &key, &result, globalIndex);
 
   TEST_ASSERT_EQUAL_INT(AS_NUMBER(result), AS_NUMBER(value));
 }
@@ -95,7 +96,7 @@ void test_table_delete(void) {
   Value key   = NUMBER_VAL(4);
   Value value = NUMBER_VAL(6);
 
-  tableSet(&table, &key, &value);
+  tableSet(&table, &key, value);
   Entry* entry = findEntry(table.entries, table.capacity, &key);
 
   // test that the value was set
@@ -110,7 +111,7 @@ void test_table_delete(void) {
   TEST_ASSERT_EQUAL_INT(tombstone, true);
 
   value = NUMBER_VAL(7);
-  tableSet(&table, &key, &value);
+  tableSet(&table, &key, value);
   entry = findEntry(table.entries, table.capacity, &key);
 
   // test that the value was set again to the new value
