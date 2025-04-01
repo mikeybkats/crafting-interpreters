@@ -251,9 +251,9 @@ the instruction pointer.
         int   index = READ_BYTE();
         Value value = vm.globalsCache[index].value;
 
-        printf("Getting global fast -- index: %d value: ", index);
-        printValue(value);
-        printf("\n");
+        // printf("Getting global fast -- index: %d value: ", index);
+        // printValue(value);
+        // printf("\n");
 
         push(value);
 
