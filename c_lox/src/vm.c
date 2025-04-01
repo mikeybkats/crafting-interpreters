@@ -33,6 +33,9 @@ with global variables.
 */
 VM vm;
 
+#define GLOBALS_CACHE_DEFAULT_SIZE 100
+// TODO: Fall back to hash table lookups for additional globals when this limit is reached
+
 static void resetStack() {
   vm.stackTop = vm.stack;
 }
@@ -50,11 +53,24 @@ static void runtimeError(const char* format, ...) {
   resetStack();
 }
 
+void initGlobalsCache() {
+  vm.globalsCache = ALLOCATE(CachedGlobal, GLOBALS_CACHE_DEFAULT_SIZE);
+
+  for (int i = 0; i < GLOBALS_CACHE_DEFAULT_SIZE; i++) {
+    vm.globalsCache[i].name  = NULL;
+    vm.globalsCache[i].value = NIL_VAL;
+    vm.globalsCache[i].index = i;
+  }
+}
+
 void initVM() {
   resetStack();
   vm.objects = NULL;
   initTable(&vm.globals);
   initTable(&vm.strings);
+
+  vm.globalsCacheCount = GLOBALS_CACHE_DEFAULT_SIZE;
+  initGlobalsCache();
 }
 
 void freeVM() {
@@ -88,8 +104,8 @@ static Value peek(int distance) {
 // }
 
 static void concatenate() {
-  ObjString* a = AS_STRING(pop());
   ObjString* b = AS_STRING(pop());
+  ObjString* a = AS_STRING(pop());
 
   int   length = a->length + b->length;
   char* chars  = ALLOCATE(char, length + 1);
@@ -100,6 +116,47 @@ static void concatenate() {
   ObjString* result = takeString(chars, length);
 
   push(OBJ_VAL(result));
+}
+
+/**
+ * ## patchGlobalToCache
+ *
+ * Takes the name, value and globalIndex and replaces all future instructions to get the global from the globals cache
+ * which will provide faster access than the globals table.
+ *
+ * #### Performance Tradeoff Analysis
+ *
+ * One-time cost: The scanning is a one-time cost per global variable per execution
+ * Ongoing benefit: Every access to the variable after patching is much faster
+ * Amortized cost: As the program runs longer, the initial cost becomes increasingly negligible
+ *
+ * If a variable is accessed 1,000 times in a program, paying the cost of scanning once to optimize the other 999
+ * accesses is a clear win.
+ *
+ * #### Potential Improvements
+ *
+ * If you were concerned about the scanning cost for very large programs, you could consider:
+ *
+ * Lazy patching: Only patch a small window ahead of the current instruction
+ * Compilation-time analysis: Identify all global variable accesses during compilation
+ * Patching threshold: Only patch if a global is used more than X times
+ */
+void patchGlobalToCache(ObjString* name, Value* value, int globalIndex) {
+  // OP_GET_GLOBAL should only ever run once per global. After it runs then all subsequent global gets will go
+  // through the cache. Create an entry for the globals cache
+  CachedGlobal* global = &vm.globalsCache[globalIndex];
+  global->index        = globalIndex;
+  global->name         = AS_CSTRING(OBJ_VAL(name));
+  global->value        = *value;
+
+  for (int i = (int)(vm.ip - vm.chunk->code); i < vm.chunk->count - 1; i++) {
+    uint8_t constantIndex = vm.chunk->code[i + 1];
+    Value   value         = vm.chunk->constants.values[constantIndex];
+    if (value.type == VAL_OBJ && vm.chunk->code[i] == OP_GET_GLOBAL && AS_CSTRING(value) == global->name) {
+      vm.chunk->code[i]     = OP_GET_GLOBAL_FAST;
+      vm.chunk->code[i + 1] = global->index;
+    }
+  }
 }
 
 /*
@@ -135,6 +192,7 @@ the instruction pointer.
 
   for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
+
     printf("         ");
     for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
       // This loop lets us observe the effect of each instruction on the stack.
@@ -153,6 +211,7 @@ the instruction pointer.
 
     u_int8_t instruction;  // every bytecode instruction modifies the stack
 
+    // printf("OP_CODE before READ_BYTE: %hhu\n", *vm.ip);
     // This switch statement will become giant to handle all the opcodes
     switch (instruction = READ_BYTE()) {
       case OP_CONSTANT: {
@@ -175,23 +234,43 @@ the instruction pointer.
       case OP_GET_GLOBAL: {
         ObjString* name = READ_STRING();
         Value      value;
-        if (!tableGet(&vm.globals, &OBJ_VAL(name), &value)) {
+        int        globalIndex;
+
+        if (!tableGet(&vm.globals, &OBJ_VAL(name), &value, &globalIndex)) {
           runtimeError("Undefined variable '%s'.", name->chars);
           return INTERPRET_RUNTIME_ERROR;
         }
+
+        patchGlobalToCache(name, &value, globalIndex);
+
         push(value);
         break;
       }
+
+      case OP_GET_GLOBAL_FAST: {
+        int   index = READ_BYTE();
+        Value value = vm.globalsCache[index].value;
+
+        printf("Getting global fast -- index: %d value: ", index);
+        printValue(value);
+        printf("\n");
+
+        push(value);
+
+        break;
+      }
+
       case OP_DEFINE_GLOBAL: {
+        // when global is defined set it to the table and the vm globalsCache
         ObjString* name = READ_STRING();
+
         tableSet(&vm.globals, &OBJ_VAL(name), peek(0));
         pop();
         break;
       }
       case OP_SET_GLOBAL: {
         ObjString* name = READ_STRING();
-        // if a variable is not defined, then it is a runtime error.
-        // Because in this case, there would be nothing to set the variable to
+
         if (tableSet(&vm.globals, &OBJ_VAL(name), peek(0))) {
           tableDelete(&vm.globals, &OBJ_VAL(name));
           runtimeError("Undefined variable '%s'.", name->chars);
@@ -199,6 +278,7 @@ the instruction pointer.
         }
         break;
       }
+
       case OP_EQUAL: {
         Value b = pop();
         Value a = pop();

@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "value.h"
+#include "vm.h"
 
 /*
  * ## disassembleChunk
@@ -55,10 +56,20 @@ void printChunk(Chunk* chunk) {
  * @param offset the offset of the current instruction.
  */
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
-  uint8_t constantIndex = chunk->code[offset + 1];
+  uint8_t constantIndex = chunk->code[offset + 1];     // the constantIndex is the operand for the instruction
   printf(" %-16s", name);                              // print the opcode name of the instruction
   printf("%4d: '", constantIndex);                     // print the index of the constant
   printValue(chunk->constants.values[constantIndex]);  // print the constant value
+  printf("'\n");
+
+  return offset + 2;
+}
+
+static int globalInstruction(const char* name, Chunk* chunk, int offset) {
+  uint8_t globalIndex = chunk->code[offset + 1];   // the constantIndex is the operand for the instruction
+  printf(" %-16s", name);                          // print the opcode name of the instruction
+  printf("%4d: '", globalIndex);                   // print the index
+  printValue(vm.globalsCache[globalIndex].value);  // print the  value
   printf("'\n");
 
   return offset + 2;
@@ -121,6 +132,9 @@ int disassembleInstruction(Chunk* chunk, int offset) {
 
     case OP_GET_GLOBAL:
       return constantInstruction("OP_GET_GLOBAL", chunk, offset);
+
+    case OP_GET_GLOBAL_FAST:
+      return globalInstruction("OP_GET_GLOBAL_FAST", chunk, offset);
 
     case OP_DEFINE_GLOBAL:
       return constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);

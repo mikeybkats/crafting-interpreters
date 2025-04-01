@@ -81,11 +81,12 @@ void test_table_set(void) {
 void test_table_get(void) {
   Value key   = NUMBER_VAL(3);
   Value value = NUMBER_VAL(4);
+  int   globalIndex;
 
   tableSet(&table, &key, value);
 
   Value result = NIL_VAL;
-  tableGet(&table, &key, &result);
+  tableGet(&table, &key, &result, globalIndex);
 
   TEST_ASSERT_EQUAL_INT(AS_NUMBER(result), AS_NUMBER(value));
 }

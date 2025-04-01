@@ -110,8 +110,9 @@ static void adjustCapacity(Table* table, int capacity) {
   Entry* entries = ALLOCATE(Entry, capacity);
   table->count   = 0;
   for (int i = 0; i < capacity; i++) {
-    entries[i].key   = NIL_VAL;  // previously NULL
-    entries[i].value = NIL_VAL;
+    entries[i].key         = NIL_VAL;  // previously NULL
+    entries[i].value       = NIL_VAL;
+    entries[i].globalIndex = i;
   }
 
   // take the old table entries and copy them into the newly sized entries
@@ -142,12 +143,22 @@ bool tableSet(Table* table, Value* key, Value value) {
 
   // update the size of the table
   bool isNewKey = IS_NIL(entry->key);
+
   // increment the count only if the new entry is not a tombstone (key is null and value is Nil)
-  if (isNewKey && IS_NIL(entry->value)) table->count++;
+  if (isNewKey && IS_NIL(entry->value)) {
+    table->count++;
+    // increment global cache count
+    // globalsCacheCount++;
+  }
 
   // copy the entry into the table
   entry->key   = *key;
   entry->value = value;
+
+  //  set the globals cache index for the entry
+  // entry->globalsIndex = globalsCacheCount;
+  // Store the value in both the hash table and at that index in the global values array
+  // globalsCache[globalsCacheCount] = *entry;
 
   return isNewKey;
 }
@@ -168,13 +179,14 @@ bool tableDelete(Table* table, Value* key) {
   return true;
 }
 
-bool tableGet(Table* table, Value* key, Value* value) {
+bool tableGet(Table* table, Value* key, Value* value, int* globalIndex) {
   if (table->count == 0) return false;
 
   Entry* entry = findEntry(table->entries, table->capacity, key);
   if (IS_NIL(entry->key)) return false;
 
-  *value = entry->value;
+  *value       = entry->value;
+  *globalIndex = entry->globalIndex;
   return true;
 }
 

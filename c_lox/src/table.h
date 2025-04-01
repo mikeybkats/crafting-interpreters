@@ -14,6 +14,7 @@ typedef struct
 {
   Value key;
   Value value;
+  int   globalIndex;  // used for globalsCache
 } Entry;
 
 typedef struct
@@ -33,7 +34,7 @@ STATIC Entry* findEntry(Entry* entries, int capacity, Value* key);
 
 bool       tableSet(Table* table, Value* key, Value value);
 bool       tableDelete(Table* table, Value* key);
-bool       tableGet(Table* table, Value* key, Value* value);
+bool       tableGet(Table* table, Value* key, Value* value, int* globalIndex);
 void       tableAddAll(Table* from, Table* to);
 ObjString* tableFindString(Table* table, const char* chars, int length, uint32_t hash);
 uint32_t   getHashValue(Value value);
