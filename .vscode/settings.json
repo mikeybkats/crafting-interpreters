@@ -61,7 +61,8 @@
     "streambuf": "c",
     "utility": "c",
     "*.inc": "c",
-    "table.h": "c"
+    "table.h": "c",
+    "object.h": "c"
   },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",
