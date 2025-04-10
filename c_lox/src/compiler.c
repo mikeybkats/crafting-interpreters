@@ -59,6 +59,8 @@ typedef struct
 {
   Token name;
   int   depth;
+  bool  isConst;
+  bool  initialized;
 } Local;
 
 typedef struct
@@ -239,19 +241,21 @@ static int resolveLocal(Compiler* compiler, Token* name) {
   return -1;
 }
 
-static void addLocal(Token name) {
+static void addLocal(Token name, bool isConst) {
   if (current->localCount == UINT8_COUNT) {
     error("Too many local variables in function");
     return;
   }
 
-  Local* local = &current->locals[current->localCount++];
-  local->name  = name;
+  Local* local   = &current->locals[current->localCount++];
+  local->name    = name;
+  local->isConst = isConst;
+  local->depth   = -1;
+
   // local->depth = current->scopeDepth;
-  local->depth = -1;
 }
 
-static void declareVariable() {
+static void declareVariable(bool isConst) {
   if (current->scopeDepth == 0) return;
 
   Token* name = &parser.previous;
@@ -271,7 +275,7 @@ static void declareVariable() {
     }
   }
 
-  addLocal(*name);
+  addLocal(*name, isConst);
 }
 
 static void endCompiler() {
@@ -404,7 +408,27 @@ static void namedVariable(Token name, bool canAssign) {
   }
 }
 
+static Local* findLocal(Token* name) {
+  for (int i = current->localCount - 1; i >= 0; i--) {
+    Local* local = &current->locals[i];
+
+    if (identifiersEqual(name, &local->name)) {
+      return local;
+    }
+  }
+  return NULL;
+}
+
 static void variable(bool canAssign) {
+  Local* local = findLocal(&parser.previous);
+  if (local != NULL && local->isConst && canAssign && local->initialized) {
+    error("Cannot reassign to const variable.");
+    return;
+  }
+  if (canAssign) {
+    local->initialized = true;
+  }
+
   namedVariable(parser.previous, canAssign);
 }
 
@@ -481,6 +505,7 @@ ParseRule rules[] = {
     [TOKEN_THIS]          = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_TRUE]          = { literal,   NULL,       PREC_NONE},
     [TOKEN_VAR]           = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_CONST]         = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_WHILE]         = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_ERROR]         = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_EOF]           = {    NULL,   NULL,       PREC_NONE},
@@ -534,15 +559,23 @@ static void parsePrecedence(Precedence precedence) {
   }
 }
 
-static uint8_t parseVariable(const char* errorMessage) {
+static uint8_t parseVariable(bool isConst, const char* errorMessage) {
   consume(TOKEN_IDENTIFIER, errorMessage);
 
-  declareVariable();
+  declareVariable(isConst);
   if (current->scopeDepth > 0) return 0;
 
   return identifierConstant(&parser.previous);
 }
 
+/**
+ * ## function: markInitialized
+ *
+ * @brief sets the depth of the top most local variable to the current scope depth.
+ *
+ * So this is really what “declaring” and “defining” a variable means in the compiler. “Declaring” is when the variable
+ * is added to the scope, and “defining” is when it becomes available for use.
+ */
 static void markInitialized() {
   current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
@@ -580,8 +613,22 @@ static void block() {
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
 
+static void constDeclaration() {
+  uint8_t global = parseVariable(true, "Expect variable name.");
+
+  if (match(TOKEN_EQUAL)) {
+    expression();
+  } else {
+    emitByte(OP_NIL);
+  }
+
+  consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
+  defineVariable(global);
+}
+
 static void varDeclaration() {
-  uint8_t global = parseVariable("Expect variable name.");
+  uint8_t global = parseVariable(false, "Expect variable name.");
 
   if (match(TOKEN_EQUAL)) {
     expression();
@@ -616,6 +663,7 @@ static void synchronize() {
       case TOKEN_CLASS:
       case TOKEN_FUN:
       case TOKEN_VAR:
+      case TOKEN_CONST:
       case TOKEN_FOR:
       case TOKEN_IF:
       case TOKEN_WHILE:
@@ -631,7 +679,9 @@ static void synchronize() {
 }
 
 static void declaration() {
-  if (match(TOKEN_VAR)) {
+  if (match(TOKEN_CONST)) {
+    constDeclaration();
+  } else if (match(TOKEN_VAR)) {
     varDeclaration();
   } else {
     statement();

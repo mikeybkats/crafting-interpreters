@@ -1,7 +1,11 @@
+{
 var beverage = "cafe au lait";
-var breakfast = "beignets with " + beverage;
 print beverage;
-print breakfast;
 
+beverage = "coffee";
+
+const breakfast = "beignets with " + beverage;
 print breakfast;
+}
+ 
 

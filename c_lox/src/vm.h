@@ -31,6 +31,7 @@ typedef struct
   // a little odd, but almost every implementation does this."
   Table strings;  // the interned strings for our interpreter
   Table globals;  // a hash table of the global variables for our interpreter
+  Table globalConsts;
   CachedGlobal*
       globalsCache;  // The first time a global is defined, it gets added to both the hash table AND assigned the
   // next available index in the array
