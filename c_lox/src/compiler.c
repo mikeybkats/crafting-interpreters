@@ -389,7 +389,20 @@ static void string(bool canAssign) {
 
 static void namedVariable(Token name, bool canAssign) {
   uint8_t getOp, setOp;
-  uint8_t arg = resolveLocal(current, &name);
+  int     arg = resolveLocal(current, &name);
+
+  Local* local = &current->locals[arg];
+
+  if (local->initialized == true && local->isConst == true && parser.current.type == TOKEN_EQUAL) {
+    error("Can't reassign to const variable");
+  }
+
+  if (local->isConst == true) {
+    local->initialized = true;
+    getOp              = OP_GET_LOCAL;
+    emitBytes(getOp, (uint8_t)arg);
+    return;
+  }
 
   if (arg != -1) {
     getOp = OP_GET_LOCAL;
@@ -408,27 +421,7 @@ static void namedVariable(Token name, bool canAssign) {
   }
 }
 
-static Local* findLocal(Token* name) {
-  for (int i = current->localCount - 1; i >= 0; i--) {
-    Local* local = &current->locals[i];
-
-    if (identifiersEqual(name, &local->name)) {
-      return local;
-    }
-  }
-  return NULL;
-}
-
 static void variable(bool canAssign) {
-  Local* local = findLocal(&parser.previous);
-  if (local != NULL && local->isConst && canAssign && local->initialized) {
-    error("Cannot reassign to const variable.");
-    return;
-  }
-  if (canAssign) {
-    local->initialized = true;
-  }
-
   namedVariable(parser.previous, canAssign);
 }
 
