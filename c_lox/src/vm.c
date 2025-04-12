@@ -282,8 +282,6 @@ the instruction pointer.
         int   index = READ_BYTE();
         Value value = vm.globalsCache[index].value;
 
-        // printf("index: %d -- global value: %s\n", index, AS_CSTRING(value));
-
         push(value);
 
         break;
