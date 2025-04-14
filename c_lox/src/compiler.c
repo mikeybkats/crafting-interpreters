@@ -68,6 +68,10 @@ typedef struct
   Local locals[UINT8_COUNT];
   int   localCount;
   int   scopeDepth;
+
+  ObjString* initializedGlobals[UINT8_COUNT];
+  int        globalsCount;
+  bool       isCurrentGlobalConst;
 } Compiler;  // added in chapter 22. Compiler not needed until local variables are introduced
 
 Parser parser;  // create a single global variable so state does not need to be
@@ -188,6 +192,7 @@ static void emitReturn() {
  */
 static uint8_t makeConstant(Value value) {
   // int constant - index of the constant in the values array
+  // constant gets added to the currentChunk Values array
   int constant = addConstant(currentChunk(), value);
 
   if (constant > UINT8_MAX) {
@@ -216,7 +221,10 @@ static ParseRule* getRule(TokenType type);
 static void       parsePrecedence(Precedence precedence);
 
 static uint8_t identifierConstant(Token* name) {
-  return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+  ObjString* constName = copyString(name->start, name->length);
+
+  current->initializedGlobals[current->globalsCount] = constName;
+  return makeConstant(OBJ_VAL(constName));
 }
 
 static bool identifiersEqual(Token* a, Token* b) {
@@ -251,8 +259,6 @@ static void addLocal(Token name, bool isConst) {
   local->name    = name;
   local->isConst = isConst;
   local->depth   = -1;
-
-  // local->depth = current->scopeDepth;
 }
 
 static void declareVariable(bool isConst) {
@@ -393,6 +399,8 @@ static void namedVariable(Token name, bool canAssign) {
 
   Local* local = &current->locals[arg];
 
+  // Locals exist in a locals array, so it's easy to pass flags for if they are constants or not.
+  // Globals on the other hand are simply written directly to the constant array in the chunk
   if (local->initialized == true && local->isConst == true && parser.current.type == TOKEN_EQUAL) {
     error("Can't reassign to const variable");
   }
@@ -404,11 +412,19 @@ static void namedVariable(Token name, bool canAssign) {
     return;
   }
 
+  // check if the global is a const and has been added to the initialized array
+  // if it has then throw an error for "Can't reassign to const variable"
+  // otherwise emitBytes for set global const
+
   if (arg != -1) {
     getOp = OP_GET_LOCAL;
     setOp = OP_SET_LOCAL;
   } else {
-    arg   = identifierConstant(&name);
+    arg = identifierConstant(&name);
+
+    // set the globalInit flag back to false, since now the global has been set and assignment is complete on the
+    // compiler side.
+
     getOp = OP_GET_GLOBAL;
     setOp = OP_SET_GLOBAL;
   }
@@ -558,6 +574,10 @@ static uint8_t parseVariable(bool isConst, const char* errorMessage) {
   declareVariable(isConst);
   if (current->scopeDepth > 0) return 0;
 
+  // Set the flag for global const
+  if (isConst) {
+    current->isCurrentGlobalConst = true;
+  }
   return identifierConstant(&parser.previous);
 }
 
@@ -606,22 +626,8 @@ static void block() {
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
 
-static void constDeclaration() {
-  uint8_t global = parseVariable(true, "Expect variable name.");
-
-  if (match(TOKEN_EQUAL)) {
-    expression();
-  } else {
-    emitByte(OP_NIL);
-  }
-
-  consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
-
-  defineVariable(global);
-}
-
-static void varDeclaration() {
-  uint8_t global = parseVariable(false, "Expect variable name.");
+static void varDeclaration(bool isConst) {
+  uint8_t global = parseVariable(isConst, "Expect variable name.");
 
   if (match(TOKEN_EQUAL)) {
     expression();
@@ -673,9 +679,9 @@ static void synchronize() {
 
 static void declaration() {
   if (match(TOKEN_CONST)) {
-    constDeclaration();
+    varDeclaration(true);
   } else if (match(TOKEN_VAR)) {
-    varDeclaration();
+    varDeclaration(false);
   } else {
     statement();
   }

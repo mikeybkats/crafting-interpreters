@@ -1,14 +1,25 @@
 var beverage = "cafe au lait";
-print beverage;
+
 beverage = "coffee";
 
-var breakfast = "beignets with " + beverage;
 
-{
-    const newBreakfast = breakfast + " and side of bacon";
+beverage = "foo";
 
-    print newBreakfast;
-}
- 
-print breakfast;
 print beverage;
+
+const foo = "bar";
+
+print foo;
+
+// const breakfast = "beignets with " + beverage;
+
+// {
+//     const newBreakfast = breakfast + " and side of bacon";
+// 
+//     print newBreakfast;
+// }
+// 
+// breakfast = "fooo";
+// 
+// print breakfast;
+// print beverage;
