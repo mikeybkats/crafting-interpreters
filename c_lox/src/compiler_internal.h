@@ -5,10 +5,10 @@
 
 // Expose the internal variables from compiler.c
 extern Parser parser;
-extern Chunk compilingChunk;
+extern Chunk  compilingChunk;
 
 #ifdef DEBUG_TEST
-void test_advance();
+void   test_advance();
 Chunk* currentChunk();
 #endif
 

@@ -10,7 +10,7 @@ extern Scanner scanner;
 // Add test helper functions
 const char* test_get_scanner_current(void);
 const char* test_get_scanner_start(void);
-int test_get_scanner_line(void);
+int         test_get_scanner_line(void);
 #endif
 
 #endif
