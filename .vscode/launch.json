@@ -1,7 +1,4 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
@@ -9,49 +6,41 @@
       "type": "lldb",
       "request": "launch",
       "program": "${workspaceFolder}/rust_lox/target/debug/rlox_interpreter",
-      "args": ["${workspaceFolder}/rust_lox/test/scopes.lox"],
+      "args": [
+        "${workspaceFolder}/rust_lox/test/scopes.lox"
+      ],
       "cwd": "${workspaceFolder}/rust_lox"
     },
     {
       "name": "Debug C Lox",
-      "type": "cppdbg",
+      "type": "lldb",
       "request": "launch",
       "program": "${workspaceFolder}/c_lox/build/src/outputExecutable",
-      "args": ["${workspaceFolder}/c_lox/tests/test.lox"],
-      "stopAtEntry": true,
+      "args": [
+        "${workspaceFolder}/c_lox/lox_programs/test.lox"
+      ],
       "cwd": "${workspaceFolder}/c_lox",
-      "environment": [],
-      "externalConsole": false,
-      "MIMode": "lldb",
       "preLaunchTask": "clox build",
-      "setupCommands": [
-        {
-            "description": "Enable pretty-printing for lldb",
-            "text": "-enable-pretty-printing",
-            "ignoreFailures": true
-        }
-    ]
+      "initCommands": []
     },
     {
       "name": "Test C Lox",
-      "type": "cppdbg",
+      "type": "lldb",
       "request": "launch",
       "program": "${workspaceFolder}/c_lox/build/tests/testRunner",
       "args": [],
-      "stopAtEntry": true,
       "cwd": "${workspaceFolder}/c_lox",
-      "environment": [],
-      "externalConsole": false,
-      "internalConsoleOptions": "openOnSessionStart",
-      "MIMode": "lldb",
       "preLaunchTask": "Build Tests",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ],
-    }
+      "initCommands": [
+      ]
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": ".",
+      "program": "build/Debug/outDebug"
+    },
   ]
 }

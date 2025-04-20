@@ -1,0 +1,2 @@
+var drinkOption = "caffinated";
+drinkOption = "decaffinated";

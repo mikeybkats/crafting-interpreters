@@ -1,16 +1,21 @@
 {
   "configurations": [
     {
-      "name": "Mac",
+      "name": "macos-clang-arm64",
       "includePath": [
-        "${workspaceFolder}/**",
-        "/usr/local/include",
-        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
-        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"
+        "${workspaceFolder}/**"
       ],
       "defines": [],
-      "macFrameworkPath": []
+      "macFrameworkPath": [],
+      "cStandard": "c99",
+      "cppStandard": "${default}",
+      "compilerPath": "/usr/bin/clang",
+      "intelliSenseMode": "macos-clang-arm64",
+      "compilerArgs": [
+        "-g",
+        "-Wall",
+        "-Wextra"
+      ]
     }
   ],
   "version": 4
