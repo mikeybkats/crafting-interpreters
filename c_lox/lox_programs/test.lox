@@ -1,2 +1,4 @@
 var drinkOption = "caffinated";
 drinkOption = "decaffinated";
+
+print drinkOption;

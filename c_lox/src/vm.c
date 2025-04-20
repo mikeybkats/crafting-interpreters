@@ -390,7 +390,7 @@ InterpretResult interpret(const char* source) {
   Chunk chunk;
   initChunk(&chunk);
 
-  printf("Source: %s\n", source);
+  // printf("DEBUG -- SOURCE: %s\n", source);
   // compiler fills chunk with bytecode
   if (!compile(source, &chunk)) {
     // if an error is encountered the chunk is freed and an error is returned

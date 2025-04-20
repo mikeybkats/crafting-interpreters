@@ -24,7 +24,7 @@
  *
  * @brief The precedence of operators
  *
- * "These are all of Lox’s precedence levels in order from lowest to highest."
+ * "These are all of Lox's precedence levels in order from lowest to highest."
  */
 typedef enum
 {
@@ -423,24 +423,25 @@ static void namedVariable(Token name, bool canAssign) {
   uint8_t getOp, setOp;
   int     arg = resolveLocal(current, &name);
 
-  Local *local = &current->locals[arg];
+  if (arg != -1) {
+    Local *local = &current->locals[arg];
 
-  // Locals exist in a locals array, so it's easy to pass flags for if they are
-  // constants or not. Globals on the other hand are simply written directly to
-  // the constant array in the chunk
-  if (parser.current.type == TOKEN_EQUAL && local->initialized == true && local->isConst == true) {
-    printf("LOCAL CONST ERROR");
-    error("Can't reassign to const variable");
-  }
+    // Locals exist in a locals array, so it's easy to pass flags for if they are
+    // constants or not. Globals on the other hand are simply written directly to
+    // the constant array in the chunk
+    if (parser.current.type == TOKEN_EQUAL && local->initialized == true && local->isConst == true) {
+      error("Can't reassign to const variable");
+    }
 
-  if (local->isConst == true) {
-    local->initialized = true;
-    getOp              = OP_GET_LOCAL;
-    emitBytes(getOp, (uint8_t)arg);
-    // if (canAssign && match(TOKEN_EQUAL)) {
-    //   error("Can't reassign to const variable");
-    // }
-    return;
+    if (local->isConst == true) {
+      local->initialized = true;
+      getOp              = OP_GET_LOCAL;
+      emitBytes(getOp, (uint8_t)arg);
+      // if (canAssign && match(TOKEN_EQUAL)) {
+      //   error("Can't reassign to const variable");
+      // }
+      return;
+    }
   }
 
   // check if the global is a const and has been added to the initialized array
@@ -628,9 +629,9 @@ static uint8_t parseVariable(bool isConst, const char *errorMessage) {
  * @brief sets the depth of the top most local variable to the current scope
  * depth.
  *
- * So this is really what “declaring” and “defining” a variable means in the
- * compiler. “Declaring” is when the variable is added to the scope, and
- * “defining” is when it becomes available for use.
+ * So this is really what "declaring" and "defining" a variable means in the
+ * compiler. "Declaring" is when the variable is added to the scope, and
+ * "defining" is when it becomes available for use.
  */
 static void markInitialized() {
   current->locals[current->localCount - 1].depth = current->scopeDepth;
