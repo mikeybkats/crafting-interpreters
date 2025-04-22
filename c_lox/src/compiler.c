@@ -215,8 +215,9 @@ static void emitConstant(Value value) {
 
 static void initCompiler(Compiler *compiler) {
   memset(compiler->initializedGlobals, 0, sizeof(Token *) * UINT8_COUNT);
+  // I don't think the globals need to be explicitly set to NULL
   // for (int i = 0; i < UINT8_COUNT; i++) {
-  //     compiler->initializedGlobals[i] = NULL;
+  //   compiler->initializedGlobals[i] = NULL;
   // }
   compiler->globalsCount         = 0;
   compiler->isCurrentGlobalConst = false;
@@ -225,7 +226,7 @@ static void initCompiler(Compiler *compiler) {
   current                        = compiler;
 }
 
-static void       expression(Precedence precedence);
+static void       expression();
 static void       statement();
 static void       declaration();
 static ParseRule *getRule(TokenType type);
@@ -272,7 +273,7 @@ static void addLocal(Token name, bool isConst) {
 static void declareVariable(bool isConst) {
   if (current->scopeDepth == 0) {
     if (isConst) {
-      // current->isCurrentGlobalConst = true;
+      current->isCurrentGlobalConst = true;
     }
     return;
   }
@@ -389,7 +390,7 @@ static void literal(bool canAssign) {
  * higher precedence one is expected."
  */
 static void grouping(bool canAssign) {
-  expression(PREC_ASSIGNMENT);
+  expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
 }
 
@@ -408,15 +409,17 @@ static void string(bool canAssign) {
 }
 
 static bool globalInitialized(Token *name) {
-  // for (int i = current->globalsCount; i != 0; i--) {
-  //   if (identifiersEqual(name, current->initializedGlobals[i])) {
-  //   }
-  // }
+  for (int i = current->globalsCount; i != 0; i--) {
+    if (identifiersEqual(name, current->initializedGlobals[i])) {
+      printf("GLOBAL IS INITALIZED\n");
+      return true;
+    }
+  }
   return false;
 }
 
 static void initializeGlobalConst(Token *name) {
-  // current->initializedGlobals[current->globalsCount] = name;
+  current->initializedGlobals[current->globalsCount] = name;
 }
 
 /**
@@ -447,11 +450,16 @@ static void namedVariable(Token name, bool canAssign) {
     }
   }
 
+  bool isInit = globalInitialized(&name);
+  printf("DEBUG -- namedVariable -- token type: %d -- isCurrentGlobalConst: %s -- isInit: %s\n",
+         parser.current.type,
+         current->isCurrentGlobalConst ? "true" : "false",
+         isInit ? "true" : "false");
+
   // check if the global is a const and has been added to the initialized array
-  // if (parser.current.type == TOKEN_EQUAL && current->isCurrentGlobalConst &&
-  //     globalInitialized(&name)) {
-  //   error("Can't reassign to const variable");
-  // }
+  if (parser.current.type == TOKEN_EQUAL && current->isCurrentGlobalConst && globalInitialized(&name)) {
+    error("Can't reassign to const variable");
+  }
 
   if (arg != -1) {
     getOp = OP_GET_LOCAL;
@@ -459,22 +467,22 @@ static void namedVariable(Token name, bool canAssign) {
   } else {
     arg = identifierConstant(&name);
 
-    // if (current->isCurrentGlobalConst) {
-    //   initializeGlobalConst(&name);
-    //   getOp = OP_GET_GLOBAL;
-    //   emitBytes(getOp, (uint8_t)arg);
-    //   // set the globalInit flag back to false, since now the global has been set
-    //   // and assignment is complete on the compiler side.
-    //   current->isCurrentGlobalConst = false;
-    //   return;
-    // }
+    if (current->isCurrentGlobalConst) {
+      initializeGlobalConst(&name);
+      getOp = OP_GET_GLOBAL;
+      emitBytes(getOp, (uint8_t)arg);
+      // set the globalInit flag back to false, since now the global has been set
+      // and assignment is complete on the compiler side.
+      current->isCurrentGlobalConst = false;
+      return;
+    }
 
     getOp = OP_GET_GLOBAL;
     setOp = OP_SET_GLOBAL;
   }
 
   if (canAssign && match(TOKEN_EQUAL)) {
-    expression(PREC_ASSIGNMENT);
+    expression();
     emitBytes(setOp, (uint8_t)arg);
   } else {
     emitBytes(getOp, (uint8_t)arg);
@@ -525,49 +533,47 @@ static void unary(bool canAssign) {
  * [RULE_INDEX] = { prefix function, infix function, precedence }
  */
 ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN]       = {grouping,   NULL,       PREC_NONE},
-    [TOKEN_RIGHT_PAREN]      = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_LEFT_BRACE]       = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_RIGHT_BRACE]      = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_COMMA]            = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_DOT]              = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_MINUS]            = {   unary, binary,       PREC_TERM},
-    [TOKEN_PLUS]             = {    NULL, binary,       PREC_TERM},
-    [TOKEN_SEMICOLON]        = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_SLASH]            = {    NULL, binary,     PREC_FACTOR},
-    [TOKEN_STAR]             = {    NULL, binary,     PREC_FACTOR},
-    [TOKEN_BANG]             = {   unary,   NULL,       PREC_NONE},
-    [TOKEN_BANG_EQUAL]       = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_EQUAL]            = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_EQUAL_EQUAL]      = {    NULL, binary,   PREC_EQUALITY},
-    [TOKEN_GREATER]          = {    NULL, binary, PREC_COMPARISON},
-    [TOKEN_GREATER_EQUAL]    = {    NULL, binary, PREC_COMPARISON},
-    [TOKEN_LESS]             = {    NULL, binary, PREC_COMPARISON},
-    [TOKEN_LESS_EQUAL]       = {    NULL, binary, PREC_COMPARISON},
-    [TOKEN_IDENTIFIER]       = {variable,   NULL,       PREC_NONE},
-    [TOKEN_IDENTIFIER_CONST] = {variable,   NULL,    PREC_PRIMARY},
-    [TOKEN_STRING]           = {  string,   NULL,       PREC_NONE},
-    [TOKEN_NUMBER]           = {  number,   NULL,       PREC_NONE},
-    [TOKEN_AND]              = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_CLASS]            = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_ELSE]             = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_FALSE]            = { literal,   NULL,       PREC_NONE},
-    [TOKEN_FOR]              = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_FUN]              = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_IF]               = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_NIL]              = { literal,   NULL,       PREC_NONE},
-    [TOKEN_OR]               = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_PRINT]            = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_RETURN]           = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_SUPER]            = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_THIS]             = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_TRUE]             = { literal,   NULL,       PREC_NONE},
-    [TOKEN_VAR]              = {    NULL,   NULL,       PREC_NONE},
- /* TOKEN CONST SHOULD have its own variable chain of events to process the const? */
-    [TOKEN_CONST] = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_WHILE] = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_ERROR] = {    NULL,   NULL,       PREC_NONE},
-    [TOKEN_EOF]   = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_LEFT_PAREN]    = {grouping,   NULL,       PREC_NONE},
+    [TOKEN_RIGHT_PAREN]   = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_LEFT_BRACE]    = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_RIGHT_BRACE]   = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_COMMA]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_DOT]           = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_MINUS]         = {   unary, binary,       PREC_TERM},
+    [TOKEN_PLUS]          = {    NULL, binary,       PREC_TERM},
+    [TOKEN_SEMICOLON]     = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_SLASH]         = {    NULL, binary,     PREC_FACTOR},
+    [TOKEN_STAR]          = {    NULL, binary,     PREC_FACTOR},
+    [TOKEN_BANG]          = {   unary,   NULL,       PREC_NONE},
+    [TOKEN_BANG_EQUAL]    = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_EQUAL]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_EQUAL_EQUAL]   = {    NULL, binary,   PREC_EQUALITY},
+    [TOKEN_GREATER]       = {    NULL, binary, PREC_COMPARISON},
+    [TOKEN_GREATER_EQUAL] = {    NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS]          = {    NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS_EQUAL]    = {    NULL, binary, PREC_COMPARISON},
+    [TOKEN_IDENTIFIER]    = {variable,   NULL,       PREC_NONE},
+    [TOKEN_STRING]        = {  string,   NULL,       PREC_NONE},
+    [TOKEN_NUMBER]        = {  number,   NULL,       PREC_NONE},
+    [TOKEN_AND]           = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_CLASS]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_ELSE]          = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_FALSE]         = { literal,   NULL,       PREC_NONE},
+    [TOKEN_FOR]           = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_FUN]           = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_IF]            = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_NIL]           = { literal,   NULL,       PREC_NONE},
+    [TOKEN_OR]            = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_PRINT]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_RETURN]        = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_SUPER]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_THIS]          = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_TRUE]          = { literal,   NULL,       PREC_NONE},
+    [TOKEN_VAR]           = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_CONST]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_WHILE]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_ERROR]         = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_EOF]           = {    NULL,   NULL,       PREC_NONE},
 };
 
 /*
@@ -619,7 +625,8 @@ static void parsePrecedence(Precedence precedence) {
   }
 }
 
-static uint8_t parseVariable(bool isConst, const char *errorMessage) {
+static uint8_t parseVariable(const char *errorMessage, bool isConst) {
+  printf("DEBUG -- parseVariable -- isConst: %s\n", isConst ? "true" : "false");
   consume(TOKEN_IDENTIFIER, errorMessage);
 
   declareVariable(isConst);
@@ -627,7 +634,7 @@ static uint8_t parseVariable(bool isConst, const char *errorMessage) {
 
   // Set the flag for global const
   if (isConst) {
-    // current->isCurrentGlobalConst = true;
+    current->isCurrentGlobalConst = true;
   }
   return identifierConstant(&parser.previous);
 }
@@ -675,9 +682,8 @@ static ParseRule *getRule(TokenType type) {
  *
  * @brief  Called when processing an EQUAL token
  */
-static void expression(Precedence precedence) {
-  parsePrecedence(precedence);
-  // parsePrecedence(PREC_ASSIGNMENT);
+static void expression() {
+  parsePrecedence(PREC_ASSIGNMENT);
 }
 
 static void block() {
@@ -689,10 +695,10 @@ static void block() {
 }
 
 static void varDeclaration(bool isConst) {
-  uint8_t global = parseVariable(isConst, "Expect variable name.");
+  uint8_t global = parseVariable("Expect variable name.", isConst);
 
   if (match(TOKEN_EQUAL)) {
-    expression(PREC_ASSIGNMENT);
+    expression();
   } else {
     emitByte(OP_NIL);
   }
@@ -703,13 +709,13 @@ static void varDeclaration(bool isConst) {
 }
 
 static void expressionStatement() {
-  expression(PREC_ASSIGNMENT);
+  expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
   emitByte(OP_POP);
 }
 
 static void printStatement() {
-  expression(PREC_NONE);
+  expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after value.");
   emitByte(OP_PRINT);
 }

@@ -1,4 +1,3 @@
-var drinkOption = "caffinated";
+const drinkOption = "caffinated";
 drinkOption = "decaffinated";
-
 print drinkOption;
