@@ -32,6 +32,7 @@ typedef enum
   TOKEN_LEFT_STRING_LITERAL,   // two characters
   TOKEN_RIGHT_STRING_LITERAL,  // one character
   TOKEN_IDENTIFIER,            // Literals.
+  TOKEN_IDENTIFIER_CONST,
   TOKEN_STRING,
   TOKEN_NUMBER,  // Keywords.
   TOKEN_AND,
