@@ -1,5 +1,7 @@
 {
-  "rust-analyzer.linkedProjects": ["rust_lox/Cargo.toml"],
+  "rust-analyzer.linkedProjects": [
+    "rust_lox/Cargo.toml"
+  ],
   "eslint.enable": false,
   "files.associations": {
     "stdint.h": "c",
@@ -62,18 +64,41 @@
     "utility": "c",
     "*.inc": "c",
     "table.h": "c",
-    "object.h": "c"
+    "object.h": "c",
+    "cstdlib": "c"
   },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "xaver.clang-format",
-  "C_Cpp.formatting": "clangFormat",
-  "C_Cpp.errorSquiggles": "enabled",
-  "C_Cpp.default.compilerPath": "/usr/bin/clang",
   "[markdown]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "prettier.proseWrap": "always",
   "prettier.printWidth": 100,
-  "prettier.tabWidth": 2
+  "prettier.tabWidth": 2,
+  "editor.semanticHighlighting.enabled": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.tokenColorCustomizations": {
+    "[Default Dark+]": {
+      "functions": "#DCDCAA",
+      "keywords": "#569CD6",
+      "strings": "#CE9178",
+      "numbers": "#B5CEA8",
+      "types": "#4EC9B0"
+    }
+  },
+  "editor.hover.enabled": true,
+  "editor.hover.above": false,
+  "[c]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+  },
+  "clangd.arguments": [
+    "--background-index",
+    "--compile-commands-dir=${workspaceFolder}/c_lox",
+    "--completion-style=detailed",
+    "--header-insertion=never",
+    "--all-scopes-completion",
+    "--clang-tidy",
+    "--offset-encoding=utf-16",
+  ]
 }

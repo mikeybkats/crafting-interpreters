@@ -138,6 +138,9 @@ static TokenType identifierType() {
     case 'a':
       return checkKeyword(1, 2, "nd", TOKEN_AND);
     case 'c':
+      if (memcmp(scanner.start + 1, "o", 2)) {
+        return checkKeyword(1, 4, "onst", TOKEN_CONST);
+      }
       return checkKeyword(1, 4, "lass", TOKEN_CLASS);
     case 'e':
       return checkKeyword(1, 3, "lse", TOKEN_ELSE);

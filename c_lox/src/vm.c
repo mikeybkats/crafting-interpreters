@@ -118,6 +118,29 @@ static void concatenate() {
   push(OBJ_VAL(result));
 }
 
+bool checkGlobals(ObjString* name, int* index) {
+  char* cName = AS_CSTRING(OBJ_VAL(name));
+
+  for (int i = 0; i < vm.globalsCacheCount; i++) {
+    if (vm.globalsCache[i].name == cName) {
+      // printf("global name: %s\n", vm.globalsCache[i].name);
+      *index = i;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+CachedGlobal* setCachedGlobal(int* globalIndex, ObjString* name, Value value) {
+  CachedGlobal* global = &vm.globalsCache[*globalIndex];
+  global->index        = *globalIndex;
+  global->name         = AS_CSTRING(OBJ_VAL(name));
+  global->value        = value;
+
+  return global;
+}
+
 /**
  * ## patchGlobalToCache
  *
@@ -141,17 +164,15 @@ static void concatenate() {
  * Compilation-time analysis: Identify all global variable accesses during compilation
  * Patching threshold: Only patch if a global is used more than X times
  */
-void patchGlobalToCache(ObjString* name, Value* value, int globalIndex) {
+void patchGlobalToCache(ObjString* name, Value value, int globalIndex) {
   // OP_GET_GLOBAL should only ever run once per global. After it runs then all subsequent global gets will go
   // through the cache. Create an entry for the globals cache
-  CachedGlobal* global = &vm.globalsCache[globalIndex];
-  global->index        = globalIndex;
-  global->name         = AS_CSTRING(OBJ_VAL(name));
-  global->value        = *value;
+  CachedGlobal* global = setCachedGlobal(&globalIndex, name, value);
 
   for (int i = (int)(vm.ip - vm.chunk->code); i < vm.chunk->count - 1; i++) {
     uint8_t constantIndex = vm.chunk->code[i + 1];
     Value   value         = vm.chunk->constants.values[constantIndex];
+
     if (value.type == VAL_OBJ && vm.chunk->code[i] == OP_GET_GLOBAL && AS_CSTRING(value) == global->name) {
       vm.chunk->code[i]     = OP_GET_GLOBAL_FAST;
       vm.chunk->code[i + 1] = global->index;
@@ -231,6 +252,16 @@ the instruction pointer.
       case OP_POP:
         pop();
         break;
+      case OP_GET_LOCAL: {
+        uint8_t slot = READ_BYTE();
+        push(vm.stack[slot]);
+        break;
+      }
+      case OP_SET_LOCAL: {
+        uint8_t slot   = READ_BYTE();
+        vm.stack[slot] = peek(0);
+        break;
+      }
       case OP_GET_GLOBAL: {
         ObjString* name = READ_STRING();
         Value      value;
@@ -241,7 +272,7 @@ the instruction pointer.
           return INTERPRET_RUNTIME_ERROR;
         }
 
-        patchGlobalToCache(name, &value, globalIndex);
+        patchGlobalToCache(name, value, globalIndex);
 
         push(value);
         break;
@@ -250,10 +281,6 @@ the instruction pointer.
       case OP_GET_GLOBAL_FAST: {
         int   index = READ_BYTE();
         Value value = vm.globalsCache[index].value;
-
-        // printf("Getting global fast -- index: %d value: ", index);
-        // printValue(value);
-        // printf("\n");
 
         push(value);
 
@@ -269,7 +296,12 @@ the instruction pointer.
         break;
       }
       case OP_SET_GLOBAL: {
-        ObjString* name = READ_STRING();
+        ObjString* name        = READ_STRING();
+        int        globalIndex = 0;
+
+        if (checkGlobals(name, &globalIndex)) {
+          setCachedGlobal(&globalIndex, name, peek(0));
+        }
 
         if (tableSet(&vm.globals, &OBJ_VAL(name), peek(0))) {
           tableDelete(&vm.globals, &OBJ_VAL(name));
@@ -358,6 +390,7 @@ InterpretResult interpret(const char* source) {
   Chunk chunk;
   initChunk(&chunk);
 
+  // printf("DEBUG -- SOURCE: %s\n", source);
   // compiler fills chunk with bytecode
   if (!compile(source, &chunk)) {
     // if an error is encountered the chunk is freed and an error is returned

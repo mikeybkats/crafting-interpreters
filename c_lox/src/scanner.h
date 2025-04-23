@@ -1,6 +1,8 @@
 #ifndef clox_scanner_h
 #define clox_scanner_h
 
+#include <stdbool.h>
+
 typedef struct
 {
   const char* start;    // pointer to the beginning of the current token
@@ -49,6 +51,7 @@ typedef enum
   TOKEN_THIS,
   TOKEN_TRUE,
   TOKEN_VAR,
+  TOKEN_CONST,
   TOKEN_WHILE,
   TOKEN_ERROR,
   TOKEN_EOF

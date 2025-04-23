@@ -6,7 +6,8 @@
 #include "scanner.h"
 #include "vm.h"
 
-typedef struct {
+typedef struct
+{
   Token current;
   Token previous;
   bool  hadError;

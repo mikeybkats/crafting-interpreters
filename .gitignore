@@ -5,3 +5,6 @@
 **/build/**
 build/*
 **/target/**
+
+# c_lox
+c_lox/.cache
