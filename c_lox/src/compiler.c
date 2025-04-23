@@ -216,9 +216,9 @@ static void emitConstant(Value value) {
 static void initCompiler(Compiler *compiler) {
   memset(compiler->initializedGlobals, 0, sizeof(Token *) * UINT8_COUNT);
   // I don't think the globals need to be explicitly set to NULL
-  // for (int i = 0; i < UINT8_COUNT; i++) {
-  //   compiler->initializedGlobals[i] = NULL;
-  // }
+  for (int i = 0; i < UINT8_COUNT; i++) {
+    compiler->initializedGlobals[i] = NULL;
+  }
   compiler->globalsCount         = 0;
   compiler->isCurrentGlobalConst = false;
   compiler->localCount           = 0;
@@ -271,16 +271,15 @@ static void addLocal(Token name, bool isConst) {
 }
 
 static bool globalInitialized(Token *name) {
-  printf("DEBUG -- globalInitialized -- TokenType: %d -- count: %d\n", name->type, current->globalsCount);
-  int count;
+  // printf("DEBUG -- globalInitialized -- TokenType: %d -- count: %d\n", name->type, current->globalsCount);
   if (current->globalsCount == 0) {
-    count = 0;
-  } else {
-    count = current->globalsCount - 1;
+    if (current->initializedGlobals[0] != NULL) {
+      return identifiersEqual(name, current->initializedGlobals[0]);
+    }
   }
-  for (int i = count; i != 0; i--) {
-    if (identifiersEqual(name, current->initializedGlobals[i])) {
-      printf("GLOBAL IS INITALIZED\n");
+
+  for (int i = current->globalsCount - 1; i >= 0; i--) {
+    if (current->initializedGlobals[i] != NULL && identifiersEqual(name, current->initializedGlobals[i])) {
       return true;
     }
   }
@@ -444,9 +443,6 @@ static void namedVariable(Token name, bool canAssign) {
     Local *local = &current->locals[arg];
 
     if (local->isConst == true) {
-      // Locals exist in a locals array, so it's easy to pass flags for if they are
-      // constants or not. Globals on the other hand are simply written directly to
-      // the constant array in the chunk
       if (local->initialized == true) {
         error("Can't reassign to const variable");
       }
@@ -458,34 +454,22 @@ static void namedVariable(Token name, bool canAssign) {
     }
   }
 
+  // Value value   = OBJ_VAL(copyString(name.start, name.length));
+  // char *cString = AS_CSTRING(value);
+  // printf("DEBUG -- namedVariable -- global: %s ", cString);
+
   bool isInit = globalInitialized(&name);
-  if (current->isCurrentGlobalConst && isInit) {
-    printf("DEBUG -- namedVariable -- token type: %d -- isCurrentGlobalConst: %s -- isInit: %s\n",
-           parser.current.type,
-           current->isCurrentGlobalConst ? "true" : "false",
-           isInit ? "true" : "false");
-
+  if (!isInit) {
+    initializeGlobalConst(&name);
+  } else if (current->isCurrentGlobalConst && parser.current.type == TOKEN_EQUAL) {
     // check if the global is a const and has been added to the initialized array
-    // if (parser.current.type == TOKEN_EQUAL && current->isCurrentGlobalConst && globalInitialized(&name)) {
-    //   error("Can't reassign to const variable");
-    // }
-
-    // set the globalInit flag back to false, since now the global has been set and assignment is complete on the
-    // compiler side.
-    // current->isCurrentGlobalConst = false;
-    // getOp = OP_GET_GLOBAL;
-    // emitBytes(getOp, (uint8_t)arg);
-    // return;
+    error("Can't reassign to const variable");
   }
 
   if (arg != -1) {
     getOp = OP_GET_LOCAL;
     setOp = OP_SET_LOCAL;
   } else {
-    Value value   = OBJ_VAL(copyString(name.start, name.length));
-    char *cString = AS_CSTRING(value);
-    printf("Initializing global: %s \n", cString);
-    initializeGlobalConst(&name);
     arg = identifierConstant(&name);
 
     getOp = OP_GET_GLOBAL;
@@ -637,7 +621,6 @@ static void parsePrecedence(Precedence precedence) {
 }
 
 static uint8_t parseVariable(const char *errorMessage, bool isConst) {
-  printf("DEBUG -- parseVariable -- isConst: %s\n", isConst ? "true" : "false");
   consume(TOKEN_IDENTIFIER, errorMessage);
 
   declareVariable(isConst);
