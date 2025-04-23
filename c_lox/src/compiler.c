@@ -438,38 +438,30 @@ static void namedVariable(Token name, bool canAssign) {
   uint8_t getOp, setOp;
   int     arg = resolveLocal(current, &name);
 
-  // Remember to bounds check for -1! Always bounds check before indexing or you will suffer!
   if (arg != -1) {
+    // Handle local consts
+    // Remember to bounds check for -1! Always bounds check before indexing or you will suffer!
     Local *local = &current->locals[arg];
-
-    if (local->isConst == true) {
-      if (local->initialized == true) {
-        error("Can't reassign to const variable");
-      }
-
+    if (!local->initialized && local->isConst) {
       local->initialized = true;
-      getOp              = OP_GET_LOCAL;
-      emitBytes(getOp, (uint8_t)arg);
-      return;
+    } else if (arg != -1 && local->isConst) {
+      error("Can't reassign to const variable");
     }
-  }
+    // end handle local consts
 
-  // Value value   = OBJ_VAL(copyString(name.start, name.length));
-  // char *cString = AS_CSTRING(value);
-  // printf("DEBUG -- namedVariable -- global: %s ", cString);
-
-  bool isInit = globalInitialized(&name);
-  if (!isInit) {
-    initializeGlobalConst(&name);
-  } else if (current->isCurrentGlobalConst && parser.current.type == TOKEN_EQUAL) {
-    // check if the global is a const and has been added to the initialized array
-    error("Can't reassign to const variable");
-  }
-
-  if (arg != -1) {
     getOp = OP_GET_LOCAL;
     setOp = OP_SET_LOCAL;
   } else {
+    // Handle global consts
+    bool isInit = globalInitialized(&name);
+    if (!isInit) {
+      initializeGlobalConst(&name);
+    } else if (current->isCurrentGlobalConst && parser.current.type == TOKEN_EQUAL) {
+      // check if the global is a const and has been added to the initialized array
+      error("Can't reassign to const variable");
+    }
+    // end handle global consts
+
     arg = identifierConstant(&name);
 
     getOp = OP_GET_GLOBAL;
@@ -599,7 +591,6 @@ static void parsePrecedence(Precedence precedence) {
     return;
   }
   // else process the rule by calling the prefixRule function
-  // prefixRule();
   bool canAssign = precedence <= PREC_ASSIGNMENT;
   prefixRule(canAssign);
 
@@ -615,7 +606,10 @@ static void parsePrecedence(Precedence precedence) {
     infixRule(canAssign);
   }
 
+  //  If the = doesn’t get consumed as part of the expression, nothing else is going to consume it. It’s an error and we
+  //  should report it.
   if (canAssign && match(TOKEN_EQUAL)) {
+    printf("DEBUG -- parsePrecedence -- assignment error\n");
     error("Invalid assignment target.");
   }
 }
