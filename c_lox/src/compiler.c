@@ -173,7 +173,7 @@ static bool match(TokenType type) {
 /*
  * ## emitByte
  *
- * @brief emits a byte to the current chunk. The byte is the location of the
+ * @brief emits (writes) a byte to the current chunk. The byte is the location of the
  * constant in the values array.
  */
 static void emitByte(uint8_t byte) {

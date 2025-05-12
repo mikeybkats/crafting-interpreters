@@ -25,7 +25,7 @@ void initChunk(Chunk* chunk) {
 /*
  * ## writeChunk
  *
- * @brief Writes a chunk to memory.
+ * @brief Writes to a chunk of memory.
  *
  * @param chunk the initialized Chunk to write to.
  * @param byte the code to write to the chunk. Can be an OpCode or a constant.
