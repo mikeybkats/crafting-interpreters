@@ -98,7 +98,7 @@ static int byteInstruction(const char* name, Chunk* chunk, int offset) {
 static int jumpInstruction(const char* name, int sign, Chunk* chunk, int offset) {
   uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
   jump |= chunk->code[offset + 2];
-  printf("%-16s %4d -> %d\n", name, offset, offset + 3 + sign * jump);
+  printf(" %-16s %4d -> %d\n", name, offset, offset + 3 + sign * jump);
   return offset + 3;
 }
 
@@ -109,7 +109,7 @@ static int jumpInstruction(const char* name, int sign, Chunk* chunk, int offset)
  * the next instruction.
  *
  * @param chunk
- * @param offset the int distance from the beginning of a code array to access a
+ * @param offset bytecode offset from the beginning of a code array to access a
  * given piece of code.
  */
 int disassembleInstruction(Chunk* chunk, int offset) {

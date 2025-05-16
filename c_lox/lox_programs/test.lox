@@ -1,9 +1,8 @@
-const drinkOption = "caffinated";
-print drinkOption;
-drinkOption = "decaffinated";
+const drinkOption = false;
 
-{
-    const drinkOption2 = "latte";
-    drinkOption2 = "decaf latte";
-    print drinkOption2;
+if(drinkOption) {
+    print "The customer would like a drink.";
 }
+
+print "The customer does not want a drink";
+

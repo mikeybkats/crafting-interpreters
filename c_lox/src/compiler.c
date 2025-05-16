@@ -689,8 +689,6 @@ static ParseRule *getRule(TokenType type) {
 
 /**
  * Function: expression
- *
- * @brief  Called when processing an EQUAL token
  */
 static void expression() {
   parsePrecedence(PREC_ASSIGNMENT);
