@@ -165,7 +165,7 @@ primary        → "true" | "false" | "nil"
                | "(" expression ")"
                | IDENTIFIER ;
 
-Identifier     → LoxWord;
+identifier     → LoxWord;
 
 expression     → assignment ;
 
