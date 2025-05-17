@@ -588,16 +588,7 @@ ParseRule rules[] = {
 /*
  * ## parsePrecedence
  *
- * @brief handles the precedence of operators
- *
- * consider this:
- * ```
- * -a.b + c;
- * ```
- *
- * Here the operand to `-` should just be the a.b expression. But if unary is
- * called, it will recursively eat up all of the expression and treat `-` as
- * lower precedence than the `+` which is not how it should work.
+ * @brief Processes expressions. Handles the precedence of operators. Internally consumes the expression.
  */
 static void parsePrecedence(Precedence precedence) {
   // advance to the next token

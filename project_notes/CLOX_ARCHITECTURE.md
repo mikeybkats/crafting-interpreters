@@ -49,7 +49,7 @@ virtual machine or runtime environment.
 
 #### Q: _What is the difference between an interpreter and compiler?_
 
-An `interpretter` scans and executes source code directly. This is exactly what c_lox does. Unlike a
+An `interpreter` scans and executes source code directly. This is exactly what c_lox does. Unlike a
 `Compiler`, there is no code generation an application is run, it just executes the code.
 
 ## Error handling in Lox
