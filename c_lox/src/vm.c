@@ -198,8 +198,14 @@ the instruction pointer.
    * ip always points to the next byte of code to be used. */
 
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define READ_SHORT()    (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
-#define READ_STRING()   AS_STRING(READ_CONSTANT())
+
+/**
+ * READ_SHORT()
+ * Notice the comma operator. It evaluates the left side expression and discards the result, then evaluates the right
+ * side and that is returned as the value of the expression.
+ */
+#define READ_SHORT()  (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 
 #define BINARY_OP(valueType, op)                      \
   do {                                                \
