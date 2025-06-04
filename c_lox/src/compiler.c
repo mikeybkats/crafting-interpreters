@@ -12,6 +12,8 @@
 #include "debug.h"
 #endif
 
+static void and_(bool canAssign);
+
 // typedef struct {
 //   Token current;
 //   Token previous;
@@ -366,6 +368,7 @@ static void endScope() {
 }
 
 static void binary(bool canAssign) {
+  (void)canAssign;
   TokenType  operatorType = parser.previous.type;
   ParseRule *rule         = getRule(operatorType);
 
@@ -408,6 +411,7 @@ static void binary(bool canAssign) {
 }
 
 static void literal(bool canAssign) {
+  (void)canAssign;
   switch (parser.previous.type) {
     case TOKEN_FALSE:
       emitByte(OP_FALSE);
@@ -433,13 +437,29 @@ static void literal(bool canAssign) {
  * higher precedence one is expected."
  */
 static void grouping(bool canAssign) {
+  (void)canAssign;
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
 }
 
 static void number(bool canAssign) {
+  (void)canAssign;
+
   double value = strtod(parser.previous.start, NULL);  // string to double
   emitConstant(NUMBER_VAL(value));
+}
+
+static void or_(bool canAssign) {
+  (void)canAssign;
+
+  int elseJump = emitJump(OP_JUMP_IF_FALSE);
+  int endJump  = emitJump(OP_JUMP);
+
+  patchJump(elseJump);
+  emitByte(OP_POP);
+
+  parsePrecedence(PREC_OR);
+  patchJump(endJump);
 }
 
 /**
@@ -448,6 +468,7 @@ static void number(bool canAssign) {
  * @brief handles strings
  */
 static void string(bool canAssign) {
+  (void)canAssign;
   emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
@@ -512,6 +533,7 @@ static void variable(bool canAssign) {
  * @brief handles the unary operator
  */
 static void unary(bool canAssign) {
+  (void)canAssign;
   TokenType operatorType = parser.previous.type;
 
   // compile the operand
@@ -572,7 +594,7 @@ ParseRule rules[] = {
     [TOKEN_FUN]           = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_IF]            = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_NIL]           = { literal,   NULL,       PREC_NONE},
-    [TOKEN_OR]            = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_OR]            = {    NULL,    or_,         PREC_OR},
     [TOKEN_PRINT]         = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_RETURN]        = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_SUPER]         = {    NULL,   NULL,       PREC_NONE},
@@ -675,6 +697,8 @@ static void defineVariable(uint8_t global) {
 }
 
 static void and_(bool canAssign) {
+  (void)canAssign;
+
   int endJump = emitJump(OP_JUMP_IF_FALSE);
 
   emitByte(OP_POP);

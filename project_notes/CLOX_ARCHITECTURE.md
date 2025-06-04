@@ -40,6 +40,43 @@ Single pass interpreter
 - The VM executes that bytecode immediately
 - Then the process repeats for the next token
 
+## The stack: How does the clox stack work?
+
+The clox `VM` works with the chunks that the compiler creates. The `VM` loads the chunk during
+initialization:
+
+```c
+vm.chunk = &chunk;
+vm.ip    = vm.chunk->code;
+```
+
+From there the VM interacts with values in the chunk through bytecodes and operands. Operands are
+either 8 or 16 bits.
+
+Chunks are lists of bytecodes:
+
+```
+OP_POP
+OP_JUMP 0xA131
+OP_CONSTANT
+```
+
+The rest of the operation is straightforward the `instruction pointer` is incremented and
+decremented to push and pop values:
+
+```c
+void push(Value value) {
+  *vm.stackTop = value;  // stores the value in the array of Values
+                         // after the last element in the array
+  vm.stackTop++;
+}
+
+Value pop() {
+  vm.stackTop--;
+  return *vm.stackTop;
+}
+```
+
 ## Clearing up "confusing" terminology
 
 #### Q: _What is an interpretted language?_
