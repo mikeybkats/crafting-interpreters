@@ -223,6 +223,12 @@ static void emitConstant(Value value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+/**
+ * # function: patchJump
+ * Replaces the operands for a jump instruction with the distance to jump over
+ * (typically the length of a code block), stored as upper and lower 8-bit values
+ * to make a 16-bit jump.
+ */
 static void patchJump(int offset) {
   // -2 to adjust for the bytecode for the jump offset itself.
   int jump = currentChunk()->count - offset - 2;
@@ -233,8 +239,10 @@ static void patchJump(int offset) {
 
   // shift the upper 8 bits 8 places and take the lower 8 bits of the jump and (defensive programming) mask the lower 8
   // bits
-  currentChunk()->code[offset]     = (jump >> 8) & 0xff;
-  currentChunk()->code[offset + 1] = jump & 0xff;  // take the lower 8 bits of the jump
+  // Mathematically equivalent to jump / 256 (division)
+  currentChunk()->code[offset] = (jump >> 8) & 0xff;
+  // take the lower 8 bits of the jump. // Mathematically equivalent to jump % 256 (modulo)
+  currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
 static void initCompiler(Compiler *compiler) {
