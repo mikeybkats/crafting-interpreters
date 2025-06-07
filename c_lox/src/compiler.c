@@ -73,9 +73,9 @@ typedef struct
   int   localCount;
   int   scopeDepth;
 
-  Token *initializedGlobals[UINT8_COUNT];
-  int    globalsCount;
-  bool   isCurrentGlobalConst;
+  Token initializedGlobals[UINT8_COUNT];
+  int   globalsCount;
+  bool  isCurrentGlobalConst;
 } Compiler;  // added in chapter 22. Compiler not needed until local variables
              // are introduced
 
@@ -240,9 +240,9 @@ static void patchJump(int offset) {
 static void initCompiler(Compiler *compiler) {
   memset(compiler->initializedGlobals, 0, sizeof(Token *) * UINT8_COUNT);
   // I don't think the globals need to be explicitly set to NULL
-  for (int i = 0; i < UINT8_COUNT; i++) {
-    compiler->initializedGlobals[i] = NULL;
-  }
+  // for (int i = 0; i < UINT8_COUNT; i++) {
+  //   compiler->initializedGlobals[i] = NULL;
+  // }
   compiler->globalsCount         = 0;
   compiler->isCurrentGlobalConst = false;
   compiler->localCount           = 0;
@@ -295,15 +295,12 @@ static void addLocal(Token name, bool isConst) {
 }
 
 static bool globalInitialized(Token *name) {
-  // printf("DEBUG -- globalInitialized -- TokenType: %d -- count: %d\n", name->type, current->globalsCount);
   if (current->globalsCount == 0) {
-    if (current->initializedGlobals[0] != NULL) {
-      return identifiersEqual(name, current->initializedGlobals[0]);
-    }
+    return identifiersEqual(name, &current->initializedGlobals[0]);
   }
 
   for (int i = current->globalsCount - 1; i >= 0; i--) {
-    if (current->initializedGlobals[i] != NULL && identifiersEqual(name, current->initializedGlobals[i])) {
+    if (identifiersEqual(name, &current->initializedGlobals[i])) {
       return true;
     }
   }
@@ -311,7 +308,7 @@ static bool globalInitialized(Token *name) {
 }
 
 static void initializeGlobalConst(Token *name) {
-  current->initializedGlobals[current->globalsCount] = name;
+  current->initializedGlobals[current->globalsCount] = *name;
   current->globalsCount++;
 }
 
@@ -475,12 +472,11 @@ static void string(bool canAssign) {
 /**
  * function namedVariable
  * @brief after variable() this is the first variable function to get called from the rules table. It resolves the
- * variable and emits the bytecode to the Chunk.
+ * variable and emits the bytecode to the Chunk. Gets called when accessing a variable.
  */
 static void namedVariable(Token name, bool canAssign) {
   uint8_t getOp, setOp;
   int     arg = resolveLocal(current, &name);
-
   if (arg != -1) {
     // Handle local consts
     // Remember to bounds check for -1! Always bounds check before indexing or you will suffer!
@@ -491,16 +487,18 @@ static void namedVariable(Token name, bool canAssign) {
       error("Can't reassign to const variable");
     }
     // end handle local consts
-
     getOp = OP_GET_LOCAL;
     setOp = OP_SET_LOCAL;
   } else {
     // Handle global consts
     bool isInit = globalInitialized(&name);
     if (!isInit) {
+      printf("namedVariable -- initializing global\n");
       initializeGlobalConst(&name);
-    } else if (current->isCurrentGlobalConst && parser.current.type == TOKEN_EQUAL) {
-      // check if the global is a const and has been added to the initialized array
+      isInit = true;
+    }
+    // check if the global is a const and has been added to the initialized array
+    if (isInit && parser.current.type == TOKEN_EQUAL) {
       error("Can't reassign to const variable");
     }
     // end handle global consts
@@ -512,6 +510,7 @@ static void namedVariable(Token name, bool canAssign) {
   }
 
   if (canAssign && match(TOKEN_EQUAL)) {
+    // match(TOKEN_EQUAL);
     expression();
     emitBytes(setOp, (uint8_t)arg);
   } else {

@@ -12,8 +12,8 @@
  */
 void disassembleChunk(Chunk* chunk, char* name) {
   printf("== %s ==\n", name);
-  printf("offset line opcode             constant\n");
-  printf("------ ---- ------------------ --------\n");
+  printf("offset line opcode             operand   constant\n");
+  printf("------ ---- ------------------ --------- --------\n");
 
   for (int offset = 0; offset < chunk->count;) {
     offset = disassembleInstruction(chunk, offset);
@@ -57,8 +57,7 @@ void printChunk(Chunk* chunk) {
  */
 static int constantInstruction(const char* name, Chunk* chunk, int offset) {
   uint8_t constantIndex = chunk->code[offset + 1];     // the constantIndex is the operand for the instruction
-  printf(" %-16s", name);                              // print the opcode name of the instruction
-  printf("%4d: '", constantIndex);                     // print the index of the constant
+  printf(" %-18s   0x%02X   '", name, constantIndex);  // print the index of the constant
   printValue(chunk->constants.values[constantIndex]);  // print the constant value
   printf("'\n");
 
@@ -66,10 +65,9 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
 }
 
 static int globalInstruction(const char* name, Chunk* chunk, int offset) {
-  uint8_t globalIndex = chunk->code[offset + 1];   // the constantIndex is the operand for the instruction
-  printf(" %-16s", name);                          // print the opcode name of the instruction
-  printf("%4d: '", globalIndex);                   // print the index
-  printValue(vm.globalsCache[globalIndex].value);  // print the  value
+  uint8_t globalIndex = chunk->code[offset + 1];     // the constantIndex is the operand for the instruction
+  printf(" %-18s   0x%02X   '", name, globalIndex);  // print the index
+  printValue(vm.globalsCache[globalIndex].value);    // print the  value
   printf("'\n");
 
   return offset + 2;
@@ -85,20 +83,20 @@ static int globalInstruction(const char* name, Chunk* chunk, int offset) {
  * @param offset the offset of the current instruction.
  */
 static int simpleInstruction(const char* name, int offset) {
-  printf(" %s\n", name);
+  printf(" %-18s\n", name);
   return offset + 1;
 }
 
 static int byteInstruction(const char* name, Chunk* chunk, int offset) {
   uint8_t slot = chunk->code[offset + 1];
-  printf("%-16s %4d\n", name, slot);
+  printf("%-18s   0x%02X\n", name, slot);
   return offset + 2;
 }
 
 static int jumpInstruction(const char* name, int sign, Chunk* chunk, int offset) {
   uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
   jump |= chunk->code[offset + 2];
-  printf(" %-16s %4d -> %d\n", name, offset, offset + 3 + sign * jump);
+  printf(" %-18s   0x%04X  token: %d -> token: %d\n", name, jump, offset, offset + 3 + sign * jump);
   return offset + 3;
 }
 

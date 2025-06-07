@@ -1,8 +1,13 @@
-const drinkOption = false;
+const customer = false;
+const customer2 = true;
+const customer3 = false;
+const customer4 = false;
+customer4 = true;
 
-if(drinkOption) {
+if(customer) {
     print "The customer would like a drink.";
+} else {
+    print "The customer does not want a drink";
 }
 
-print "The customer does not want a drink";
 
