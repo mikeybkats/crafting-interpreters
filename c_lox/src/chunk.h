@@ -31,6 +31,7 @@ typedef enum
   OP_JUMP,
   OP_JUMP_IF_FALSE,  // Reads the top value from the stack and if false jumps to a placeholder location -- operand:
                      // (0xFFFF) see function: emitJump
+  OP_LOOP,
   OP_RETURN,
 } OpCode;
 
