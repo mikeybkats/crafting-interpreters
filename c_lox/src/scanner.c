@@ -126,10 +126,17 @@ characters.
 @return - the type of the keyword if it is a keyword, otherwise TOKEN_IDENTIFIER
 */
 static TokenType checkKeyword(int start, int length, const char* rest, TokenType type) {
+  printf("Comparing: '%.*s' with '%s'\n", length, scanner.start + start, rest);
+  printf("memcmp result: %d\n", memcmp(scanner.start + start, rest, length));
   if (scanner.current - scanner.start == start + length && memcmp(scanner.start + start, rest, length) == 0) {
+    printf("rest: %s\n", rest);
+    if (strcmp(rest, "witch") == 0) {
+      printf("returning switch token: %d\n", type);
+    }
     return type;
   }
 
+  printf("returning identifier: %s\n", rest);
   return TOKEN_IDENTIFIER;
 }
 
@@ -137,6 +144,8 @@ static TokenType identifierType() {
   switch (scanner.start[0]) {
     case 'a':
       return checkKeyword(1, 2, "nd", TOKEN_AND);
+    case 'b':
+      return checkKeyword(1, 4, "reak", TOKEN_BREAK);
     case 'c':
       if (memcmp(scanner.start + 1, "o", 2)) {
         return checkKeyword(1, 4, "onst", TOKEN_CONST);
@@ -168,7 +177,16 @@ static TokenType identifierType() {
     case 'r':
       return checkKeyword(1, 5, "eturn", TOKEN_RETURN);
     case 's':
-      return checkKeyword(1, 4, "uper", TOKEN_SUPER);
+      if (scanner.current - scanner.start > 1) {
+        switch (scanner.start[1]) {
+          case 'u':
+            return checkKeyword(1, 4, "uper", TOKEN_SUPER);
+          case 'w':
+            printf("checking for switch\n");
+            return checkKeyword(1, 5, "witch", TOKEN_SWITCH);
+        }
+      }
+      break;
     case 't':
       if (scanner.current - scanner.start > 1) {
         switch (scanner.start[1]) {

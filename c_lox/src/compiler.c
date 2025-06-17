@@ -511,7 +511,6 @@ static void namedVariable(Token name, bool canAssign) {
     // Handle global consts
     bool isInit = globalInitialized(&name);
     if (!isInit) {
-      printf("namedVariable -- initializing global\n");
       initializeGlobalConst(&name);
       isInit = true;
     }
@@ -810,6 +809,10 @@ static void forStatement() {
   endScope();
 }
 
+static void switchStatement() {
+  printf("switch statement");
+}
+
 static void ifStatement() {
   consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
   expression();
@@ -890,12 +893,17 @@ static void declaration() {
 }
 
 static void statement() {
+  printf("Current word: %.*s\n", parser.current.length, parser.current.start);
+  printf("Current token type: %d\n", parser.current.type);
   if (match(TOKEN_PRINT)) {
     printStatement();
   } else if (match(TOKEN_FOR)) {
     forStatement();
   } else if (match(TOKEN_IF)) {
     ifStatement();
+  } else if (match(TOKEN_SWITCH)) {
+    printf("matching switch statement\n");
+    switchStatement();
   } else if (match(TOKEN_WHILE)) {
     whileStatement();
   } else if (match(TOKEN_LEFT_BRACE)) {
@@ -903,6 +911,7 @@ static void statement() {
     block();
     endScope();
   } else {
+    printf("matching expression statement\n");
     expressionStatement();
   }
 }
