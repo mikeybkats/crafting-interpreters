@@ -809,8 +809,45 @@ static void forStatement() {
   endScope();
 }
 
+static void caseStatement() {
+  printf("matching case\n");
+  expression();  // puts case condition expression on the stack
+  consume(TOKEN_COLON, "Expect ':' after case statement.");
+
+  emitByte(OP_EQUAL);                         // put the compare value on the stack
+  int nextCase = emitJump(OP_JUMP_IF_FALSE);  // treat case like an if statement
+
+  emitByte(OP_POP);
+  statement();  // compiles case code
+
+  patchJump(nextCase);  // end of case
+  emitByte(OP_POP);     // pop the operand?
+
+  // jump back to the location of the switch expression global?
+  emitByte(OP_JUMP);
+
+  // or reference the switch statement global value?
+
+  if (match(TOKEN_CASE)) caseStatement();
+}
+
+/*
+ * ## function: switchStatement
+ *
+ * switchStmt     → "switch" "(" expression ")"
+ *                  "{" switchCase* defaultCase? "}" ;
+ * switchCase     → "case" expression ":" statement* ;
+ * defaultCase    → "default" ":" statement* ;
+ */
 static void switchStatement() {
-  printf("switch statement");
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'");
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+  consume(TOKEN_LEFT_BRACE, "Expect '{' after 'switch expression condition'");
+  if (match(TOKEN_CASE)) caseStatement();
+
+  consume(TOKEN_RIGHT_BRACE, "Expect '}' after 'switch expression condition'");
 }
 
 static void ifStatement() {
@@ -893,8 +930,6 @@ static void declaration() {
 }
 
 static void statement() {
-  printf("Current word: %.*s\n", parser.current.length, parser.current.start);
-  printf("Current token type: %d\n", parser.current.type);
   if (match(TOKEN_PRINT)) {
     printStatement();
   } else if (match(TOKEN_FOR)) {
@@ -902,7 +937,6 @@ static void statement() {
   } else if (match(TOKEN_IF)) {
     ifStatement();
   } else if (match(TOKEN_SWITCH)) {
-    printf("matching switch statement\n");
     switchStatement();
   } else if (match(TOKEN_WHILE)) {
     whileStatement();
@@ -911,7 +945,6 @@ static void statement() {
     block();
     endScope();
   } else {
-    printf("matching expression statement\n");
     expressionStatement();
   }
 }

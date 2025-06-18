@@ -126,17 +126,10 @@ characters.
 @return - the type of the keyword if it is a keyword, otherwise TOKEN_IDENTIFIER
 */
 static TokenType checkKeyword(int start, int length, const char* rest, TokenType type) {
-  printf("Comparing: '%.*s' with '%s'\n", length, scanner.start + start, rest);
-  printf("memcmp result: %d\n", memcmp(scanner.start + start, rest, length));
   if (scanner.current - scanner.start == start + length && memcmp(scanner.start + start, rest, length) == 0) {
-    printf("rest: %s\n", rest);
-    if (strcmp(rest, "witch") == 0) {
-      printf("returning switch token: %d\n", type);
-    }
     return type;
   }
 
-  printf("returning identifier: %s\n", rest);
   return TOKEN_IDENTIFIER;
 }
 
@@ -147,10 +140,17 @@ static TokenType identifierType() {
     case 'b':
       return checkKeyword(1, 4, "reak", TOKEN_BREAK);
     case 'c':
-      if (memcmp(scanner.start + 1, "o", 2)) {
-        return checkKeyword(1, 4, "onst", TOKEN_CONST);
+      if (scanner.current - scanner.start > 1) {
+        switch (scanner.start[1]) {
+          case 'a':
+            return checkKeyword(2, 2, "se", TOKEN_CASE);
+          case 'o':
+            return checkKeyword(2, 3, "nst", TOKEN_CONST);
+          case 'l':
+            return checkKeyword(2, 3, "ass", TOKEN_CLASS);
+        }
       }
-      return checkKeyword(1, 4, "lass", TOKEN_CLASS);
+      break;
     case 'e':
       return checkKeyword(1, 3, "lse", TOKEN_ELSE);
     case 'f':
@@ -180,10 +180,9 @@ static TokenType identifierType() {
       if (scanner.current - scanner.start > 1) {
         switch (scanner.start[1]) {
           case 'u':
-            return checkKeyword(1, 4, "uper", TOKEN_SUPER);
+            return checkKeyword(2, 3, "per", TOKEN_SUPER);
           case 'w':
-            printf("checking for switch\n");
-            return checkKeyword(1, 5, "witch", TOKEN_SWITCH);
+            return checkKeyword(2, 4, "itch", TOKEN_SWITCH);
         }
       }
       break;
@@ -258,6 +257,8 @@ Token scanToken() {
       return makeToken(TOKEN_LEFT_BRACE);
     case '}':
       return makeToken(TOKEN_RIGHT_BRACE);
+    case ':':
+      return makeToken(TOKEN_COLON);
     case ';':
       return makeToken(TOKEN_SEMICOLON);
     case ',':

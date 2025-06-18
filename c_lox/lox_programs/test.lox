@@ -1,1 +1,10 @@
-super
+var month = "September";
+
+switch (month){
+    case "July":
+        print "Independence Day";
+    case "August":
+        print "Tiffany's Birthday";
+    case "September":
+        print "Move into house";
+}
