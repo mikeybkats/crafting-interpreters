@@ -809,8 +809,8 @@ static void forStatement() {
   endScope();
 }
 
-static void caseStatement() {
-  printf("matching case\n");
+static void caseStatement(uint8_t tempGlobal) {
+  emitBytes(OP_GET_GLOBAL, tempGlobal);
   expression();  // puts case condition expression on the stack
   consume(TOKEN_COLON, "Expect ':' after case statement.");
 
@@ -822,13 +822,6 @@ static void caseStatement() {
 
   patchJump(nextCase);  // end of case
   emitByte(OP_POP);     // pop the operand?
-
-  // jump back to the location of the switch expression global?
-  emitByte(OP_JUMP);
-
-  // or reference the switch statement global value?
-
-  if (match(TOKEN_CASE)) caseStatement();
 }
 
 /*
@@ -844,8 +837,14 @@ static void switchStatement() {
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
+  // pop processed expresion from the stack
+  uint8_t tempGlobal = makeConstant(OBJ_VAL(copyString("__switch_temp", strlen("__switch_temp"))));
+  // store it as a global temp variable in the vm
+  emitBytes(OP_DEFINE_GLOBAL, tempGlobal);
+
   consume(TOKEN_LEFT_BRACE, "Expect '{' after 'switch expression condition'");
-  if (match(TOKEN_CASE)) caseStatement();
+
+  while (match(TOKEN_CASE)) caseStatement(tempGlobal);
 
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after 'switch expression condition'");
 }
