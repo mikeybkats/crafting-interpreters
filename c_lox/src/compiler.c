@@ -810,20 +810,21 @@ static void forStatement() {
 }
 
 static void caseStatement(uint8_t tempGlobal) {
-  emitBytes(OP_GET_GLOBAL, tempGlobal);
-  expression();  // puts case condition expression on the stack
+  emitBytes(OP_GET_GLOBAL, tempGlobal);  // puts switch condition on the stack
+  expression();                          // puts case condition expression on the stack
   consume(TOKEN_COLON, "Expect ':' after case statement.");
 
-  emitByte(OP_EQUAL);                         // put the compare value on the stack
-  int nextCase = emitJump(OP_JUMP_IF_FALSE);  // treat case like an if statement
-
+  emitByte(OP_EQUAL);                         // put the compare (switch == case result) value on the stack
+  int nextCase = emitJump(OP_JUMP_IF_FALSE);  // if false jump to next case statement
   emitByte(OP_POP);
-  statement();  // compiles case code
+  statement();  // compiles case block
 
   patchJump(nextCase);  // end of case
-  emitByte(OP_POP);     // pop the operand?
-}
 
+  if (match(TOKEN_CASE)) caseStatement(tempGlobal);
+
+  emitByte(OP_POP);  // pop the operand
+}
 /*
  * ## function: switchStatement
  *
@@ -837,14 +838,14 @@ static void switchStatement() {
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
-  // pop processed expresion from the stack
+  // make tamp global for the switch statement
   uint8_t tempGlobal = makeConstant(OBJ_VAL(copyString("__switch_temp", strlen("__switch_temp"))));
-  // store it as a global temp variable in the vm
+  // store global temp variable in the vm
   emitBytes(OP_DEFINE_GLOBAL, tempGlobal);
 
   consume(TOKEN_LEFT_BRACE, "Expect '{' after 'switch expression condition'");
 
-  while (match(TOKEN_CASE)) caseStatement(tempGlobal);
+  if (match(TOKEN_CASE)) caseStatement(tempGlobal);
 
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after 'switch expression condition'");
 }

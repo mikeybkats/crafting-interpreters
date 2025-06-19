@@ -1,4 +1,4 @@
-var month = "July";
+var month = "August";
 
 switch (month){
     case "July":
