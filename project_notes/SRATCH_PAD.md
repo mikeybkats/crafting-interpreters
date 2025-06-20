@@ -1,63 +1,58 @@
-````c
-typedef enum
-{
-  PREC_NONE,        // 0
-  PREC_ASSIGNMENT,  // 1:  =
-  PREC_OR,          // 2: or
-  PREC_AND,         // 3: and
-  PREC_EQUALITY,    // 4: == !=
-  PREC_COMPARISON,  // 5: < > <= >=
-  PREC_TERM,        // 6: + -
-  PREC_FACTOR,      // 7: * /
-  PREC_UNARY,       // 8: ! -
-  PREC_CALL,        // 9: . ()
-  PREC_PRIMARY      // 10:
-} Precedence;
+# Bytecode Disassembly
 
+## Raw Bytecode Output
 
-```c
-typedef enum
-{
-    ...
-    TOKEN_PLUS,
-    TOKEN_STAR,
-    TOKEN_IDENTIFIER,            // Literals.
-    TOKEN_NUMBER,  // Keywords.
-    TOKEN_VAR,
-    ...
-} TokenType
-````
+| Offset | Line | Instruction      | Operand | Value                | Jump Info                |
+| ------ | ---- | ---------------- | ------- | -------------------- | ------------------------ |
+| 0000   | 1    | OP_CONSTANT      | 0x01    | 'August'             |                          |
+| 0002   |      | OP_DEFINE_GLOBAL | 0x00    | 'month'              |                          |
+| 0004   | 3    | OP_GET_GLOBAL    | 0x00    | 'month'              |                          |
+| 0006   |      | OP_DEFINE_GLOBAL | 0x02    | '\_\_switch_temp'    |                          |
+| 0008   | 4    | OP_GET_GLOBAL    | 0x02    | '\_\_switch_temp'    |                          |
+| 0010   |      | OP_CONSTANT      | 0x03    | 'July'               |                          |
+| 0012   |      | OP_EQUAL         |         |                      |                          |
+| 0013   |      | OP_JUMP_IF_FALSE | 0x0004  |                      | offset: 13 -> offset: 20 |
+| 0016   |      | OP_POP           |         |                      |                          |
+| 0017   | 5    | OP_CONSTANT      | 0x04    | 'Independence Day'   |                          |
+| 0019   |      | OP_PRINT         |         |                      |                          |
+| 0020   | 6    | OP_GET_GLOBAL    | 0x02    | '\_\_switch_temp'    |                          |
+| 0022   |      | OP_CONSTANT      | 0x01    | 'August'             |                          |
+| 0024   |      | OP_EQUAL         |         |                      |                          |
+| 0025   |      | OP_JUMP_IF_FALSE | 0x0004  |                      | offset: 25 -> offset: 32 |
+| 0028   |      | OP_POP           |         |                      |                          |
+| 0029   | 7    | OP_CONSTANT      | 0x05    | 'Tiffany's Birthday' |                          |
+| 0031   |      | OP_PRINT         |         |                      |                          |
+| 0032   | 8    | OP_GET_GLOBAL    | 0x02    | '\_\_switch_temp'    |                          |
+| 0034   |      | OP_CONSTANT      | 0x06    | 'September'          |                          |
+| 0036   |      | OP_EQUAL         |         |                      |                          |
+| 0037   |      | OP_JUMP_IF_FALSE | 0x0004  |                      | offset: 37 -> offset: 44 |
+| 0040   |      | OP_POP           |         |                      |                          |
+| 0041   | 9    | OP_CONSTANT      | 0x07    | 'Move into house'    |                          |
+| 0043   |      | OP_PRINT         |         |                      |                          |
+| 0044   | 10   | OP_RETURN        |         |                      |                          |
 
-```
-a + b \* c
-```
+## Bytecode Execution Trace
 
-calls to `parsePrecedence(precedence)` are made when processing an expression:
-
-| step | action                                                                                | parser.previous | parser.current         | precedence                         | prefixRule | infixRule | stack effect                              |
-| ---- | ------------------------------------------------------------------------------------- | --------------- | ---------------------- | ---------------------------------- | ---------- | --------- | ----------------------------------------- |
-| 1    | `// begin parsePrecedence`                                                            | -               | `a` `TOKEN_IDENTIFIER` | `PREC_ASSIGNMENT`                  | -          | -         | -                                         |
-| 2    | `advance()`                                                                           | `a`             | `+` `TOKEN_PLUS`       | `PREC_ASSIGNMENT`                  | -          | -         | -                                         |
-| 3    | `prefixRule = getRule(TOKEN_IDENTIFIER)->prefix` // variable                          | `a`             | `+`                    | `PREC_ASSIGNMENT`                  | `variable` | -         | -                                         |
-| 4    | `variable()`                                                                          | -               | -                      | -                                  | -          | -         | pushes `a` to stack                       |
-| 5    | `precedence <= current.precedence // PREC_ASSIGNMENT <= PREC_TERM // true`            | `a`             | `+`                    | `PREC_ASSIGNMENT`                  | -          | -         | -                                         |
-| 6    | `advance()`                                                                           | `+`             | `b` `TOKEN_IDENTIFIER` | `PREC_ASSIGNMENT`                  | -          | -         | -                                         |
-| 7    | `infixRule = getRule(TOKEN_PLUS)->infix` // binary                                    | `+`             | `b`                    | `PREC_ASSIGNMENT`                  | -          | `binary`  | -                                         |
-| 8    | `binary()`                                                                            |                 |                        |                                    | -          | -         |                                           |
-| 9    | `parsePrecedence(PREC_FACTOR)`                                                        |                 |                        | (`PREC_TERM` + 1) // `PREC_FACTOR` | -          | -         | -                                         |
-| 10   | `advance()`                                                                           | `b`             | `*` `TOKEN_STAR`       | `PREC_FACTOR`                      | -          | -         | -                                         |
-| 11   | `prefixRule = getRule(TOKEN_IDENTIFIER)->prefix` // variable                          | `b`             | `*`                    | `PREC_FACTOR`                      | `variable` | -         | -                                         |
-| 12   | `variable()`                                                                          | -               | -                      | -                                  | -          | -         | pushes `b` to stack                       |
-| 13   | `precedence <= current.precedence // PREC_FACTOR <= PREC_FACTOR // true               | `b`             | `*`                    | `PREC_FACTOR`                      |            |           |                                           |
-| 14   | `advance()                                                                            | `*`             | `c` `TOKEN_IDENTIFIER` | `PREC_FACTOR`                      |            |           |                                           |
-| 15   | `infixRule = getRule(TOKEN_STAR)->infix` // binary                                    | `*`             | `c`                    |                                    |            |           |                                           |
-| 16   | `binary()`                                                                            |                 |                        |                                    |            |           |                                           |
-| 17   | `parsePrecedence(PREC_UNARY)`                                                         |                 |                        | (`PREC_FACTOR` + 1) //             |            |           |                                           |
-| 18   | `advance()`                                                                           | `c`             | `EOF`                  | `PREC_UNARY`                       |            |           |                                           |
-| 19   | `prefixRule = getRule(TOKEN_IDENTIFIER)->prefix` // variable                          | `c`             | `EOF`                  | `PREC_UNARY`                       |            |           |                                           |
-| 20   | `variable()`                                                                          | -               | -                      |                                    |            |           |                                           |
-| 21   | `precedence <= current.precedence // PREC_UNARY <= PREC_NONE (EOF) // false`          |                 |                        |                                    |            |           | pushes `c` to stack                       |
-| 22   | exits `parsePrecedence` for `PREC_UNARY` returns from `parsePrecedence` in `binary()` |                 |                        |                                    |            |           |                                           |
-| 23   | complete `*` - stack effect in `binary()`                                             |                 |                        |                                    |            |           | pop `c`, pop `b`, push `b` \* `c`         |
-| 24   | exits `parsePrecedence` for `PREC_FACTOR` returns from `parsePrecedence` in binary()  |                 |                        |                                    |            |           |                                           |
-| 25   | complete `+` - stack effect in `binary()`                                             |                 |                        |                                    |            |           | pop `a`, pop `b*c`, push `a` \+ `(b * c)` |
+| Offset | Line | Instruction        | Operand | Value                    | Stack State                      | comment                                           |
+| ------ | ---- | ------------------ | ------- | ------------------------ | -------------------------------- | ------------------------------------------------- |
+| 0000   | 1    | OP_CONSTANT        | 0x01    | 'August'                 | [ August ]                       |                                                   |
+| 0002   |      | OP_DEFINE_GLOBAL   | 0x00    | 'month'                  |                                  |                                                   |
+| 0004   | 3    | OP_GET_GLOBAL      | 0x00    | 'month'                  | [ August ]                       |                                                   |
+| 0006   |      | OP_DEFINE_GLOBAL   | 0x02    | '\_\_switch_temp'        |                                  |                                                   |
+| 0008   | 4    | OP_GET_GLOBAL      | 0x02    | '\_\_switch_temp'        | [ August ]                       |                                                   |
+| 0010   |      | OP_CONSTANT        | 0x03    | 'July'                   | [ August ][ July ]               |                                                   |
+| 0012   |      | OP_EQUAL           |         |                          | [ false ]                        | august != july                                    |
+| 0013   |      | OP_JUMP_IF_FALSE   | 0x0004  | offset: 13 -> offset: 20 | [ false ]                        | false is left on the stack when OP_EQUAL is false |
+| 0020   | 6    | OP_GET_GLOBAL_FAST | 0x02    | 'August'                 | [ false ][ August ]              |                                                   |
+| 0022   |      | OP_CONSTANT        | 0x01    | 'August'                 | [ false ][ August ][ August ]    |                                                   |
+| 0024   |      | OP_EQUAL           |         |                          | [ false ][ true ]                | august == august                                  |
+| 0025   |      | OP_JUMP_IF_FALSE   | 0x0004  | offset: 25 -> offset: 32 | [ false ][ true ]                |                                                   |
+| 0028   |      | OP_POP             |         |                          | [ false ]                        | true is popped from stack when OP_EQUAL is true   |
+| 0029   | 7    | OP_CONSTANT        | 0x05    | 'Tiffany's Birthday'     | [ false ][ Tiffany's Birthday ]  |                                                   |
+| 0031   |      | OP_PRINT           |         |                          | **Output: Tiffany's Birthday**   |                                                   |
+|        |      |                    |         |                          | [ false ]                        |                                                   |
+| 0032   | 8    | OP_GET_GLOBAL_FAST | 0x02    | 'August'                 | [ false ][ August ]              |                                                   |
+| 0034   |      | OP_CONSTANT        | 0x06    | 'September'              | [ false ][ August ][ September ] |                                                   |
+| 0036   |      | OP_EQUAL           |         |                          | [ false ][ false ]               |                                                   |
+| 0037   |      | OP_JUMP_IF_FALSE   | 0x0004  | offset: 37 -> offset: 44 | [ false ][ false ]               |                                                   |
+| 0044   | 10   | OP_RETURN          |         |                          |                                  |                                                   |

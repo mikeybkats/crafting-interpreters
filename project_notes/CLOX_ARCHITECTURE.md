@@ -40,6 +40,14 @@ Single pass interpreter
 - The VM executes that bytecode immediately
 - Then the process repeats for the next token
 
+| phases         |
+| -------------- |
+| scan           |
+| tokenize       |
+| parse          |
+| compile / emit |
+| run            |
+
 ## The stack: How does the clox stack work?
 
 The clox `VM` works with the chunks that the compiler creates. The `VM` loads the chunk during
