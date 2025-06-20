@@ -816,14 +816,15 @@ static void caseStatement(uint8_t tempGlobal) {
 
   emitByte(OP_EQUAL);                         // put the compare (switch == case result) value on the stack
   int nextCase = emitJump(OP_JUMP_IF_FALSE);  // if false jump to next case statement
-  emitByte(OP_POP);
+  emitByte(OP_POP);                           // only runs when true
+
   statement();  // compiles case block
 
   patchJump(nextCase);  // end of case
 
   if (match(TOKEN_CASE)) caseStatement(tempGlobal);
 
-  emitByte(OP_POP);  // pop the operand
+  emitByte(OP_POP);  // pop the leftover operand from the first comparison
 }
 /*
  * ## function: switchStatement
@@ -846,6 +847,15 @@ static void switchStatement() {
   consume(TOKEN_LEFT_BRACE, "Expect '{' after 'switch expression condition'");
 
   if (match(TOKEN_CASE)) caseStatement(tempGlobal);
+
+  // if (match(TOKEN_DEFAULT)) {
+  //   int jumpDefault = emitJump(OP_JUMP_IF_FALSE);  // where does the value for this check come from?
+
+  //   consume(TOKEN_COLON, "Expect ':' after default case statement.");
+  //   statement();  // compiles case block
+
+  //   patchJump(jumpDefault);
+  // }
 
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after 'switch expression condition'");
 }

@@ -151,6 +151,8 @@ static TokenType identifierType() {
         }
       }
       break;
+    case 'd':
+      return checkKeyword(1, 6, "efault", TOKEN_DEFAULT);
     case 'e':
       return checkKeyword(1, 3, "lse", TOKEN_ELSE);
     case 'f':

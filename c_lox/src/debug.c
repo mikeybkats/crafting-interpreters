@@ -96,7 +96,7 @@ static int byteInstruction(const char* name, Chunk* chunk, int offset) {
 static int jumpInstruction(const char* name, int sign, Chunk* chunk, int offset) {
   uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
   jump |= chunk->code[offset + 2];
-  printf(" %-18s   0x%04X  token: %d -> token: %d\n", name, jump, offset, offset + 3 + sign * jump);
+  printf(" %-18s   0x%04X  offset: %d -> offset: %d\n", name, jump, offset, offset + 3 + sign * jump);
   return offset + 3;
 }
 

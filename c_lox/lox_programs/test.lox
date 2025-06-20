@@ -1,4 +1,4 @@
-var month = "August";
+var month = "July";
 
 switch (month){
     case "July":
@@ -7,4 +7,8 @@ switch (month){
         print "Tiffany's Birthday";
     case "September":
         print "Move into house";
+    case "Happy days":
+        print "Hello deary";
+   default:
+       print "Let's party";
 }
