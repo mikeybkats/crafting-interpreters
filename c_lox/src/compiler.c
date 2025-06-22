@@ -809,7 +809,7 @@ static void forStatement() {
   endScope();
 }
 
-static void caseStatement(uint8_t tempGlobal) {
+static int caseStatement(uint8_t tempGlobal) {
   emitBytes(OP_GET_GLOBAL, tempGlobal);  // puts switch condition on the stack
   expression();                          // puts case condition expression on the stack
   consume(TOKEN_COLON, "Expect ':' after case statement.");
@@ -820,12 +820,15 @@ static void caseStatement(uint8_t tempGlobal) {
 
   statement();  // compiles case block
 
+  int jumpOp = emitJump(OP_JUMP);
+
   patchJump(nextCase);  // end of case
 
-  if (match(TOKEN_CASE)) caseStatement(tempGlobal);
-
   emitByte(OP_POP);  // pop the leftover operand from the first comparison
+
+  return jumpOp;
 }
+
 /*
  * ## function: switchStatement
  *
@@ -846,16 +849,23 @@ static void switchStatement() {
 
   consume(TOKEN_LEFT_BRACE, "Expect '{' after 'switch expression condition'");
 
-  if (match(TOKEN_CASE)) caseStatement(tempGlobal);
+  int endJumps[256];     // Array to store jump addresses for case statements
+  int endJumpCount = 0;  // Counter for the number of jumps
 
-  // if (match(TOKEN_DEFAULT)) {
-  //   int jumpDefault = emitJump(OP_JUMP_IF_FALSE);  // where does the value for this check come from?
+  while (match(TOKEN_CASE)) {
+    int endJump            = caseStatement(tempGlobal);
+    endJumps[endJumpCount] = endJump;
+    endJumpCount++;
+  }
 
-  //   consume(TOKEN_COLON, "Expect ':' after default case statement.");
-  //   statement();  // compiles case block
+  if (match(TOKEN_DEFAULT)) {
+    consume(TOKEN_COLON, "Expect ':' after default case statement.");
+    statement();  // compiles case block
+  }
 
-  //   patchJump(jumpDefault);
-  // }
+  for (int i = 0; i < endJumpCount; i++) {
+    patchJump(endJumps[i]);
+  }
 
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after 'switch expression condition'");
 }
