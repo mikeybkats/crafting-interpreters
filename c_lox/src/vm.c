@@ -99,9 +99,9 @@ static Value peek(int distance) {
   return vm.stackTop[-1 - distance];
 }
 
-// static bool isFalsey(Value value) {
-//   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
-// }
+static bool isFalsey(Value value) {
+  return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
 
 static void concatenate() {
   ObjString* b = AS_STRING(pop());
@@ -198,7 +198,14 @@ the instruction pointer.
    * ip always points to the next byte of code to be used. */
 
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define READ_STRING()   AS_STRING(READ_CONSTANT())
+
+/**
+ * READ_SHORT()
+ * Notice the comma operator. It evaluates the left side expression and discards the result, then evaluates the right
+ * side and that is returned as the value of the expression.
+ */
+#define READ_SHORT()  (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 
 #define BINARY_OP(valueType, op)                      \
   do {                                                \
@@ -361,6 +368,21 @@ the instruction pointer.
         printValue(pop());
         printf("\n");
         break;
+      case OP_JUMP: {
+        uint16_t offset = READ_SHORT();
+        vm.ip += offset;
+        break;
+      }
+      case OP_JUMP_IF_FALSE: {
+        uint16_t offset = READ_SHORT();  // gets the offset that was assigned before the call to OP_JUMP_IF_FALSE
+        if (isFalsey(peek(0))) vm.ip += offset;
+        break;
+      }
+      case OP_LOOP: {
+        uint16_t offset = READ_SHORT();
+        vm.ip -= offset;
+        break;
+      }
       case OP_RETURN: {
         return INTERPRET_OK;
       }
@@ -372,6 +394,7 @@ Undefining these macros explicitly might seem needlessly fastidious, but C tends
 to punish sloppy users, and the C preprocessor doubly so.
 */
 #undef READ_BYTE
+#undef READ_SHORT
 #undef READ_CONSTANT
 #undef READ_STRING
 #undef BINARY_OP

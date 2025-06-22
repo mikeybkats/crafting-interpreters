@@ -12,6 +12,8 @@
 #include "debug.h"
 #endif
 
+static void and_(bool canAssign);
+
 // typedef struct {
 //   Token current;
 //   Token previous;
@@ -71,9 +73,9 @@ typedef struct
   int   localCount;
   int   scopeDepth;
 
-  Token *initializedGlobals[UINT8_COUNT];
-  int    globalsCount;
-  bool   isCurrentGlobalConst;
+  Token initializedGlobals[UINT8_COUNT];
+  int   globalsCount;
+  bool  isCurrentGlobalConst;
 } Compiler;  // added in chapter 22. Compiler not needed until local variables
              // are introduced
 
@@ -185,6 +187,24 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
   emitByte(byte2);
 }
 
+static void emitLoop(int loopStart) {
+  emitByte(OP_LOOP);
+
+  int offset = currentChunk()->count - loopStart + 2;
+  if (offset > UINT16_MAX) error("Loop body too large.");
+
+  emitByte((offset >> 8) & 0xff);
+  emitByte(offset & 0xff);
+}
+
+static int emitJump(uint8_t instruction) {
+  emitByte(instruction);
+  emitByte(0xff);  // add a placeholder byte for maximum possible jump distance
+  emitByte(0xff);  // add a placeholder byte for maximum possible jump distance
+
+  return currentChunk()->count - 2;  // return the distance minus the two bytes
+}
+
 static void emitReturn() {
   emitByte(OP_RETURN);
 }
@@ -213,12 +233,34 @@ static void emitConstant(Value value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+/**
+ * # function: patchJump
+ * Replaces the operands for a jump instruction with the distance to jump over
+ * (typically the length of a code block), stored as upper and lower 8-bit values
+ * to make a 16-bit jump.
+ */
+static void patchJump(int offset) {
+  // -2 to adjust for the bytecode for the jump offset itself.
+  int jump = currentChunk()->count - offset - 2;
+
+  if (jump > UINT16_MAX) {
+    error("Too much code to jump over.");
+  }
+
+  // shift the upper 8 bits 8 places and take the lower 8 bits of the jump and (defensive programming) mask the lower 8
+  // bits
+  // Mathematically equivalent to jump / 256 (division)
+  currentChunk()->code[offset] = (jump >> 8) & 0xff;
+  // take the lower 8 bits of the jump. // Mathematically equivalent to jump % 256 (modulo)
+  currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
 static void initCompiler(Compiler *compiler) {
   memset(compiler->initializedGlobals, 0, sizeof(Token *) * UINT8_COUNT);
   // I don't think the globals need to be explicitly set to NULL
-  for (int i = 0; i < UINT8_COUNT; i++) {
-    compiler->initializedGlobals[i] = NULL;
-  }
+  // for (int i = 0; i < UINT8_COUNT; i++) {
+  //   compiler->initializedGlobals[i] = NULL;
+  // }
   compiler->globalsCount         = 0;
   compiler->isCurrentGlobalConst = false;
   compiler->localCount           = 0;
@@ -271,15 +313,12 @@ static void addLocal(Token name, bool isConst) {
 }
 
 static bool globalInitialized(Token *name) {
-  // printf("DEBUG -- globalInitialized -- TokenType: %d -- count: %d\n", name->type, current->globalsCount);
   if (current->globalsCount == 0) {
-    if (current->initializedGlobals[0] != NULL) {
-      return identifiersEqual(name, current->initializedGlobals[0]);
-    }
+    return identifiersEqual(name, &current->initializedGlobals[0]);
   }
 
   for (int i = current->globalsCount - 1; i >= 0; i--) {
-    if (current->initializedGlobals[i] != NULL && identifiersEqual(name, current->initializedGlobals[i])) {
+    if (identifiersEqual(name, &current->initializedGlobals[i])) {
       return true;
     }
   }
@@ -287,7 +326,7 @@ static bool globalInitialized(Token *name) {
 }
 
 static void initializeGlobalConst(Token *name) {
-  current->initializedGlobals[current->globalsCount] = name;
+  current->initializedGlobals[current->globalsCount] = *name;
   current->globalsCount++;
 }
 
@@ -344,6 +383,7 @@ static void endScope() {
 }
 
 static void binary(bool canAssign) {
+  (void)canAssign;
   TokenType  operatorType = parser.previous.type;
   ParseRule *rule         = getRule(operatorType);
 
@@ -386,6 +426,7 @@ static void binary(bool canAssign) {
 }
 
 static void literal(bool canAssign) {
+  (void)canAssign;
   switch (parser.previous.type) {
     case TOKEN_FALSE:
       emitByte(OP_FALSE);
@@ -411,13 +452,29 @@ static void literal(bool canAssign) {
  * higher precedence one is expected."
  */
 static void grouping(bool canAssign) {
+  (void)canAssign;
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
 }
 
 static void number(bool canAssign) {
+  (void)canAssign;
+
   double value = strtod(parser.previous.start, NULL);  // string to double
   emitConstant(NUMBER_VAL(value));
+}
+
+static void or_(bool canAssign) {
+  (void)canAssign;
+
+  int elseJump = emitJump(OP_JUMP_IF_FALSE);
+  int endJump  = emitJump(OP_JUMP);
+
+  patchJump(elseJump);
+  emitByte(OP_POP);
+
+  parsePrecedence(PREC_OR);
+  patchJump(endJump);
 }
 
 /**
@@ -426,18 +483,18 @@ static void number(bool canAssign) {
  * @brief handles strings
  */
 static void string(bool canAssign) {
+  (void)canAssign;
   emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
 /**
  * function namedVariable
  * @brief after variable() this is the first variable function to get called from the rules table. It resolves the
- * variable and emits the bytecode to the Chunk.
+ * variable and emits the bytecode to the Chunk. Gets called when accessing a variable.
  */
 static void namedVariable(Token name, bool canAssign) {
   uint8_t getOp, setOp;
   int     arg = resolveLocal(current, &name);
-
   if (arg != -1) {
     // Handle local consts
     // Remember to bounds check for -1! Always bounds check before indexing or you will suffer!
@@ -448,7 +505,6 @@ static void namedVariable(Token name, bool canAssign) {
       error("Can't reassign to const variable");
     }
     // end handle local consts
-
     getOp = OP_GET_LOCAL;
     setOp = OP_SET_LOCAL;
   } else {
@@ -456,8 +512,10 @@ static void namedVariable(Token name, bool canAssign) {
     bool isInit = globalInitialized(&name);
     if (!isInit) {
       initializeGlobalConst(&name);
-    } else if (current->isCurrentGlobalConst && parser.current.type == TOKEN_EQUAL) {
-      // check if the global is a const and has been added to the initialized array
+      isInit = true;
+    }
+    // check if the global is a const and has been added to the initialized array
+    if (isInit && parser.current.type == TOKEN_EQUAL) {
       error("Can't reassign to const variable");
     }
     // end handle global consts
@@ -469,6 +527,7 @@ static void namedVariable(Token name, bool canAssign) {
   }
 
   if (canAssign && match(TOKEN_EQUAL)) {
+    // match(TOKEN_EQUAL);
     expression();
     emitBytes(setOp, (uint8_t)arg);
   } else {
@@ -490,6 +549,7 @@ static void variable(bool canAssign) {
  * @brief handles the unary operator
  */
 static void unary(bool canAssign) {
+  (void)canAssign;
   TokenType operatorType = parser.previous.type;
 
   // compile the operand
@@ -542,7 +602,7 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER]    = {variable,   NULL,       PREC_NONE},
     [TOKEN_STRING]        = {  string,   NULL,       PREC_NONE},
     [TOKEN_NUMBER]        = {  number,   NULL,       PREC_NONE},
-    [TOKEN_AND]           = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_AND]           = {    NULL,   and_,        PREC_AND},
     [TOKEN_CLASS]         = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_ELSE]          = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_FALSE]         = { literal,   NULL,       PREC_NONE},
@@ -550,7 +610,7 @@ ParseRule rules[] = {
     [TOKEN_FUN]           = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_IF]            = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_NIL]           = { literal,   NULL,       PREC_NONE},
-    [TOKEN_OR]            = {    NULL,   NULL,       PREC_NONE},
+    [TOKEN_OR]            = {    NULL,    or_,         PREC_OR},
     [TOKEN_PRINT]         = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_RETURN]        = {    NULL,   NULL,       PREC_NONE},
     [TOKEN_SUPER]         = {    NULL,   NULL,       PREC_NONE},
@@ -566,16 +626,7 @@ ParseRule rules[] = {
 /*
  * ## parsePrecedence
  *
- * @brief handles the precedence of operators
- *
- * consider this:
- * ```
- * -a.b + c;
- * ```
- *
- * Here the operand to `-` should just be the a.b expression. But if unary is
- * called, it will recursively eat up all of the expression and treat `-` as
- * lower precedence than the `+` which is not how it should work.
+ * @brief Processes expressions. Handles the precedence of operators. Internally consumes the expression.
  */
 static void parsePrecedence(Precedence precedence) {
   // advance to the next token
@@ -661,14 +712,23 @@ static void defineVariable(uint8_t global) {
   emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
+static void and_(bool canAssign) {
+  (void)canAssign;
+
+  int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+  emitByte(OP_POP);
+  parsePrecedence(PREC_AND);
+
+  patchJump(endJump);
+}
+
 static ParseRule *getRule(TokenType type) {
   return &rules[type];
 }
 
 /**
  * Function: expression
- *
- * @brief  Called when processing an EQUAL token
  */
 static void expression() {
   parsePrecedence(PREC_ASSIGNMENT);
@@ -702,10 +762,157 @@ static void expressionStatement() {
   emitByte(OP_POP);
 }
 
+static void forStatement() {
+  beginScope();
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+  if (match(TOKEN_SEMICOLON)) {
+    // No initializer.
+  } else if (match(TOKEN_VAR)) {
+    varDeclaration(false);
+  } else {
+    expressionStatement();
+  }
+
+  consume(TOKEN_SEMICOLON, "Expect ';'.");
+
+  int loopStart = currentChunk()->count;
+  int exitJump  = -1;
+  if (!match(TOKEN_SEMICOLON)) {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+    // Jump out of the loop if the condition is false.
+    exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);  // Condition.
+  }
+
+  if (!match(TOKEN_RIGHT_PAREN)) {
+    int bodyJump       = emitJump(OP_JUMP);
+    int incrementStart = currentChunk()->count;
+    expression();
+    emitByte(OP_POP);
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+    emitLoop(loopStart);
+    loopStart = incrementStart;
+    patchJump(bodyJump);
+  }
+
+  statement();
+  emitLoop(loopStart);
+
+  if (exitJump != -1) {
+    patchJump(exitJump);
+    emitByte(OP_POP);  // Condition.
+  }
+
+  endScope();
+}
+
+static int caseStatement(uint8_t tempGlobal) {
+  emitBytes(OP_GET_GLOBAL, tempGlobal);  // puts switch condition on the stack
+  expression();                          // puts case condition expression on the stack
+  consume(TOKEN_COLON, "Expect ':' after case statement.");
+
+  emitByte(OP_EQUAL);                         // put the compare (switch == case result) value on the stack
+  int nextCase = emitJump(OP_JUMP_IF_FALSE);  // if false jump to next case statement
+  emitByte(OP_POP);                           // only runs when true
+
+  statement();  // compiles case block
+
+  int endJump = emitJump(OP_JUMP);
+
+  patchJump(nextCase);  // end of case
+
+  emitByte(OP_POP);  // pop the leftover operand from the first comparison
+
+  return endJump;
+}
+
+/*
+ * ## function: switchStatement
+ *
+ * switchStmt     → "switch" "(" expression ")"
+ *                  "{" switchCase* defaultCase? "}" ;
+ * switchCase     → "case" expression ":" statement* ;
+ * defaultCase    → "default" ":" statement* ;
+ */
+static void switchStatement() {
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'");
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+  // Problem: how to store a variable to compare all the switch cases to?
+  // Solution: manually make tamp global for the switch statement
+  uint8_t tempGlobal = makeConstant(OBJ_VAL(copyString("__switch_temp", strlen("__switch_temp"))));
+  // store global temp variable in the vm
+  emitBytes(OP_DEFINE_GLOBAL, tempGlobal);
+
+  consume(TOKEN_LEFT_BRACE, "Expect '{' after 'switch expression condition'");
+
+  // Problem: how to always jump to the end in the case of a case match
+  // recursion will not be an elegant solution because it would involve patching the end jumps in sequence, which would
+  // involve pointers, conditionals, and complex code Solution: a simpler way is to manage the end jumps in an array.
+  int endJumps[256];     // Array to store jump addresses for case statements
+  int endJumpCount = 0;  // Counter for the number of jumps
+
+  while (match(TOKEN_CASE)) {
+    int endJump            = caseStatement(tempGlobal);
+    endJumps[endJumpCount] = endJump;
+    endJumpCount++;
+  }
+
+  if (match(TOKEN_DEFAULT)) {
+    consume(TOKEN_COLON, "Expect ':' after default case statement.");
+    statement();  // compiles case block
+  }
+
+  // Now after all the jumps have been added, patch them with the end location;
+  for (int i = 0; i < endJumpCount; i++) {
+    patchJump(endJumps[i]);
+  }
+
+  consume(TOKEN_RIGHT_BRACE, "Expect '}' after 'switch expression condition'");
+}
+
+static void ifStatement() {
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+  int thenJump = emitJump(OP_JUMP_IF_FALSE);
+  emitByte(OP_POP);
+  statement();
+
+  int elseJump = emitJump(OP_JUMP);
+
+  patchJump(thenJump);
+  emitByte(OP_POP);
+
+  if (match(TOKEN_ELSE)) statement();
+
+  patchJump(elseJump);
+}
+
 static void printStatement() {
   expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after value.");
   emitByte(OP_PRINT);
+}
+
+static void whileStatement() {
+  int loopStart = currentChunk()->count;
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+  int exitJump = emitJump(OP_JUMP_IF_FALSE);
+  emitByte(OP_POP);
+  statement();
+  emitLoop(loopStart);
+
+  patchJump(exitJump);
+  emitByte(OP_POP);
 }
 
 static void synchronize() {
@@ -750,6 +957,14 @@ static void declaration() {
 static void statement() {
   if (match(TOKEN_PRINT)) {
     printStatement();
+  } else if (match(TOKEN_FOR)) {
+    forStatement();
+  } else if (match(TOKEN_IF)) {
+    ifStatement();
+  } else if (match(TOKEN_SWITCH)) {
+    switchStatement();
+  } else if (match(TOKEN_WHILE)) {
+    whileStatement();
   } else if (match(TOKEN_LEFT_BRACE)) {
     beginScope();
     block();

@@ -20,7 +20,7 @@ typedef struct
 {
   // the chunk of code to execute "the VM will gradually acquire more state"
   Chunk* chunk;
-  // ip points to the bytecode inside the chunk
+  // ip points to the bytecode array (chunk->code) inside the chunk
   uint8_t* ip;  // "ip stands for instruction pointer. Pointing to the
                 // bytecode array inside the chunk, faster than looking up
                 // the bytecode by index."
