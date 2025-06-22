@@ -820,13 +820,13 @@ static int caseStatement(uint8_t tempGlobal) {
 
   statement();  // compiles case block
 
-  int jumpOp = emitJump(OP_JUMP);
+  int endJump = emitJump(OP_JUMP);
 
   patchJump(nextCase);  // end of case
 
   emitByte(OP_POP);  // pop the leftover operand from the first comparison
 
-  return jumpOp;
+  return endJump;
 }
 
 /*
@@ -842,13 +842,17 @@ static void switchStatement() {
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
-  // make tamp global for the switch statement
+  // Problem: how to store a variable to compare all the switch cases to?
+  // Solution: manually make tamp global for the switch statement
   uint8_t tempGlobal = makeConstant(OBJ_VAL(copyString("__switch_temp", strlen("__switch_temp"))));
   // store global temp variable in the vm
   emitBytes(OP_DEFINE_GLOBAL, tempGlobal);
 
   consume(TOKEN_LEFT_BRACE, "Expect '{' after 'switch expression condition'");
 
+  // Problem: how to always jump to the end in the case of a case match
+  // recursion will not be an elegant solution because it would involve patching the end jumps in sequence, which would
+  // involve pointers, conditionals, and complex code Solution: a simpler way is to manage the end jumps in an array.
   int endJumps[256];     // Array to store jump addresses for case statements
   int endJumpCount = 0;  // Counter for the number of jumps
 
@@ -863,6 +867,7 @@ static void switchStatement() {
     statement();  // compiles case block
   }
 
+  // Now after all the jumps have been added, patch them with the end location;
   for (int i = 0; i < endJumpCount; i++) {
     patchJump(endJumps[i]);
   }
