@@ -33,6 +33,7 @@ typedef enum
                      // (0xFFFF) see function: emitJump
   OP_LOOP,
   OP_RETURN,
+  OP_FOO
 } OpCode;
 
 /*

@@ -72,6 +72,14 @@ static void runFile(const char* path) {
   if (result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
+static void runFileBytecode(const char* path) {
+  char*           source = readFile(path);
+  InterpretResult result = interpretBytecode(source);
+  free(source);
+
+  if (result == INTERPRET_COMPILE_ERROR) exit(65);
+}
+
 int main(int argc, const char* argv[]) {
   initVM();
 
@@ -79,8 +87,10 @@ int main(int argc, const char* argv[]) {
     repl();
   } else if (argc == 2) {
     runFile(argv[1]);
+  } else if (argc == 3 && strcmp(argv[1], "--bytecode") == 0) {
+    runFileBytecode(argv[2]);
   } else {
-    fprintf(stderr, "Usage: clox [path]\n");
+    fprintf(stderr, "Usage: clox [path] or clox --bytecode [path]\n");
     exit(64);
   }
 

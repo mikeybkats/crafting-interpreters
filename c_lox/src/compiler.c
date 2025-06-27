@@ -73,6 +73,8 @@ typedef struct
   int   localCount;
   int   scopeDepth;
 
+  int statementScopes[UINT8_COUNT];
+
   Token initializedGlobals[UINT8_COUNT];
   int   globalsCount;
   bool  isCurrentGlobalConst;
@@ -773,10 +775,9 @@ static void forStatement() {
     expressionStatement();
   }
 
-  consume(TOKEN_SEMICOLON, "Expect ';'.");
-
   int loopStart = currentChunk()->count;
-  int exitJump  = -1;
+
+  int exitJump = -1;
   if (!match(TOKEN_SEMICOLON)) {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
@@ -786,9 +787,15 @@ static void forStatement() {
     emitByte(OP_POP);  // Condition.
   }
 
+  // increment
   if (!match(TOKEN_RIGHT_PAREN)) {
     int bodyJump       = emitJump(OP_JUMP);
     int incrementStart = currentChunk()->count;
+
+    // start loop fallback for continue stmt
+    current->statementScopes[0] = incrementStart;
+    // end loop fallback for continue stmt
+
     expression();
     emitByte(OP_POP);
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
@@ -797,6 +804,7 @@ static void forStatement() {
     loopStart = incrementStart;
     patchJump(bodyJump);
   }
+  // end for increment
 
   statement();
   emitLoop(loopStart);
@@ -915,6 +923,11 @@ static void whileStatement() {
   emitByte(OP_POP);
 }
 
+static void continueStmt() {
+  consume(TOKEN_SEMICOLON, "Expect ';' after continue.");
+  emitLoop(current->statementScopes[0]);
+}
+
 static void synchronize() {
   parser.panicMode = false;
 
@@ -965,6 +978,8 @@ static void statement() {
     switchStatement();
   } else if (match(TOKEN_WHILE)) {
     whileStatement();
+  } else if (match(TOKEN_CONTINUE)) {
+    continueStmt();
   } else if (match(TOKEN_LEFT_BRACE)) {
     beginScope();
     block();

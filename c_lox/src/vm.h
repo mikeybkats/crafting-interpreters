@@ -52,6 +52,7 @@ extern VM vm;
 void            initVM();
 void            freeVM();
 InterpretResult interpret(const char* source);
+InterpretResult interpretBytecode(const char* source);
 
 /*
 A proper stack implementation needs to:

@@ -401,6 +401,28 @@ to punish sloppy users, and the C preprocessor doubly so.
 }
 
 /*
+## interpretBytecode
+
+Compiles the source code and outputs the bytecode without running it.
+Returns INTERPRET_OK if compilation succeeds, INTERPRET_COMPILE_ERROR otherwise.
+*/
+InterpretResult interpretBytecode(const char* source) {
+  Chunk chunk;
+  initChunk(&chunk);
+
+  // compiler fills chunk with bytecode
+  if (!compile(source, &chunk)) {
+    // if an error is encountered the chunk is freed and an error is returned
+    freeChunk(&chunk);
+    return INTERPRET_COMPILE_ERROR;
+  }
+
+  // Bytecode has been output by the compiler (if DEBUG_PRINT_CODE is enabled)
+  freeChunk(&chunk);
+  return INTERPRET_OK;
+}
+
+/*
 ## interpret
 
 returns InterpretResult enum
@@ -420,6 +442,10 @@ InterpretResult interpret(const char* source) {
     freeChunk(&chunk);
     return INTERPRET_COMPILE_ERROR;
   }
+
+  // If you want to just see the bytecode without running it, uncomment this line:
+  // printf("\nCurrently running in interpreter only mode. Code will not execute.\n");
+  // return INTERPRET_OK;
 
   vm.chunk = &chunk;
   vm.ip    = vm.chunk->code;
