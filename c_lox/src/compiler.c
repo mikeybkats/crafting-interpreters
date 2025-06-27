@@ -925,6 +925,7 @@ static void whileStatement() {
 
 static void continueStmt() {
   consume(TOKEN_SEMICOLON, "Expect ';' after continue.");
+  // TODO: manage statement scopes so nested continue statements would work.
   emitLoop(current->statementScopes[0]);
 }
 
