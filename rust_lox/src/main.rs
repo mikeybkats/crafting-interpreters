@@ -20,11 +20,15 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optflag("", "multiline", "enable multiline mode");
+    opts.optflag("", "quiet", "suppress non-program output in file mode");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(f) => panic!("{}", f.to_string()),
     };
+
+    let quiet_mode = matches.opt_present("quiet");
+    let file_argument = matches.free.first();
 
     if matches.opt_present("multiline") {
         let prompt = lox.run_prompt_multiline(); // assuming you have a run_prompt_multiline method
@@ -33,8 +37,8 @@ fn main() {
             Ok(_value) => (),
             Err(_e) => (),
         }
-    } else if args.len() == 2 {
-        lox.run_file(&args[1]).unwrap();
+    } else if let Some(path) = file_argument {
+        lox.run_file(path, quiet_mode).unwrap();
     } else {
         let prompt = lox.run_prompt();
 
