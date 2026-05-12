@@ -267,9 +267,15 @@ impl ExprVisitor<Result<Object, LoxError>> for Resolver {
         Ok(Object::Nil)
     }
 
-    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
+    fn visit_assign_expr(
+        &mut self,
+        expr: &Expr,
+        name: &Token,
+        value: &Expr,
+    ) -> Result<Object, LoxError> {
         self.resolve_expr(value)?;
-        self.resolve_local(value, name)
+        self.resolve_local(expr, name)?;
+        Ok(Object::Nil)
     }
 }
 

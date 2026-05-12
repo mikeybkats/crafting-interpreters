@@ -68,7 +68,9 @@ pub enum Expr {
 impl Expr {
     pub fn accept<R>(&self, visitor: &mut impl ExprVisitor<R>) -> R {
         match self {
-            Expr::Assign { name, value } => visitor.visit_assign_expr(name, value),
+            Expr::Assign { name, value } => {
+                visitor.visit_assign_expr(&self, name, value.as_ref())
+            }
             Expr::Binary {
                 left,
                 operator,
@@ -101,7 +103,7 @@ impl Expr {
 }
 
 pub trait ExprVisitor<R> {
-    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> R;
+    fn visit_assign_expr(&mut self, expr: &Expr, name: &Token, value: &Expr) -> R;
     fn visit_binary_expr(&mut self, left: &Expr, operator: &Token, right: &Expr) -> R;
     fn visit_call_expr(&mut self, callee: &Expr, paren: &Token, arguments: &Vec<Expr>) -> R;
     fn visit_get_expr(&mut self, object: &Expr, name: &Token) -> R;

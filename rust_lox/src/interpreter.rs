@@ -520,11 +520,16 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
     /// ## visit_assign_expr
     /// Runs only on resassignment
-    fn visit_assign_expr(&mut self, name: &Token, value: &Expr) -> Result<Object, LoxError> {
+    fn visit_assign_expr(
+        &mut self,
+        expr: &Expr,
+        name: &Token,
+        value: &Expr,
+    ) -> Result<Object, LoxError> {
         let value_obj = self.evaluate(value)?;
 
         let locals = self.locals.borrow();
-        let distance = locals.get(&value);
+        let distance = locals.get(expr);
         match distance {
             Some(distance) => self
                 .environment
