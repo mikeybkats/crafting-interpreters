@@ -86,7 +86,7 @@ void test_table_get(void) {
   tableSet(&table, &key, value);
 
   Value result = NIL_VAL;
-  tableGet(&table, &key, &result, globalIndex);
+  tableGet(&table, &key, &result, &globalIndex);
 
   TEST_ASSERT_EQUAL_INT(AS_NUMBER(result), AS_NUMBER(value));
 }
