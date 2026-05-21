@@ -7,16 +7,16 @@ flowchart LR
     SCANNER -->|Returns Token| PARSER[Parser]
     PARSER -->|Parses Token| COMPILER
 
-    COMPILER -->|Emits| BYTECODES[Byte Codes + Operands]
-
-    subgraph VM[Virtual Machine]
+    subgraph vm["Virtual Machine"]
+        BYTECODES["Byte Codes + Operands"]
         CHUNKS[Chunks] -->|Contain| BYTECODES
         IP[Instruction Pointer] -->|Points to| BYTECODES
         BYTECODES -->|Operate on| STACK[Stack]
+        STACK --> OUTPUT[Output]
     end
 
+    COMPILER -->|Emits| BYTECODES
     COMPILER -->|Creates| CHUNKS
-    VM --> OUTPUT[Output]
 ```
 
 | component            | in c_lox                                                                                                                                | classical definition                                                                                                                                                  |
