@@ -10,7 +10,7 @@ TESTS_DIR = tests
 UNITY_DIR = $(TESTS_DIR)/unity/src
 BUILD_DIR = build
 TESTS_BUILD_DIR = $(BUILD_DIR)/tests
-SRC_BUILD_DIR = ${BUILD_DIR}/src
+SRC_BUILD_DIR = $(BUILD_DIR)/test_src
 
 # target
 TARGET=$(TESTS_BUILD_DIR)/testRunner
@@ -68,9 +68,9 @@ print-files:
 	@echo "TEST_FILES: $(TEST_FILES)"
 	@echo "SRC_FILES: $(SRC_FILES)"
 
-# Clean
+# Clean (only test artifacts; leave build/src for the main interpreter)
 clean:
-	@rm -rf $(TESTS_BUILD_DIR) 
+	@rm -rf $(TESTS_BUILD_DIR)
 	@rm -rf $(SRC_BUILD_DIR)
 
 .PHONY: all clean
