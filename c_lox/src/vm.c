@@ -237,7 +237,7 @@ the instruction pointer.
                                                             // pointers, hence the int type cast
 #endif
 
-    u_int8_t instruction;  // every bytecode instruction modifies the stack
+    uint8_t instruction;  // every bytecode instruction modifies the stack
 
     // printf("OP_CODE before READ_BYTE: %hhu\n", *vm.ip);
     // This switch statement will become giant to handle all the opcodes

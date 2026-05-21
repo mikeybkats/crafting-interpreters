@@ -32,7 +32,7 @@ uint32_t getHashValue(Value value) {
 
       uint32_t hash  = 0;
       uint8_t* bytes = (uint8_t*)&number;
-      for (int i = 0; i < sizeof(double); i++) {
+      for (size_t i = 0; i < sizeof(double); i++) {
         hash = 31 * hash + bytes[i];
       }
       return hash;

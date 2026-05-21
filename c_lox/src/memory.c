@@ -29,6 +29,7 @@
  *
  */
 void* reallocate(void* pointer, size_t oldsize, size_t newSize) {
+  (void)oldsize;
   if (newSize == 0) {
     free(pointer);
     return NULL;
@@ -60,7 +61,7 @@ void freeObjects() {
   Obj* object = vm.objects;
   while (object != NULL) {
     Obj* next = object->next;
-    free(object);
+    freeObject(object);
     object = next;
   }
 }
